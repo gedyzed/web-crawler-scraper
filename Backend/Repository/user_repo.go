@@ -20,7 +20,6 @@ type userRepo struct {
 func (r *userRepo) Create(ctx context.Context, user *domain.User) *domain.AppError {
 
 	logger.SetFormatter(&logger.JSONFormatter{})
-
 	err := r.db.WithContext(ctx).Create(user).Error
 	if err != nil {
 		logger.WithFields(logger.Fields{
@@ -37,12 +36,31 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) *domain.AppErr
 	return nil
 }
 
-func (r *userRepo) FindByUniqueField (ctx context.Context, uniqueField string)(*domain.User, *domain.AppError){
+func (r *userRepo) FindByID (ctx context.Context, id string)(*domain.User, *domain.AppError){
 
 	logger.SetFormatter(&logger.JSONFormatter{})
 
 	var user domain.User
-	if err:= r.db.WithContext(ctx).First(&user, uniqueField).Error; err != nil {
+	if err:= r.db.WithContext(ctx).First(&user, id).Error; err != nil {
+		logger.WithFields(logger.Fields{
+			"user": user,
+			"error": err,
+		}).Error("User Not Found")
+
+		return nil, &domain.AppError{
+			Message: "User Not Found",
+			HttpStatus: 404,
+		}
+	} 
+	return &user, nil
+}
+
+func (r *userRepo) FindByEmail (ctx context.Context, email string)(*domain.User, *domain.AppError){
+
+	logger.SetFormatter(&logger.JSONFormatter{})
+
+	var user domain.User
+	if err:= r.db.WithContext(ctx).First(&user, &domain.User{Email: email}).Error; err != nil {
 		logger.WithFields(logger.Fields{
 			"user": user,
 			"error": err,

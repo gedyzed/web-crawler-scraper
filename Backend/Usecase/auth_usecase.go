@@ -5,14 +5,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	domain "web_crawler_scraper/Domain"
+
 	logger "github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 )
 	
 type IAuthUsecase interface {
 	Register(ctx context.Context, user *domain.User) *domain.AppError
 	Login(ctx context.Context, user *domain.User) (*domain.User, *domain.AppError)
 }
-
 
 type authUsecase struct { 
 	repo domain.IUserRepo
@@ -34,9 +35,12 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User) *domain.
 	logger.SetFormatter(&logger.JSONFormatter{})
 
 	// check for duplicate email
-	user, err := ac.repo.FindByUniqueField(ctx, user.Email);
-	if err != nil {
-		return err
+	old_user, err := ac.repo.FindByEmail(ctx, user.Email);
+	if err == nil && old_user != nil {
+		return &domain.AppError{
+			Message: "Duplicate Email",
+			HttpStatus: 409,
+		}
 	}
 
 	userID, err_ := GenerateID(16)
@@ -50,11 +54,25 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User) *domain.
 			HttpStatus: 500,
 		}
 	}
+	
+	hashedPassword, err_ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err_ != nil {
+		logger.WithFields(logger.Fields{
+			"user": user,
+			"error": err_,
+		}).Error("Failed to Hash user password")
+		return &domain.AppError{
+			Message: "Something went wrong. Try again!",
+			HttpStatus: 500,
+		}
 
+	}
 	user.UserID = userID
+	user.Password = string(hashedPassword)
+
 	if err := ac.repo.Create(ctx, user); err != nil {
 		return err
-	}
+	 }
 
 	return nil
 }
