@@ -5,10 +5,10 @@ import (
 	"regexp"
 	domain "web_crawler_scraper/Domain"
 	usecase "web_crawler_scraper/Usecase"
+
 	passwordvalidator "github.com/wagslane/go-password-validator"
 
 	"github.com/gin-gonic/gin"
-
 )
 
 type AuthController struct {
@@ -40,10 +40,10 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return
 	}
 
-	const minEntropyBits = 50
+	const minEntropyBits = 30
 	err := passwordvalidator.Validate(user.Password, minEntropyBits)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return 
 	}
 
