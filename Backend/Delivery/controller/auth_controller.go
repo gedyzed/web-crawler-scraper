@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 	"regexp"
+	"strings"
 	domain "web_crawler_scraper/Domain"
 	usecase "web_crawler_scraper/Usecase"
 
@@ -28,7 +29,8 @@ func IsValidEmail(email string) bool {
 func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	ctx := c.Request.Context()
-
+	ip := c.ClientIP()
+	
 	var user domain.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error" : "Invalid Input Format"})
@@ -40,6 +42,10 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return
 	}
 
+	// normalize email
+	normalizeEmail := strings.ToLower(user.Email)
+	user.Email = normalizeEmail
+
 	const minEntropyBits = 30
 	err := passwordvalidator.Validate(user.Password, minEntropyBits)
 	if err != nil {
@@ -47,13 +53,13 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 		return 
 	}
 
-	appError := ac.authUC.Register(ctx, &user)
+	appError := ac.authUC.Register(ctx, &user, ip)
 	if appError != nil {
 		c.IndentedJSON(appError.HttpStatus, gin.H{"error": appError.Message})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "User Registered Successfully!"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "User Registered Successfully. PLease Verify Email"})
 }
 
 func (ac *AuthController) LoginUser(c *gin.Context) {

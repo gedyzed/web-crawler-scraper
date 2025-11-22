@@ -10,6 +10,7 @@ import (
 type Config struct {
 	App AppConfig `mapstructure:"app"`
 	DB 	DBConfig `mapstructure:"db"`	
+	Redis RedisConfig `mapstructure:"redis"`
 }
 
 type DBConfig struct {
@@ -21,6 +22,12 @@ type AppConfig struct {
 	Port  string `mapstructure:"port" validate:"required"`
 	Env   string `mapstructure:"env"`
 	Debug bool	 `mapstructure:"debug"` 		
+}
+
+type RedisConfig struct{
+	Address string`mapstructure:"address"`
+	Password string`mapstructure:"password"`
+	DB int `mapstructure:"db"`
 }
 
 func ValidateConfig(cfg *Config) error {
@@ -40,7 +47,6 @@ func LoadConfig() *Config {
 	viper.AutomaticEnv()
 	viper.BindEnv("db.dns", "DB_DNS")
 	viper.BindEnv("app.port", "PORT")
-
 
 
 	var cfg Config
