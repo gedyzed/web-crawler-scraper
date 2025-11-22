@@ -11,12 +11,17 @@ import (
 )
 	
 type IAuthUsecase interface {
-	Register(ctx context.Context, user *domain.User) *domain.AppError
-	Login(ctx context.Context, user *domain.User) (*domain.User, *domain.AppError)
+	Register(ctx context.Context, user *domain.User, ip string) *domain.AppError
+	Login(ctx context.Context, user *domain.User, ip string) (*domain.User, *domain.AppError)
+}
+
+type IRateLimiter interface {
+	Allow(ctx context.Context, ip string)(bool, *domain.AppError)
 }
 
 type authUsecase struct { 
 	repo domain.IUserRepo
+	rateLimiter IRateLimiter
 }
 
 func NewAuthUsecase(repo domain.IUserRepo) IAuthUsecase {
@@ -31,14 +36,34 @@ func GenerateID(n int) (string, error) {
     return hex.EncodeToString(bytes), nil
 }
 
-func (ac *authUsecase) Register(ctx context.Context, user *domain.User) *domain.AppError {
+func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip string) *domain.AppError {
 	logger.SetFormatter(&logger.JSONFormatter{})
+
+	allowed, err := ac.rateLimiter.Allow(ctx, ip)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"user": user,
+			"error": err,
+		}).Error("Failed to get the rate limiter")
+		return &domain.AppError{
+			Message: "Something Went Wrong. Try again",
+			HttpStatus: 500,
+		}
+	}
+
+	if !allowed {
+		return &domain.AppError{
+			Message: "Too Many Request. Try again Later!",
+			HttpStatus: 429,
+		}
+	}
+
 
 	// check for duplicate email
 	old_user, err := ac.repo.FindByEmail(ctx, user.Email);
 	if err == nil && old_user != nil {
 		return &domain.AppError{
-			Message: "Duplicate Email",
+			Message: "Email Already Registered",
 			HttpStatus: 409,
 		}
 	}
@@ -77,6 +102,6 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User) *domain.
 	return nil
 }
 
-func (ac *authUsecase) Login(ctx context.Context, user *domain.User)(*domain.User, *domain.AppError){
+func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string)(*domain.User, *domain.AppError){
 	return nil, nil
 }
