@@ -5,12 +5,15 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
+	"golang.org/x/oauth2"
 )
 	
 type Config struct {
-	App AppConfig `mapstructure:"app"`
-	DB 	DBConfig `mapstructure:"db"`	
-	Redis RedisConfig `mapstructure:"redis"`
+	App 		AppConfig `mapstructure:"app"`
+	DB 			DBConfig `mapstructure:"db"`	
+	Redis 		RedisConfig `mapstructure:"redis"`
+	GoogleCfg   OAuthConfig `mapstructure:"google_oauth"`
+	GithubCfg   OAuthConfig `mapstructure:"github_oauth"`
 }
 
 type DBConfig struct {
@@ -30,6 +33,17 @@ type RedisConfig struct{
 	DB int `mapstructure:"db"`
 }
 
+type OAuthConfig struct {
+	ClientID 		string 			`mapstructure:"client_id"`
+	ClientSecret 	string 			`mapstructure:"client_secret"`
+	RedirectURL 	string 			`mapstructure:"redirect_url"`
+	Scopes 			[]string 		`mapstructure:"scopes"`
+	Endpoint 		oauth2.Endpoint `mapstructure:"endpoint"`
+	UserURL 		string 			`mapstructure:"user_url"`
+}
+
+
+
 func ValidateConfig(cfg *Config) error {
 	validate := validator.New()
 	return validate.Struct(cfg)
@@ -38,7 +52,7 @@ func ValidateConfig(cfg *Config) error {
 func LoadConfig() *Config {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("Infrastrucuture/config")
+	viper.AddConfigPath("../Infrastrucuture/config")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Error in loading config file: %v", err)
@@ -47,6 +61,8 @@ func LoadConfig() *Config {
 	viper.AutomaticEnv()
 	viper.BindEnv("db.dns", "DB_DNS")
 	viper.BindEnv("app.port", "PORT")
+	viper.SetDefault("google_oauth.scopes", []string{"openid", "email", "profile"})
+	viper.SetDefault("github.scopes", []string{"read:user", "users:email"})
 
 
 	var cfg Config
