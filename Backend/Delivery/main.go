@@ -1,15 +1,18 @@
 package main
 
 import (
+	"time"
 	route "web_crawler_scraper/Delivery/Route"
 	"web_crawler_scraper/Delivery/controller"
 	"web_crawler_scraper/Infrastrucuture"
 	"web_crawler_scraper/Infrastrucuture/config"
+	"web_crawler_scraper/Infrastrucuture/oauth"
 	repository "web_crawler_scraper/Repository"
 	usecase "web_crawler_scraper/Usecase"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
 )
 
 func main() {
@@ -17,10 +20,34 @@ func main() {
 	// Initialization 
 	cfg := config.LoadConfig()
 	db := infrastructure.DBConnect(&cfg.DB)
+	redis := infrastructure.NewRedisClient(&cfg.Redis)
+	rateLimiter := infrastructure.NewRedisRateLimiter(redis, 5, time.Minute)
+
+
+	// OAuth Initialization
+	googleOAuth := oauth.NewGoogleOAuthConfig(&cfg.GoogleCfg)
+	githubOAUth := oauth.NewGithubOAuthConfig(&cfg.GithubCfg)
+	oauthProviders := map[string] *oauth2.Config {
+		"google": googleOAuth,
+		"github": githubOAUth,
+	}
+
+	oauthUserURL := map[string]  string {
+		"google": cfg.GoogleCfg.UserURL,
+		"github": cfg.GithubCfg.UserURL,
+	}
 
 	userRepo := repository.NewUserRepo(db)
-	authUsecase := usecase.NewAuthUsecase(userRepo)
+	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
+	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
+	authUsecase := usecase.NewAuthUsecase(userRepo, 
+										  refreshTokenRepo, 
+										  rateLimiter, 
+										  oauthServices,
+										)
 	authController := controller.NewAuthController(authUsecase)
+
+
 
 	router := gin.Default()
 	router.Use(cors.Default())

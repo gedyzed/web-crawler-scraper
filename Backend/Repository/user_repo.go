@@ -93,3 +93,22 @@ func(r *userRepo) Update(ctx context.Context, user *domain.User) (*domain.User, 
 	return user, nil
 }
 
+func (r *userRepo) SaveProvider(ctx context.Context, provider *domain.AuthProvider) *domain.AppError { 
+	logger.SetFormatter(&logger.JSONFormatter{})
+	err := r.db.WithContext(ctx).Create(provider).Error
+	if err != nil {
+		logger.WithFields(logger.Fields{
+				"provider": provider,
+				"error": err,
+			}).Error("Failed to Create User")
+		
+		return &domain.AppError{
+				Message: domain.ErrInternalServer,
+				HttpStatus: 500,
+			}
+	}
+	
+	return nil
+
+}
+

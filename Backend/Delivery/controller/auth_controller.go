@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -12,12 +13,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 type AuthController struct {
 	authUC usecase.IAuthUsecase
 }
 
 func NewAuthController(uc usecase.IAuthUsecase) *AuthController {
-	return &AuthController{authUC: uc}
+	return &AuthController{
+		authUC: uc, 
+	}
 }
 
 func IsValidEmail(email string) bool {
@@ -64,4 +68,73 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 func (ac *AuthController) LoginUser(c *gin.Context) {
 
+	ctx := c.Request.Context()
+	ip := c.ClientIP()
+
+	var user domain.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid Input Format"})
+		c.Abort()
+		return
+	}
+
+	isValid := IsValidEmail(user.Email)
+	if !isValid {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid Email"})
+		c.Abort()
+		return 
+	} 
+
+	token, err := ac.authUC.Login(ctx, &user, ip)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.Abort()
+		return 
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": token})
+
+}
+
+func (ac *AuthController) OAuthHandler(c *gin.Context) {
+
+	providerName := c.Query("provider")
+	url, err := ac.authUC.GetLoginURL(providerName, "state")
+	if err != nil {
+		c.IndentedJSON(err.HttpStatus, gin.H{"error" : err.Message})
+		c.Abort()
+		return 
+	}
+
+	url += fmt.Sprintf("&provider=%s", providerName)
+	c.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+func (ac *AuthController) GoogleOAuthCallBack(c *gin.Context){
+	provider := "google"
+	ac.OAuthCallback(c, provider)
+}
+
+func (ac *AuthController) GithubOAuthCallBack(c *gin.Context){
+	provider := "github"
+	ac.OAuthCallback(c, provider)
+}
+
+func (ac *AuthController) OAuthCallback(c *gin.Context, provider string){
+
+	ctx := c.Request.Context()
+	code := c.Query("code")
+	ipAddress := c.ClientIP()
+
+	fmt.Print("callback:", provider)
+	
+
+	tokens, err := ac.authUC.RegisterOrLogin(ctx, provider, code, ipAddress)
+	if err != nil {
+		c.IndentedJSON(err.HttpStatus, gin.H{"error" : err.Message})
+		c.Abort()
+		return 
+	}
+
+	c.IndentedJSON(http.StatusOK, tokens)
 }

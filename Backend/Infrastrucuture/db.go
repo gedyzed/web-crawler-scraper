@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"log"
+	// domain "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
 
 	"gorm.io/driver/postgres"
@@ -27,6 +28,7 @@ func DBConnect(cfg *config.DBConfig) *gorm.DB {
 	// 	domain.CrawlerSetting{},
 	// 	domain.Session{},
 	// 	domain.RefreshToken{},
+	// 	domain.AuthProvider{},
 	// )
 	return db
 }

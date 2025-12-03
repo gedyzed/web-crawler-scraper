@@ -48,7 +48,7 @@ func(rl *RedisRateLimiter) Allow(ctx context.Context, ip string)(bool, *domain.A
 	return true, nil
 }
 
-func NewRedisClient(cfg config.RedisConfig) *redis.Client{
+func NewRedisClient(cfg *config.RedisConfig) *redis.Client{
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr: cfg.Address,
