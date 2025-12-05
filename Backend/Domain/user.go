@@ -26,6 +26,7 @@ type User struct {
 	Result 	[]*CrawlerResult `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 	Session []*Session `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 	RefreshToken []*RefreshToken `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
+	Provider	[]*AuthProvider `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 }
 
 type ExchangeData struct{

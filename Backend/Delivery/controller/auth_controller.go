@@ -126,15 +126,22 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string){
 	code := c.Query("code")
 	ipAddress := c.ClientIP()
 
-	fmt.Print("callback:", provider)
-	
-
-	tokens, err := ac.authUC.RegisterOrLogin(ctx, provider, code, ipAddress)
+	response, err := ac.authUC.RegisterOrLogin(ctx, provider, code, ipAddress)
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error" : err.Message})
 		c.Abort()
 		return 
 	}
 
-	c.IndentedJSON(http.StatusOK, tokens)
+	refreshToken := response.RefreshToken
+	c.SetCookie(
+		"refresh_token",
+		refreshToken.Token,
+		7 * 24 * 60 * 60,
+		"/",
+		"localhost",
+		false, 
+		true,
+	)
+	c.IndentedJSON(http.StatusOK, response.Session)
 }

@@ -98,6 +98,11 @@ func (os *OAuthServices) Exchange(
 
 			}
 
+			session := &domain.Session{
+				Token: got.AccessToken,
+				ExpiresAt: got.Expiry,
+			}
+
 			client := provider.Client(ctx, got)
 			url := os.UserURL[providerName]
 			resp, err := client.Get(url) 
@@ -146,6 +151,7 @@ func (os *OAuthServices) Exchange(
 				RefreshToken: refreshToken,
 				User: newUser,
 				Provider: authProvider,	
+				Session: session,
 			}
 
 			return exchangeData, nil
