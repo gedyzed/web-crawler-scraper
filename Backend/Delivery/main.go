@@ -40,10 +40,14 @@ func main() {
 	userRepo := repository.NewUserRepo(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
+	passwordService := infrastructure.NewPasswordService()
+	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
 	authUsecase := usecase.NewAuthUsecase(userRepo, 
 										  refreshTokenRepo, 
 										  rateLimiter, 
 										  oauthServices,
+										  jwtService,
+										  passwordService,
 										)
 	authController := controller.NewAuthController(authUsecase)
 

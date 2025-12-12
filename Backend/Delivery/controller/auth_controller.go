@@ -85,14 +85,34 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		return 
 	} 
 
-	token, err := ac.authUC.Login(ctx, &user, ip)
+	response, err := ac.authUC.Login(ctx, &user, ip)
 	if err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
 		c.Abort()
 		return 
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": token})
+	c.SetCookie (
+		"accessToken",
+		response.Session.Token,
+		5 * 60,
+		"/",
+		"localhost",
+		false, 
+		true,
+	)
+
+	c.SetCookie(
+		"refresh_token",
+		response.RefreshToken.Token,
+		7 * 24 * 60 * 60,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "welcome to homepage"})
 
 }
 
@@ -133,6 +153,16 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string){
 		return 
 	}
 
+	c.SetCookie (
+		"accessToken",
+		response.Session.Token,
+		5 * 60,
+		"/",
+		"localhost",
+		false, 
+		true,
+	)
+
 	refreshToken := response.RefreshToken
 	c.SetCookie(
 		"refresh_token",
@@ -143,5 +173,7 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string){
 		false, 
 		true,
 	)
+
+
 	c.IndentedJSON(http.StatusOK, response.Session)
 }

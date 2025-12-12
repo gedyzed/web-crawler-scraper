@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
@@ -9,11 +10,12 @@ import (
 )
 	
 type Config struct {
-	App 		AppConfig `mapstructure:"app"`
-	DB 			DBConfig `mapstructure:"db"`	
+	App 		AppConfig 	`mapstructure:"app"`
+	DB 			DBConfig 	`mapstructure:"db"`	
 	Redis 		RedisConfig `mapstructure:"redis"`
 	GoogleCfg   OAuthConfig `mapstructure:"google_oauth"`
 	GithubCfg   OAuthConfig `mapstructure:"github_oauth"`
+	JWTConfig   JWTConfig 	`mapstructure:"jwt_config"`  
 }
 
 type DBConfig struct {
@@ -42,6 +44,12 @@ type OAuthConfig struct {
 	UserURL 		string 			`mapstructure:"user_url"`
 }
 
+type JWTConfig struct{
+	AccessKey 	string 		  `mapstructure:"access_key"`
+	RefreshKey 	string 		  `mapstructure:"refresh_key"`
+	AccessTTL 	time.Duration `mapstructure:"access_ttl"`
+	RefreshTTL 	time.Duration `mapstructure:"refresh_ttl"`
+}
 
 
 func ValidateConfig(cfg *Config) error {
