@@ -24,5 +24,15 @@ type IOAuthServices interface {
 	Exchange(context.Context, string, string)(*ExchangeData, *AppError)
 }
 
+type IJwtService interface {
+	GenerateTokens(ctx context.Context, userID string)(*ExchangeData, *AppError)
+	ValidateToken(tokenString string, tokenName string)(*Claims, *AppError)
+}
+
+type IPasswordService interface {
+	HashPassword(password string)(string, *AppError)
+	ComparePassword(hashedPassword string, password string)bool
+}
+
 
 

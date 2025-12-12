@@ -60,7 +60,7 @@ func (r *userRepo) FindByEmail (ctx context.Context, email string)(*domain.User,
 	logger.SetFormatter(&logger.JSONFormatter{})
 
 	var user domain.User
-	if err:= r.db.WithContext(ctx).First(&user, &domain.User{Email: email}).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&user, &domain.User{Email: email}).Error; err != nil {
 		logger.WithFields(logger.Fields{
 			"user": user,
 			"error": err,
@@ -71,6 +71,7 @@ func (r *userRepo) FindByEmail (ctx context.Context, email string)(*domain.User,
 			HttpStatus: 404,
 		}
 	} 
+	
 	return &user, nil
 }
 

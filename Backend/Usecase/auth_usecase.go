@@ -8,12 +8,11 @@ import (
 	domain "web_crawler_scraper/Domain"
 
 	logger "github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 )
 	
 type IAuthUsecase interface {
 	Register(ctx context.Context, user *domain.User, ip string) *domain.AppError
-	Login(ctx context.Context, user *domain.User, ip string) (*domain.User, *domain.AppError)
+	Login(ctx context.Context, user *domain.User, ip string) (*domain.ExchangeData, *domain.AppError)
 	GetLoginURL(providerName string, state string)(string, *domain.AppError)
 	RegisterOrLogin(ctx context.Context, providerName string, code string, ip string)(*domain.ExchangeData, *domain.AppError)
 }
@@ -27,6 +26,8 @@ type authUsecase struct {
 	tokenRepo domain.IRefreshTokenRepo
 	rateLimiter IRateLimiter
 	oauthServices domain.IOAuthServices
+	jwtService domain.IJwtService
+	passwordService domain.IPasswordService
 }
 
 func NewAuthUsecase(
@@ -34,12 +35,16 @@ func NewAuthUsecase(
 		tokenRepo		domain.IRefreshTokenRepo,
 		rateLimiter 	IRateLimiter, 
 		oauthServices  	domain.IOAuthServices,
+		jwtService      domain.IJwtService,
+		passwordService domain.IPasswordService,
 	) IAuthUsecase {
 		return &authUsecase{
 			repo: repo, 
 			tokenRepo: tokenRepo,
 			rateLimiter: rateLimiter,
 			oauthServices: oauthServices,
+			jwtService: jwtService,
+			passwordService: passwordService,
 		}
 }
 
@@ -74,12 +79,7 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 	}
 	
 	// check for duplicate email
-	old_user, err := ac.repo.FindByEmail(ctx, user.Email);
-
-	if err != nil {
-		return err
-	}
-
+	old_user, _ := ac.repo.FindByEmail(ctx, user.Email);
 	if old_user != nil {
 		return &domain.AppError{
 			Message: "User Already Registered",
@@ -99,17 +99,9 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 		}
 	}
 	
-	hashedPassword, err_ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	if err_ != nil {
-		logger.WithFields(logger.Fields{
-			"user": user,
-			"error": err_,
-		}).Error("Failed to Hash user password")
-		return &domain.AppError{
-			Message: "Something went wrong. Try again!",
-			HttpStatus: 500,
-		}
-
+	hashedPassword, err := ac.passwordService.HashPassword(user.Password)
+	if err != nil {
+		return err
 	}
 	user.UserID = userID
 	user.Password = string(hashedPassword)
@@ -121,8 +113,63 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 	return nil
 }
 
-func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string)(*domain.User, *domain.AppError){
-	return nil, nil
+func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string)(*domain.ExchangeData, *domain.AppError){
+	
+	logger.SetFormatter(&logger.JSONFormatter{})
+	allowed, err := ac.rateLimiter.Allow(ctx, ip)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"user": user,
+			"error": err,
+		}).Error("Failed to get the rate limiter")
+		return nil, &domain.AppError{
+			Message: "Something Went Wrong. Try again",
+			HttpStatus: 500,
+		}
+	}
+
+	if !allowed {
+		return nil, &domain.AppError{
+			Message: "Too Many Request. Try again Later!",
+			HttpStatus: 429,
+		}
+	}
+
+	old_user, err := ac.repo.FindByEmail(ctx, user.Email);
+	if err != nil {
+		return nil, err
+	}
+
+	if old_user == nil {
+		return nil, &domain.AppError{
+			Message: "Invalid Email or Password",
+			HttpStatus: 401,
+		}
+	}
+
+	isMatched := ac.passwordService.ComparePassword(old_user.Password, user.Password)
+	if !isMatched {
+		return nil, &domain.AppError{
+			Message: "Invalid Email or Password",
+			HttpStatus: 401,
+		}
+	}
+
+	// generate tokens
+	exchangeData, err := ac.jwtService.GenerateTokens(ctx, old_user.UserID)
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"user": user,
+			"error": err,
+		}).Error("Failed to Create Tokens")
+		return nil, &domain.AppError{
+			Message: "Something Went Wrong. Try again!",
+			HttpStatus: 500,
+		}		
+	}
+
+	return exchangeData, nil
+
 }
 
 func (ac *authUsecase) GetLoginURL(providerName string, state string)(string, *domain.AppError){
