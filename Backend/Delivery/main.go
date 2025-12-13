@@ -4,6 +4,7 @@ import (
 	"time"
 	route "web_crawler_scraper/Delivery/Route"
 	"web_crawler_scraper/Delivery/controller"
+	domain "web_crawler_scraper/Domain"
 	infrastructure "web_crawler_scraper/Infrastrucuture"
 	"web_crawler_scraper/Infrastrucuture/config"
 	"web_crawler_scraper/Infrastrucuture/oauth"
@@ -37,13 +38,13 @@ func main() {
 	googleOAuth := oauth.NewGoogleOAuthConfig(&cfg.GoogleCfg)
 	githubOAUth := oauth.NewGithubOAuthConfig(&cfg.GithubCfg)
 	oauthProviders := map[string]*oauth2.Config{
-		"google": googleOAuth,
-		"github": githubOAUth,
+		domain.Google: googleOAuth,
+		domain.Github: githubOAUth,
 	}
 
 	oauthUserURL := map[string]string{
-		"google": cfg.GoogleCfg.UserURL,
-		"github": cfg.GithubCfg.UserURL,
+		domain.Google: cfg.GoogleCfg.UserURL,
+		domain.Github: cfg.GithubCfg.UserURL,
 	}
 
 	userRepo := repository.NewUserRepo(db)

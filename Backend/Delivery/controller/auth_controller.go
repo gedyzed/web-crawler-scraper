@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 	domain "web_crawler_scraper/Domain"
 	usecase "web_crawler_scraper/Usecase"
 
@@ -168,10 +169,10 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	)
 
 	c.SetCookie(
-		domain.RefreshToken_,
+		domain.RefreshTokenLocal,
 		response.RefreshToken.Token,
 		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
-		"/",
+		"/auth/refresh",
 		ac.cfg.App.Domain,
 		ac.cfg.App.SecureCookies,
 		true,
@@ -208,7 +209,18 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 
 	ctx := c.Request.Context()
 	code := c.Query("code")
+	if code == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Missing authorization code"})
+		return
+	}
 	ipAddress := c.ClientIP()
+
+	if ac.cfg.App.Debug {
+		logrus.WithFields(logrus.Fields{
+			"provider": provider,
+			"ip":       ipAddress,
+		}).Debug("OAuth callback received")
+	}
 
 	response, err := ac.authUC.RegisterOrLogin(ctx, provider, code, ipAddress)
 	if err != nil {
@@ -216,22 +228,37 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		return
 	}
 
+	c.SetSameSite(http.SameSiteLaxMode)
+
+	expiryTime := response.Session.ExpiresAt.Sub(time.Now()).Seconds()
 	c.SetCookie(
 		domain.AccessToken,
 		response.Session.Token,
-		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
+		int(expiryTime),
 		"/",
 		ac.cfg.App.Domain,
-		false,
+		ac.cfg.App.SecureCookies,
 		true,
 	)
 
+	var tokenName string
+	switch provider {
+	case domain.Google:
+		tokenName = domain.RefreshTokenGoogle
+	case domain.Github:
+		tokenName = domain.RefreshTokenGithub
+	default:
+		logrus.WithField("provider", provider).Error("Unknown OAuth provider")
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Invalid provider"})
+		return
+	}
+
 	refreshToken := response.RefreshToken
 	c.SetCookie(
-		domain.RefreshToken_,
+		tokenName,
 		refreshToken.Token,
 		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
-		"/",
+		"/auth/oauth/refresh",
 		ac.cfg.App.Domain,
 		ac.cfg.App.SecureCookies,
 		true,

@@ -36,7 +36,7 @@ func NewAuthUsecase(
 		rateLimiter 	IRateLimiter, 
 		oauthServices 	domain.IOAuthServices,
 		jwtService      domain.IJwtService,
-	passwordService domain.IPasswordService,
+		passwordService domain.IPasswordService,
 ) IAuthUsecase {
 	return &authUsecase{
 		repo:            repo,
@@ -139,18 +139,18 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 			HttpStatus: 429,
 		}
 	}
-	
-    dummyHash := "$2a$10$6.8LO2dQfP6rkY6/u.2mJOjEt5AdKRu98HEG6UWHQbliU/jhKJjLo"
+
+	dummyHash := "$2a$10$6.8LO2dQfP6rkY6/u.2mJOjEt5AdKRu98HEG6UWHQbliU/jhKJjLo"
 	old_user, err := ac.repo.FindByEmail(ctx, user.Email)
 	if err != nil && err.HttpStatus != http.StatusNotFound {
 		logger.WithFields(logger.Fields{
 			"user":  user,
 			"error": err,
 		}).Error(domain.LogUserNotFound)
-	
+
 		return nil, err
 	}
-    
+
 	hashToCompare := dummyHash
 	if old_user != nil {
 		hashToCompare = old_user.Password
@@ -241,7 +241,7 @@ func (ac *authUsecase) RegisterOrLogin(
 		return nil, err
 	}
 
-	// login
+	// login - existing user
 	if old_user != nil {
 		userData.Provider.UserID = old_user.UserID
 		err := ac.repo.SaveProvider(ctx, userData.Provider)
@@ -249,9 +249,27 @@ func (ac *authUsecase) RegisterOrLogin(
 			logger.WithFields(logger.Fields{
 				"provider": userData.Provider,
 				"error":    err,
-			}).Error(domain.LogFailedCreateRefreshToken)
+			}).Error(domain.LogFailedSaveProvider)
 		}
+
+		// Save refresh token for existing user
+		userData.RefreshToken.UserID = old_user.UserID
+		err = ac.tokenRepo.Create(ctx, userData.RefreshToken)
+		if err != nil {
+			logger.WithFields(logger.Fields{
+				"refreshToken": userData.RefreshToken,
+				"error":        err,
+			}).Error(domain.LogFailedCreateRefreshToken)
+			return nil, &domain.AppError{
+				Message:    domain.ErrSomethingWentWrong,
+				HttpStatus: 500,
+			}
+		}
+
+		// Set UserID in session
+		userData.Session.UserID = old_user.UserID
 	} else {
+		// register - new user
 		UserID, err_ := GenerateID(10)
 		if err_ != nil {
 			return nil, &domain.AppError{
@@ -272,6 +290,8 @@ func (ac *authUsecase) RegisterOrLogin(
 		if err != nil {
 			return nil, err
 		}
+
+		userData.Session.UserID = UserID
 	}
 
 	return userData, nil
