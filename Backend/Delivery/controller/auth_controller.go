@@ -109,43 +109,71 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	ip := c.ClientIP()
 
 	var user domain.User
+	if ac.cfg.App.Debug {
+		bodyBytes, _ := io.ReadAll(c.Request.Body)
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		logrus.WithFields(logrus.Fields{
+			"headers": c.Request.Header,
+			"body":    string(bodyBytes),
+		}).Debug(domain.LogLoginRequestDump)
+	}
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid Input Format"})
-		c.Abort()
+		logrus.WithError(err).Debug(domain.LogLoginBindingError)
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
 		return
 	}
 
+	// Normalize and validate email
+	normalizeEmail := strings.ToLower(user.Email)
+	user.Email = normalizeEmail
 	isValid := IsValidEmail(user.Email)
 	if !isValid || user.Password == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid Email or Password"})
-		c.Abort()
+		logrus.WithField("email", user.Email).Debug(domain.LogLoginInvalidEmail)
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidCredentials})
 		return
 	}
 
 	response, err := ac.authUC.Login(ctx, &user, ip)
 	if err != nil {
+		if err.HttpStatus >= 500 {
+			logrus.WithFields(logrus.Fields{
+				"error":       err.Message,
+				"http_status": err.HttpStatus,
+				"email":       user.Email,
+				"ip":          ip,
+			}).Error(domain.LogLoginSystemError)
+		} else {
+			logrus.WithFields(logrus.Fields{
+				"error":       err.Message,
+				"http_status": err.HttpStatus,
+				"email":       user.Email,
+				"ip":          ip,
+			}).Debug(domain.LogLoginClientError)
+		}
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
-		c.Abort()
 		return
 	}
 
+	c.SetSameSite(http.SameSiteLaxMode)
+
 	c.SetCookie(
-		"accessToken",
+		domain.AccessToken,
 		response.Session.Token,
 		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
 		"/",
-		"localhost",
-		false,
+		ac.cfg.App.Domain,
+		ac.cfg.App.SecureCookies,
 		true,
 	)
 
 	c.SetCookie(
-		"refresh_token",
+		domain.RefreshToken_,
 		response.RefreshToken.Token,
 		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 		"/",
-		"localhost",
-		false,
+		ac.cfg.App.Domain,
+		ac.cfg.App.SecureCookies,
 		true,
 	)
 
@@ -159,7 +187,6 @@ func (ac *AuthController) OAuthHandler(c *gin.Context) {
 	url, err := ac.authUC.GetLoginURL(providerName, "state")
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
-		c.Abort()
 		return
 	}
 
@@ -186,28 +213,27 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 	response, err := ac.authUC.RegisterOrLogin(ctx, provider, code, ipAddress)
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
-		c.Abort()
 		return
 	}
 
 	c.SetCookie(
-		"accessToken",
+		domain.AccessToken,
 		response.Session.Token,
 		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
 		"/",
-		"localhost",
+		ac.cfg.App.Domain,
 		false,
 		true,
 	)
 
 	refreshToken := response.RefreshToken
 	c.SetCookie(
-		"refresh_token",
+		domain.RefreshToken_,
 		refreshToken.Token,
 		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 		"/",
-		"localhost",
-		false,
+		ac.cfg.App.Domain,
+		ac.cfg.App.SecureCookies,
 		true,
 	)
 

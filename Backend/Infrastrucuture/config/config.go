@@ -28,10 +28,12 @@ type DBConfig struct {
 }
 
 type AppConfig struct {
-	Name  string `mapstructure:"name"`
-	Port  string `mapstructure:"port" validate:"required"`
-	Env   string `mapstructure:"env"`
-	Debug bool   `mapstructure:"debug"`
+	Name   			string `mapstructure:"name"`
+	Port   			string `mapstructure:"port" validate:"required"`
+	Env    			string `mapstructure:"env"`
+	Debug  			bool   `mapstructure:"debug"`
+	Domain 			string `mapstructure:"domain" validate:"required"`
+	SecureCookies 	bool   `mapstructure:"secure_cookies"`
 }
 
 type RedisConfig struct {

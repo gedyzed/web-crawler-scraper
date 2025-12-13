@@ -57,7 +57,6 @@ func GenerateID(n int) (string, error) {
 }
 
 func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip string) *domain.AppError {
-	logger.SetFormatter(&logger.JSONFormatter{})
 
 	allowed, err := ac.rateLimiter.Allow(ctx, ip)
 	if err != nil {
@@ -82,7 +81,7 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 	old_user, err := ac.repo.FindByEmail(ctx, user.Email)
 	if err != nil && err.HttpStatus != http.StatusInternalServerError {
 		return &domain.AppError{
-			Message:    "Internal Server Error",
+			Message:    domain.ErrInternalServer,
 			HttpStatus: 500,
 		}
 	}
@@ -101,7 +100,7 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 			"error": err_,
 		}).Error(domain.LogFailedCreateUserID)
 		return &domain.AppError{
-			Message:    domain.ErrSomethingWentWrongAlt,
+			Message:    domain.ErrSomethingWentWrong,
 			HttpStatus: 500,
 		}
 	}
@@ -122,13 +121,12 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 
 func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) (*domain.ExchangeData, *domain.AppError) {
 
-	logger.SetFormatter(&logger.JSONFormatter{})
 	allowed, err := ac.rateLimiter.Allow(ctx, ip)
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"user":  user,
 			"error": err,
-		}).Error("Failed to get the rate limiter")
+		}).Error(domain.LogFailedRateLimiter)
 		return nil, &domain.AppError{
 			Message:    domain.ErrSomethingWentWrong,
 			HttpStatus: 500,
@@ -141,23 +139,27 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 			HttpStatus: 429,
 		}
 	}
-
+	
+    dummyHash := "$2a$10$6.8LO2dQfP6rkY6/u.2mJOjEt5AdKRu98HEG6UWHQbliU/jhKJjLo"
 	old_user, err := ac.repo.FindByEmail(ctx, user.Email)
-	if err != nil {
+	if err != nil && err.HttpStatus != http.StatusNotFound {
+		logger.WithFields(logger.Fields{
+			"user":  user,
+			"error": err,
+		}).Error(domain.LogUserNotFound)
+	
 		return nil, err
 	}
-
-	if old_user == nil {
-		return nil, &domain.AppError{
-			Message:    domain.ErrInvalidCredentials,
-			HttpStatus: 401,
-		}
+    
+	hashToCompare := dummyHash
+	if old_user != nil {
+		hashToCompare = old_user.Password
 	}
 
-	isMatched := ac.passwordService.ComparePassword(old_user.Password, user.Password)
-	if !isMatched {
+	isMatched := ac.passwordService.ComparePassword(hashToCompare, user.Password)
+	if !isMatched || old_user == nil {
 		return nil, &domain.AppError{
-			Message:    "Invalid Email or Password",
+			Message:    domain.ErrInvalidCredentials,
 			HttpStatus: 401,
 		}
 	}
@@ -170,13 +172,27 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 			"error": err,
 		}).Error(domain.LogFailedCreateTokens)
 		return nil, &domain.AppError{
-			Message:    domain.ErrSomethingWentWrongAlt,
+			Message:    domain.ErrSomethingWentWrong,
 			HttpStatus: 500,
 		}
 	}
 
-	return exchangeData, nil
+	// save refresh token
+	refreshToken := exchangeData.RefreshToken
+	refreshToken.UserID = old_user.UserID
+	if err := ac.tokenRepo.Create(ctx, refreshToken); err != nil {
+		logger.WithFields(logger.Fields{
+			"refreshToken": refreshToken,
+			"error":        err,
+		}).Error(domain.LogFailedCreateRefreshToken)
+		return nil, &domain.AppError{
+			Message:    domain.ErrSomethingWentWrong,
+			HttpStatus: 500,
+		}
+	}
 
+	exchangeData.Session.UserID = old_user.UserID
+	return exchangeData, nil
 }
 
 func (ac *authUsecase) GetLoginURL(providerName string, state string) (string, *domain.AppError) {
@@ -199,8 +215,6 @@ func (ac *authUsecase) RegisterOrLogin(
 	code string,
 	ipAddress string,
 ) (*domain.ExchangeData, *domain.AppError) {
-
-	logger.SetFormatter(&logger.JSONFormatter{})
 
 	allowed, err := ac.rateLimiter.Allow(ctx, ipAddress)
 	if err != nil {
@@ -241,7 +255,7 @@ func (ac *authUsecase) RegisterOrLogin(
 		UserID, err_ := GenerateID(10)
 		if err_ != nil {
 			return nil, &domain.AppError{
-				Message:    domain.ErrSomethingWentWrongAlt,
+				Message:    domain.ErrSomethingWentWrong,
 				HttpStatus: 500,
 			}
 		}
