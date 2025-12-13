@@ -1,48 +1,68 @@
 package controller
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
 	domain "web_crawler_scraper/Domain"
 	usecase "web_crawler_scraper/Usecase"
 
+	"web_crawler_scraper/Infrastrucuture/config"
+
 	passwordvalidator "github.com/wagslane/go-password-validator"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
-
 
 type AuthController struct {
 	authUC usecase.IAuthUsecase
+	cfg    *config.Config
 }
 
-func NewAuthController(uc usecase.IAuthUsecase) *AuthController {
+func NewAuthController(uc usecase.IAuthUsecase, cfg *config.Config) *AuthController {
 	return &AuthController{
-		authUC: uc, 
+		authUC: uc,
+		cfg:    cfg,
 	}
 }
 
 func IsValidEmail(email string) bool {
-		regex := `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
-		re := regexp.MustCompile(regex)
-		return re.MatchString(email)
-	}
+	regex := `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
+	re := regexp.MustCompile(regex)
+	return re.MatchString(email)
+}
 
 func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	ip := c.ClientIP()
-	
+
 	var user domain.User
+	// Conditional Debug Logging
+	if ac.cfg.App.Debug {
+		bodyBytes, _ := io.ReadAll(c.Request.Body)
+		// Restore the io.ReadCloser to its original state
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		logrus.WithFields(logrus.Fields{
+			"headers": c.Request.Header,
+			"body":    string(bodyBytes),
+		}).Debug(domain.LogRegisterRequestDump)
+	}
+
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error" : "Invalid Input Format"})
+		logrus.WithError(err).Debug(domain.LogRegisterBindingError)
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	if user.Email == "" || !IsValidEmail(user.Email) {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid or Incorrect Email"})
+		logrus.WithField("email", user.Email).Debug(domain.LogRegisterInvalidEmail)
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidEmail})
 		return
 	}
 
@@ -50,20 +70,37 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	normalizeEmail := strings.ToLower(user.Email)
 	user.Email = normalizeEmail
 
-	const minEntropyBits = 30
+	// validate password and strength
+	minEntropyBits := ac.cfg.Security.MinEntropyBits
 	err := passwordvalidator.Validate(user.Password, minEntropyBits)
 	if err != nil {
+		logrus.WithError(err).Debug(domain.LogRegisterWeakPassword)
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return 
+		return
 	}
 
 	appError := ac.authUC.Register(ctx, &user, ip)
 	if appError != nil {
+		// Log system errors at Error level
+		if appError.HttpStatus >= 500 {
+			logrus.WithFields(logrus.Fields{
+				"error":       appError.Message,
+				"http_status": appError.HttpStatus,
+				"email":       user.Email,
+				"ip":          ip,
+			}).Error(domain.LogRegisterSystemError)
+		} else {
+			// Log client errors at Debug level
+			logrus.WithFields(logrus.Fields{
+				"error":       appError.Message,
+				"http_status": appError.HttpStatus,
+			}).Debug(domain.LogRegisterClientError)
+		}
 		c.IndentedJSON(appError.HttpStatus, gin.H{"error": appError.Message})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "User Registered Successfully. PLease Verify Email"})
+	c.IndentedJSON(http.StatusOK, gin.H{"message": domain.MsgUserRegisteredSuccess})
 }
 
 func (ac *AuthController) LoginUser(c *gin.Context) {
@@ -79,33 +116,33 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	}
 
 	isValid := IsValidEmail(user.Email)
-	if !isValid {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid Email"})
+	if !isValid || user.Password == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Invalid Email or Password"})
 		c.Abort()
-		return 
-	} 
+		return
+	}
 
 	response, err := ac.authUC.Login(ctx, &user, ip)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err})
+		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
 		c.Abort()
-		return 
+		return
 	}
 
-	c.SetCookie (
+	c.SetCookie(
 		"accessToken",
 		response.Session.Token,
-		5 * 60,
+		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
 		"/",
 		"localhost",
-		false, 
+		false,
 		true,
 	)
 
 	c.SetCookie(
 		"refresh_token",
 		response.RefreshToken.Token,
-		7 * 24 * 60 * 60,
+		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 		"/",
 		"localhost",
 		false,
@@ -121,26 +158,26 @@ func (ac *AuthController) OAuthHandler(c *gin.Context) {
 	providerName := c.Query("provider")
 	url, err := ac.authUC.GetLoginURL(providerName, "state")
 	if err != nil {
-		c.IndentedJSON(err.HttpStatus, gin.H{"error" : err.Message})
+		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
 		c.Abort()
-		return 
+		return
 	}
 
 	url += fmt.Sprintf("&provider=%s", providerName)
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-func (ac *AuthController) GoogleOAuthCallBack(c *gin.Context){
+func (ac *AuthController) GoogleOAuthCallBack(c *gin.Context) {
 	provider := "google"
 	ac.OAuthCallback(c, provider)
 }
 
-func (ac *AuthController) GithubOAuthCallBack(c *gin.Context){
+func (ac *AuthController) GithubOAuthCallBack(c *gin.Context) {
 	provider := "github"
 	ac.OAuthCallback(c, provider)
 }
 
-func (ac *AuthController) OAuthCallback(c *gin.Context, provider string){
+func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 
 	ctx := c.Request.Context()
 	code := c.Query("code")
@@ -148,18 +185,18 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string){
 
 	response, err := ac.authUC.RegisterOrLogin(ctx, provider, code, ipAddress)
 	if err != nil {
-		c.IndentedJSON(err.HttpStatus, gin.H{"error" : err.Message})
+		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
 		c.Abort()
-		return 
+		return
 	}
 
-	c.SetCookie (
+	c.SetCookie(
 		"accessToken",
 		response.Session.Token,
-		5 * 60,
+		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
 		"/",
 		"localhost",
-		false, 
+		false,
 		true,
 	)
 
@@ -167,13 +204,12 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string){
 	c.SetCookie(
 		"refresh_token",
 		refreshToken.Token,
-		7 * 24 * 60 * 60,
+		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 		"/",
 		"localhost",
-		false, 
+		false,
 		true,
 	)
-
 
 	c.IndentedJSON(http.StatusOK, response.Session)
 }
