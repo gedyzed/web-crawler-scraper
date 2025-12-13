@@ -65,11 +65,31 @@ var (
 	LogFailedRateLimiter  = "Failed to get the rate limiter"
 	LogFailedCreateUserID = "Failed to Create UserID"
 	LogFailedCreateTokens = "Failed to Create Tokens"
+	LogFailedSaveProvider = "Failed to Save OAuth Provider"
+)
+
+// OAuth Service - Error Messages
+var (
+	ErrProviderNotFound     = "Provider Not Found"
+	ErrAuthenticationFailed = "Authentication failed"
+)
+
+// OAuth Service - Log Messages
+var (
+	LogOAuthProviderNotFound     = "OAuth provider not found"
+	LogOAuthTokenExchangeFailed  = "OAuth token exchange failed"
+	LogOAuthClientConnectionFail = "OAuth client connection failed"
+	LogOAuthFetchUserInfoFailed  = "OAuth fetch user info failed"
 )
 
 var (
-	RefreshToken_ = "refresh_token"
-	AccessToken   = "access_token"
+	RefreshTokenLocal  = "refresh_token_local"
+	RefreshTokenGoogle = "refresh_token_google"
+	RefreshTokenGithub = "refresh_token_github"
+	AccessToken        = "access_token"
+
+	Google = "google"
+	Github = "github"
 )
 
 type AppError struct {
