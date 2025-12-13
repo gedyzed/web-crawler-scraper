@@ -27,6 +27,15 @@ var (
 	LogRegisterClientError  = "RegisterUser Client Error"
 )
 
+// Login Endpoint - Internal log messages
+var (
+	LogLoginRequestDump  = "LoginUser Request Dump"
+	LogLoginBindingError = "LoginUser Binding Error"
+	LogLoginInvalidEmail = "LoginUser Invalid Email Error"
+	LogLoginSystemError  = "LoginUser System Error"
+	LogLoginClientError  = "LoginUser Client Error"
+)
+
 // Repository - Error Messages
 var (
 	ErrUserNotFound     = "User Not Found"
@@ -46,9 +55,7 @@ var (
 // Usecase - Error Messages
 var (
 	ErrSomethingWentWrong    = "Something Went Wrong. Try again"
-	ErrSomethingWentWrongAlt = "Something Went Wrong. Try again!"
 	ErrTooManyRequests       = "Too Many Request. Try again Later!"
-	ErrTooManyRequestsAlt    = "Too Many Requests. Try again Later"
 	ErrUserAlreadyRegistered = "User Already Registered"
 	ErrInvalidCredentials    = "Invalid Email or Password"
 )
@@ -58,6 +65,11 @@ var (
 	LogFailedRateLimiter  = "Failed to get the rate limiter"
 	LogFailedCreateUserID = "Failed to Create UserID"
 	LogFailedCreateTokens = "Failed to Create Tokens"
+)
+
+var (
+	RefreshToken_ = "refresh_token"
+	AccessToken   = "access_token"
 )
 
 type AppError struct {

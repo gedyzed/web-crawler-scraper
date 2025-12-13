@@ -18,7 +18,6 @@ type userRepo struct {
 
 func (r *userRepo) Create(ctx context.Context, user *domain.User) *domain.AppError {
 
-	logger.SetFormatter(&logger.JSONFormatter{})
 	err := r.db.WithContext(ctx).Create(user).Error
 	if err != nil {
 		logger.WithFields(logger.Fields{
@@ -37,8 +36,6 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) *domain.AppErr
 
 func (r *userRepo) FindByID(ctx context.Context, id string) (*domain.User, *domain.AppError) {
 
-	logger.SetFormatter(&logger.JSONFormatter{})
-
 	var user domain.User
 	if err := r.db.WithContext(ctx).First(&user, id).Error; err != nil {
 		logger.WithFields(logger.Fields{
@@ -55,8 +52,6 @@ func (r *userRepo) FindByID(ctx context.Context, id string) (*domain.User, *doma
 }
 
 func (r *userRepo) FindByEmail(ctx context.Context, email string) (*domain.User, *domain.AppError) {
-
-	logger.SetFormatter(&logger.JSONFormatter{})
 
 	var user domain.User
 	if err := r.db.WithContext(ctx).First(&user, &domain.User{Email: email}).Error; err != nil {
@@ -82,7 +77,6 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string) (*domain.User,
 
 func (r *userRepo) Update(ctx context.Context, user *domain.User) (*domain.User, *domain.AppError) {
 
-	logger.SetFormatter(&logger.JSONFormatter{})
 	err := r.db.WithContext(ctx).Model(domain.User{}).Where("user_id = ?", user.UserID).Updates(user).Error
 	if err != nil {
 		logger.WithFields(logger.Fields{
@@ -100,7 +94,7 @@ func (r *userRepo) Update(ctx context.Context, user *domain.User) (*domain.User,
 }
 
 func (r *userRepo) SaveProvider(ctx context.Context, provider *domain.AuthProvider) *domain.AppError {
-	logger.SetFormatter(&logger.JSONFormatter{})
+
 	err := r.db.WithContext(ctx).Create(provider).Error
 	if err != nil {
 		logger.WithFields(logger.Fields{
