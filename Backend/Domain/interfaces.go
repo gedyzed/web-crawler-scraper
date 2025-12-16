@@ -4,6 +4,9 @@ import (
 	"context"
 )
 
+
+// USER
+
 type IUserRepo interface {
 	Create(ctx context.Context, user *User) *AppError
 	FindByID(ctx context.Context, field string)(*User, *AppError)
@@ -18,6 +21,9 @@ type IRefreshTokenRepo interface {
 	DeleteToken(ctx context.Context, token string) (*AppError)
 }
 
+
+
+// AUTH
 type IOAuthServices interface {
 	RefreshToken(ctx context.Context, token *RefreshToken)(*RefreshToken, *AppError)
 	GetAuthURL(string, state string)(string, *AppError)
@@ -34,5 +40,15 @@ type IPasswordService interface {
 	ComparePassword(hashedPassword string, password string)bool
 }
 
+type IEmailService interface {
+	SendEmail(string, string, string) *AppError
+}
+
+
+
+// Crawler
+
+type ICrawlerRepo interface {}
+type ICrawlerService interface {}
 
 

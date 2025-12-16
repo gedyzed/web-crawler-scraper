@@ -92,6 +92,12 @@ var (
 	Github = "github"
 )
 
+
+// For Crawler
+var (
+	ErrSeedURLNeeded = "Seed URL is not provided"
+)
+
 type AppError struct {
 	Message    string
 	Err        string
