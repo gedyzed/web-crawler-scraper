@@ -266,3 +266,5 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 
 	c.IndentedJSON(http.StatusOK, response.Session)
 }
+
+

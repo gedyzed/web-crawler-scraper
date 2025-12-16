@@ -17,6 +17,8 @@ type Config struct {
 	GithubCfg OAuthConfig    `mapstructure:"github_oauth"`
 	JWTConfig JWTConfig      `mapstructure:"jwt_config"`
 	Security  SecurityConfig `mapstructure:"security"`
+	Email	  EmailConfig    `mapstructure:"email"`
+	Crawler   CrawlerConfig  `mapstructure:"crawler"`
 }
 
 type SecurityConfig struct {
@@ -56,6 +58,17 @@ type JWTConfig struct {
 	RefreshKey string        `mapstructure:"refresh_key"`
 	AccessTTL  time.Duration `mapstructure:"access_ttl"`
 	RefreshTTL time.Duration `mapstructure:"refresh_ttl"`
+}
+
+type EmailConfig struct {
+	StmpHost	string `mapstructure:"stmp_host"`
+	StmpPort 	int    `mapstructure:"stmp_port"`
+	Username 	string `mapstructure:"username"`
+	AppPassword string `mapstructure:"app_password"`
+}
+
+type CrawlerConfig struct {
+	Depth 	int `mapstructure:"depth"`
 }
 
 func ValidateConfig(cfg *Config) error {
