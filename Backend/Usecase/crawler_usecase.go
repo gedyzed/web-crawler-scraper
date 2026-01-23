@@ -13,7 +13,6 @@ type crawlerUsecase struct {
 	services 	domain.ICrawlerService
 }
 
-
 func NewCrawlerUsecase(
 	repo domain.ICrawlerRepo, 
 	svs domain.ICrawlerService,
@@ -26,7 +25,6 @@ func NewCrawlerUsecase(
 
 
 func (c *crawlerUsecase) Crawl(input *domain.URLFrontier)(any, *domain.AppError) {
+	c.services.Crawl(input.URL, input.Depth)
 	return nil, nil
 }
-
-

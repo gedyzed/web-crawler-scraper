@@ -50,6 +50,14 @@ var (
 	LogFailedUpdateUser         = "Failed to Update User"
 	LogFailedCreateRefreshToken = "Failed to Create Refresh Token"
 	LogFailedDeleteRefreshToken = "Failed to Delete Refresh Token"
+	LogFailedSaveCrawlerResult  = "Failed to Save Crawler Result"
+	LogFailedSaveHistory        = "Failed to Save Crawler History"
+)
+
+// Repository - Error Messages
+var (
+	ErrFailedSaveCrawlerResult = "Failed to Save Crawler Result"
+	ErrFailedSaveHistory       = "Failed to Save Crawler History"
 )
 
 // Usecase - Error Messages
@@ -91,7 +99,6 @@ var (
 	Google = "google"
 	Github = "github"
 )
-
 
 // For Crawler
 var (

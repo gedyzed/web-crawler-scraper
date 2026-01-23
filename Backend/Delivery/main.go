@@ -7,6 +7,7 @@ import (
 	domain "web_crawler_scraper/Domain"
 	infrastructure "web_crawler_scraper/Infrastrucuture"
 	"web_crawler_scraper/Infrastrucuture/config"
+	crawlerservicego "web_crawler_scraper/Infrastrucuture/crawler_service.go"
 	"web_crawler_scraper/Infrastrucuture/oauth"
 	repository "web_crawler_scraper/Repository"
 	usecase "web_crawler_scraper/Usecase"
@@ -47,11 +48,18 @@ func main() {
 		domain.Github: cfg.GithubCfg.UserURL,
 	}
 
+	// repos 
 	userRepo := repository.NewUserRepo(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
+	crawlerRepo := repository.NewCrawlerRepo(db)
+
+	// services
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
 	passwordService := infrastructure.NewPasswordService()
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
+	crawlerService := crawlerservicego.NewCrawlerServices()
+
+	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,
 		refreshTokenRepo,
 		rateLimiter,
@@ -59,12 +67,16 @@ func main() {
 		jwtService,
 		passwordService,
 	)
+	crawlUsecase := usecase.NewCrawlerUsecase(crawlerRepo, crawlerService)
+
+	// controllers
 	authController := controller.NewAuthController(authUsecase, cfg)
+	crawlController := controller.NewCrawlerController(&cfg.Crawler, crawlUsecase)
 
 	router := gin.Default()
 	router.Use(cors.Default())
 
-	route.AuthRoutes(router, authController)
+	route.AuthRoutes(router, authController, crawlController)
 
 	router.Run(":" + cfg.App.Port)
 

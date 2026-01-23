@@ -5,15 +5,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthRoutes(router *gin.Engine, handler *controller.AuthController) {
-
+func AuthRoutes(router *gin.Engine, 
+	authHandler *controller.AuthController,
+	crawlerHandler *controller.CrawlerController,
+	) {
+		
 	auth := router.Group("auth")
 	{
-		auth.POST("/register", handler.RegisterUser)
-		auth.POST("/login", handler.LoginUser)
-		auth.GET("/oauth", handler.OAuthHandler)
-		auth.GET("/oauth/google-callback", handler.GoogleOAuthCallBack)
-		auth.GET("oauth/github-callback", handler.GithubOAuthCallBack)
+		auth.POST("/register", authHandler.RegisterUser)
+		auth.POST("/login", authHandler.LoginUser)
+		auth.GET("/oauth", authHandler.OAuthHandler)
+		auth.GET("/oauth/google-callback", authHandler.GoogleOAuthCallBack)
+		auth.GET("oauth/github-callback", authHandler.GithubOAuthCallBack)
+	}
+
+	crawl := router.Group("crawl")
+	{
+		crawl.GET("", crawlerHandler.Crawler)
 	}
 
 }
