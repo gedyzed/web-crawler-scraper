@@ -23,8 +23,7 @@ func NewCrawlerUsecase(
 		}
 	}
 
-
 func (c *crawlerUsecase) Crawl(input *domain.URLFrontier)(any, *domain.AppError) {
-	c.services.Crawl(input.URL, input.Depth)
-	return nil, nil
+	result, err := c.services.Crawl(input.URL)
+	return result, err
 }

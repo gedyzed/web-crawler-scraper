@@ -48,5 +48,5 @@ type ICrawlerRepo interface {
 	SaveHistory(ctx context.Context, history *History) *AppError
 }
 type ICrawlerService interface{
-	Crawl(currentURL string, maxDepth int)(string, *AppError)
+	Crawl(seedURL string)(*CrawlerResult, *AppError)
 }
