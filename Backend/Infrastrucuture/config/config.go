@@ -17,7 +17,7 @@ type Config struct {
 	GithubCfg OAuthConfig    `mapstructure:"github_oauth"`
 	JWTConfig JWTConfig      `mapstructure:"jwt_config"`
 	Security  SecurityConfig `mapstructure:"security"`
-	Email	  EmailConfig    `mapstructure:"email"`
+	Email     EmailConfig    `mapstructure:"email"`
 	Crawler   CrawlerConfig  `mapstructure:"crawler"`
 }
 
@@ -30,12 +30,12 @@ type DBConfig struct {
 }
 
 type AppConfig struct {
-	Name   			string `mapstructure:"name"`
-	Port   			string `mapstructure:"port" validate:"required"`
-	Env    			string `mapstructure:"env"`
-	Debug  			bool   `mapstructure:"debug"`
-	Domain 			string `mapstructure:"domain" validate:"required"`
-	SecureCookies 	bool   `mapstructure:"secure_cookies"`
+	Name          string `mapstructure:"name"`
+	Port          string `mapstructure:"port" validate:"required"`
+	Env           string `mapstructure:"env"`
+	Debug         bool   `mapstructure:"debug"`
+	Domain        string `mapstructure:"domain" validate:"required"`
+	SecureCookies bool   `mapstructure:"secure_cookies"`
 }
 
 type RedisConfig struct {
@@ -61,14 +61,18 @@ type JWTConfig struct {
 }
 
 type EmailConfig struct {
-	StmpHost	string `mapstructure:"stmp_host"`
-	StmpPort 	int    `mapstructure:"stmp_port"`
-	Username 	string `mapstructure:"username"`
+	StmpHost    string `mapstructure:"stmp_host"`
+	StmpPort    int    `mapstructure:"stmp_port"`
+	Username    string `mapstructure:"username"`
 	AppPassword string `mapstructure:"app_password"`
 }
 
 type CrawlerConfig struct {
-	Depth 	int `mapstructure:"depth"`
+	AllowedDomains []string `mapstructure:"allowed_domains"`
+	MaxDepth       int      `mapstructure:"max_depth" validate:"required"`
+	MaxPages       int      `mapstructure:"max_pages"`
+	AllowedPaths   []string `mapstructure:"allowed_paths"`
+	DeniedPatterns []string `mapstructure:"denied_patterns"`
 }
 
 func ValidateConfig(cfg *Config) error {
@@ -79,7 +83,10 @@ func ValidateConfig(cfg *Config) error {
 func LoadConfig() *Config {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	viper.AddConfigPath("./Infrastrucuture/config")
 	viper.AddConfigPath("../Infrastrucuture/config")
+	viper.AddConfigPath("../../Infrastrucuture/config")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Error in loading config file: %v", err)
@@ -97,7 +104,7 @@ func LoadConfig() *Config {
 		log.Fatal("Error in loading config files: ", err)
 	}
 
-	if err := ValidateConfig(&cfg); err != nil {
+													if err := ValidateConfig(&cfg); err != nil {
 		log.Fatal("Error in validating config files: ", err)
 	}
 

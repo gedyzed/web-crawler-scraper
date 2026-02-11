@@ -1,12 +1,37 @@
 package domain
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type CrawlerResult struct {
 	CRID        string `gorm:"unique"`
 	UserID   	string
-	HtmlContent string
-	TextContent string
+	Pages       []Page
 	gorm.Model
+}
 
+
+type Page struct {
+	URL             string
+	ParentURL       string
+	Depth           int
+
+	StatusCode      int
+	ContentType     string
+	ResponseTimeMS  int64
+	FetchedAt       time.Time
+
+	Title           string
+	MetaDescription string
+	H1Tags          []string
+	TextContent     string
+
+	InternalLinks   []string
+	ExternalLinks   []string
+
+	ExtractedData   map[string]interface{}
+
+	Error           string
 }

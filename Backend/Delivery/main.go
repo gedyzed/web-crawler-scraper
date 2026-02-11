@@ -57,7 +57,7 @@ func main() {
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
 	passwordService := infrastructure.NewPasswordService()
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
-	crawlerService := crawlerservicego.NewCrawlerServices()
+	crawlerService := crawlerservicego.NewCrawlerServices(cfg.Crawler)
 
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,

@@ -9,17 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 type CrawlerController struct {
 	CralwerUC usecase.ICrawlerUsecase
-	config 	  *config.CrawlerConfig
+	config    *config.CrawlerConfig
 }
 
 func NewCrawlerController(cfg *config.CrawlerConfig, cu usecase.ICrawlerUsecase) *CrawlerController {
 	return &CrawlerController{CralwerUC: cu, config: cfg}
 }
 
-func (cl *CrawlerController) Crawler(c *gin.Context){
+func (cl *CrawlerController) Crawler(c *gin.Context) {
 
 	var input domain.URLFrontier
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -32,7 +31,7 @@ func (cl *CrawlerController) Crawler(c *gin.Context){
 		return
 	}
 
-	input.Depth = cl.config.Depth
+	input.Depth = cl.config.MaxDepth
 	response, err := cl.CralwerUC.Crawl(&input)
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
@@ -42,4 +41,3 @@ func (cl *CrawlerController) Crawler(c *gin.Context){
 	c.IndentedJSON(http.StatusOK, gin.H{"message": response})
 
 }
-
