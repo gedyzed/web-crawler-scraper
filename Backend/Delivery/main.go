@@ -48,7 +48,7 @@ func main() {
 		domain.Github: cfg.GithubCfg.UserURL,
 	}
 
-	// repos 
+	// repos
 	userRepo := repository.NewUserRepo(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
 	crawlerRepo := repository.NewCrawlerRepo(db)
@@ -57,7 +57,7 @@ func main() {
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
 	passwordService := infrastructure.NewPasswordService()
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
-	crawlerService := crawlerservicego.NewCrawlerServices(cfg.Crawler)
+	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler)
 
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,
@@ -67,7 +67,7 @@ func main() {
 		jwtService,
 		passwordService,
 	)
-	crawlUsecase := usecase.NewCrawlerUsecase(crawlerRepo, crawlerService)
+	crawlUsecase := usecase.NewCrawlerUsecase(crawlerRepo, crawlerFactory)
 
 	// controllers
 	authController := controller.NewAuthController(authUsecase, cfg)
@@ -81,4 +81,3 @@ func main() {
 	router.Run(":" + cfg.App.Port)
 
 }
-
