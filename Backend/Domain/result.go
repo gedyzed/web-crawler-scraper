@@ -25,7 +25,6 @@ type Page struct {
 
 	Title           string
 	MetaDescription string
-	H1Tags          []string
 	TextContent     string
 
 	InternalLinks   []string

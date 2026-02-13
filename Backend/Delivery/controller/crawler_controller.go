@@ -20,6 +20,8 @@ func NewCrawlerController(cfg *config.CrawlerConfig, cu usecase.ICrawlerUsecase)
 
 func (cl *CrawlerController) Crawler(c *gin.Context) {
 
+	ctx := c.Request.Context()
+
 	var input domain.URLFrontier
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
@@ -32,7 +34,7 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 	}
 
 	input.Depth = cl.config.MaxDepth
-	response, err := cl.CralwerUC.Crawl(&input)
+	response, err := cl.CralwerUC.Crawl(ctx, &input)
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
 		return
