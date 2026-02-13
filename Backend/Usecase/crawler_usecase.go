@@ -1,29 +1,31 @@
 package usecase
 
 import (
+	"context"
 	domain "web_crawler_scraper/Domain"
 )
 
 type ICrawlerUsecase interface {
-	Crawl(input *domain.URLFrontier)(any, *domain.AppError)
+	Crawl(ctx context.Context,input *domain.URLFrontier) (any, *domain.AppError)
 }
 
 type crawlerUsecase struct {
-	repo 		domain.ICrawlerRepo
-	services 	domain.ICrawlerService
+	repo       domain.ICrawlerRepo
+	svsFactory domain.ICrawlerServiceFactory
 }
 
 func NewCrawlerUsecase(
-	repo domain.ICrawlerRepo, 
-	svs domain.ICrawlerService,
-	) ICrawlerUsecase {
-		return &crawlerUsecase{
-			repo: repo,
-			services: svs,
-		}
+	repo domain.ICrawlerRepo,
+	svsFactory domain.ICrawlerServiceFactory,
+) ICrawlerUsecase {
+	return &crawlerUsecase{
+		repo:       repo,
+		svsFactory: svsFactory,
 	}
+}
 
-func (c *crawlerUsecase) Crawl(input *domain.URLFrontier)(any, *domain.AppError) {
-	result, err := c.services.Crawl(input.URL)
+func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (any, *domain.AppError) {
+	svc := c.svsFactory.NewCrawlerService()
+	result, err := svc.Crawl(ctx, input.URL)
 	return result, err
 }

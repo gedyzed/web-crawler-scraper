@@ -47,6 +47,11 @@ type ICrawlerRepo interface {
 	SaveResult(ctx context.Context, result *CrawlerResult) *AppError
 	SaveHistory(ctx context.Context, history *History) *AppError
 }
-type ICrawlerService interface{
-	Crawl(seedURL string)(*CrawlerResult, *AppError)
+type ICrawlerService interface {
+	Crawl(ctx context.Context, seedURL string) (*CrawlerResult, *AppError)
+}
+
+// ICrawlerServiceFactory creates a fresh ICrawlerService per crawl request
+type ICrawlerServiceFactory interface {
+	NewCrawlerService() ICrawlerService
 }

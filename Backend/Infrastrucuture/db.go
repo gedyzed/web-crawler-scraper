@@ -19,7 +19,7 @@ func DBConnect(cfg *config.DBConfig) *gorm.DB {
 	if err != nil {
 		log.Fatal("Failed to connect to postgress database", err)
 	}
-	
+
 	// db.AutoMigrate(
 	// 	domain.User{}, 
 	// 	domain.Profile{}, 
