@@ -23,7 +23,7 @@ type QueueItem struct {
 // Initialize Crawler services
 type CrawlerServices struct {
 	mu            *sync.Mutex
-	Scraper       *Scraper
+	Scraper       domain.IScrapeService
 	Visited       map[string]bool
 	CrawlerConfig config.CrawlerConfig
 	Result        *domain.CrawlerResult

@@ -13,16 +13,28 @@ import (
 	colly "github.com/gocolly/colly"
 )
 
+
+
+type ScraperServiceFactory struct{
+	config *config.CrawlerConfig
+}
+
+func NewScraperServiceFactory(cfg *config.CrawlerConfig) domain.IScraperServiceFactory {
+	return &ScraperServiceFactory{config: cfg}
+}
+
+func (s *ScraperServiceFactory) NewScraperService () domain.IScrapeService {
+	return &Scraper{config: s.config}
+}
+
 // Scraper handles fetching and parsing pages.
 // It is stateless — all mutable state lives inside FetchAndParse.
 type Scraper struct {
 	config *config.CrawlerConfig
 }
 
-func NewScraper(cfg *config.CrawlerConfig) *Scraper {
-	return &Scraper{
-		config: cfg,
-	}
+func NewScraper(cfg *config.CrawlerConfig) domain.IScrapeService {
+	return &Scraper{config: cfg}
 }
 
 // FetchAndParse visits a single URL and returns the parsed Page
@@ -86,7 +98,7 @@ func (s *Scraper) FetchAndParse(targetURL string, depth int) (*domain.Page, []st
 			return
 		}
 
-		article, parseErr := parseRawHTML(rawHTML, e.Request.URL)
+		article, parseErr := ParseRawHTML(rawHTML, e.Request.URL)
 		if parseErr != nil {
 			fmt.Printf("Error parsing html: %s\n", parseErr.Message)
 			return
@@ -123,7 +135,7 @@ func normalizeURL(rawURL string) string {
 	return u.String()
 }
 
-func parseRawHTML(htmlContent string, baseURL *url.URL) (*readability.Article, *domain.AppError) {
+func ParseRawHTML(htmlContent string, baseURL *url.URL) (*readability.Article, *domain.AppError) {
 	reader := strings.NewReader(htmlContent)
 	article, err := readability.FromReader(reader, baseURL)
 	if err != nil {
@@ -133,3 +145,5 @@ func parseRawHTML(htmlContent string, baseURL *url.URL) (*readability.Article, *
 	}
 	return &article, nil
 }
+
+
