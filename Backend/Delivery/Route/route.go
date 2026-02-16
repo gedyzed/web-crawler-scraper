@@ -7,7 +7,7 @@ import (
 
 func AuthRoutes(router *gin.Engine, 
 	authHandler *controller.AuthController,
-	crawlerHandler *controller.CrawlerController,
+	
 	) {
 		
 	auth := router.Group("auth")
@@ -18,11 +18,20 @@ func AuthRoutes(router *gin.Engine,
 		auth.GET("/oauth/google-callback", authHandler.GoogleOAuthCallBack)
 		auth.GET("oauth/github-callback", authHandler.GithubOAuthCallBack)
 	}
+}
 
-	crawl := router.Group("crawl")
-	{
+func CrawlerAndScraperRoutes(
+	router 		   *gin.Engine,
+	crawlerHandler *controller.CrawlerController,
+	scraperHandler *controller.ScrapeController,
+	) {
+		// crawler routes
+		crawl := router.Group("crawl")
 		crawl.GET("", crawlerHandler.Crawler)
-	}
 
+
+		// scraper routes
+		scrape := router.Group("scrape")
+		scrape.GET("", scraperHandler.Scrape)
 }
 

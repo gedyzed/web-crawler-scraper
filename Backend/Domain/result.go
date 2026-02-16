@@ -7,9 +7,9 @@ import (
 
 type CrawlerResult struct {
 	CRID        string `gorm:"unique"`
-	UserID   	string
+	UserID   	string 
 	Pages       []Page
-	gorm.Model
+	gorm.Model			`json:"-"`
 }
 
 

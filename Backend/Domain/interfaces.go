@@ -41,9 +41,9 @@ type IEmailService interface {
 	SendEmail(string, string, string) *AppError
 }
 
-// Crawler
+// Crawler & Scraper Results
 
-type ICrawlerRepo interface {
+type IResultRepo interface {
 	SaveResult(ctx context.Context, result *CrawlerResult) *AppError
 	SaveHistory(ctx context.Context, history *History) *AppError
 }
@@ -51,7 +51,15 @@ type ICrawlerService interface {
 	Crawl(ctx context.Context, seedURL string) (*CrawlerResult, *AppError)
 }
 
+type IScrapeService interface {
+	FetchAndParse(targetURL string, depth int) (*Page, []string, *AppError)
+}
+
 // ICrawlerServiceFactory creates a fresh ICrawlerService per crawl request
 type ICrawlerServiceFactory interface {
 	NewCrawlerService() ICrawlerService
+}
+
+type IScraperServiceFactory interface {
+	NewScraperService() IScrapeService
 }

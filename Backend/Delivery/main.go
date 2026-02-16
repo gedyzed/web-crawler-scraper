@@ -51,13 +51,14 @@ func main() {
 	// repos
 	userRepo := repository.NewUserRepo(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
-	crawlerRepo := repository.NewCrawlerRepo(db)
+	resultRepo := repository.NewResultRepo(db)
 
 	// services
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
 	passwordService := infrastructure.NewPasswordService()
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
 	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, *redis)
+	scraperFactory := crawlerservicego.NewScraperServiceFactory(&cfg.Crawler)
 
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,
@@ -67,16 +68,19 @@ func main() {
 		jwtService,
 		passwordService,
 	)
-	crawlUsecase := usecase.NewCrawlerUsecase(crawlerRepo, crawlerFactory)
+	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory)
+	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory)
 
 	// controllers
 	authController := controller.NewAuthController(authUsecase, cfg)
 	crawlController := controller.NewCrawlerController(&cfg.Crawler, crawlUsecase)
+	scraperController := controller.NewScraperController(scraperUsecase)
 
 	router := gin.Default()
 	router.Use(cors.Default())
 
-	route.AuthRoutes(router, authController, crawlController)
+	route.AuthRoutes(router, authController)
+	route.CrawlerAndScraperRoutes(router, crawlController, scraperController)
 
 	router.Run(":" + cfg.App.Port)
 
