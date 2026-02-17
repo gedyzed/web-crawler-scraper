@@ -267,4 +267,41 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 	c.IndentedJSON(http.StatusOK, response.Session)
 }
 
+func (ac *AuthController) RefreshToken(c *gin.Context){
+
+	ctx  := c.Request.Context()
+
+	refreshToken, err := c.Cookie(domain.RefreshTokenLocal)
+	if refreshToken == "" || err != nil  {
+		c.IndentedJSON(
+			http.StatusBadRequest,
+			gin.H{"error": "Invalid refresh token"},
+		)
+		return
+	}
+
+	newAccessToken, err_ := ac.authUC.RefreshToken(ctx, refreshToken)
+	if err_ != nil {
+		c.IndentedJSON(
+			err_.HttpStatus,
+			gin.H{"error": err_.Message},
+		)
+		return
+	}
+
+	c.SetSameSite(http.SameSiteLaxMode)
+
+	c.SetCookie(
+		domain.AccessToken,
+		newAccessToken,
+		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
+		"/auth/refresh",
+		ac.cfg.App.Domain,
+		ac.cfg.App.SecureCookies,
+		true,
+	)
+	 
+}
+
+
 
