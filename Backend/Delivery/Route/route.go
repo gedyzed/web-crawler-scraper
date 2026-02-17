@@ -17,6 +17,7 @@ func AuthRoutes(router *gin.Engine,
 		auth.GET("/oauth", authHandler.OAuthHandler)
 		auth.GET("/oauth/google-callback", authHandler.GoogleOAuthCallBack)
 		auth.GET("oauth/github-callback", authHandler.GithubOAuthCallBack)
+		auth.POST("/refresh", authHandler.RefreshToken)
 	}
 }
 
