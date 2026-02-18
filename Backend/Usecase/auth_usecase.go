@@ -15,7 +15,7 @@ type IAuthUsecase interface {
 	Login(ctx context.Context, user *domain.User, ip string) (*domain.ExchangeData, *domain.AppError)
 	GetLoginURL(providerName string, state string) (string, *domain.AppError)
 	RegisterOrLogin(ctx context.Context, providerName string, code string, ip string) (*domain.ExchangeData, *domain.AppError)
-	RefreshToken(ctx context.Context, accessToken string) (string, *domain.AppError)
+	RefreshToken(ctx context.Context, accessToken string) (string, string, *domain.AppError)
 }
 
 type IRateLimiter interface {
@@ -310,29 +310,32 @@ func (ac *authUsecase) RegisterOrLogin(
 	return userData, nil
 }
 
-func (ac *authUsecase) RefreshToken(ctx context.Context, refreshToken string) (string, *domain.AppError) {
+func (ac *authUsecase) RefreshToken(ctx context.Context, refreshToken string) (string, string, *domain.AppError) {
 
+	var newAccessToken string
+	var newRefreshToken string
+	
 	data, err := ac.jwtService.RefreshToken(ctx, refreshToken)
 	if err != nil || data == nil {
-		return "", err
+		return "", "", err
 	}
 
 	session := data.Session
-	var accessToken string
 	if session != nil {
-		accessToken = session.Token
+		newAccessToken = session.Token
 		// save the session
 		if err := ac.sessionRepo.Create(ctx, session); err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
 
 	// save the refresh token
 	if data.RefreshToken != nil {
+		newRefreshToken = data.RefreshToken.Token
 		if err := ac.tokenRepo.Create(ctx, data.RefreshToken); err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
 
-	return accessToken, nil
+	return newAccessToken, newRefreshToken, nil
 }
