@@ -280,7 +280,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context){
 		return
 	}
 
-	newAccessToken, err_ := ac.authUC.RefreshToken(ctx, refreshToken)
+	newAccessToken, newRefreshToken, err_ := ac.authUC.RefreshToken(ctx, refreshToken)
 	if err_ != nil {
 		c.IndentedJSON(
 			err_.HttpStatus,
@@ -295,11 +295,23 @@ func (ac *AuthController) RefreshToken(c *gin.Context){
 		domain.AccessToken,
 		newAccessToken,
 		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
-		"/auth/refresh",
+		"/",
 		ac.cfg.App.Domain,
 		ac.cfg.App.SecureCookies,
 		true,
 	)
+
+	if newRefreshToken != "" {
+		c.SetCookie(
+			domain.RefreshTokenLocal,
+			newAccessToken,
+			int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
+			"/auth/refresh",
+			ac.cfg.App.Domain,
+			ac.cfg.App.SecureCookies,
+			true,
+		)
+	}
 	 
 }
 

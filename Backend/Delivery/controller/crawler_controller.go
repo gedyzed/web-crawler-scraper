@@ -33,7 +33,11 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 		return
 	}
 
+	// Get user ID from context passdown form middelware
+	userID := c.GetString("userID")
 	input.Depth = cl.config.MaxDepth
+	input.UserID = userID
+	
 	response, err := cl.CralwerUC.Crawl(ctx, &input)
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
@@ -41,5 +45,4 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, gin.H{"message": response})
-
 }
