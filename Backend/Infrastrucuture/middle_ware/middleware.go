@@ -6,7 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(jwtHandler domain.IJwtService) gin.HandlerFunc {
+
+type IMiddleware interface {
+	AuthMiddleware() gin.HandlerFunc 
+}
+
+type Middlewares struct {
+	jwtHandler domain.IJwtService
+}
+
+func NewMiddleware(jwt domain.IJwtService) IMiddleware {
+	return &Middlewares{jwtHandler: jwt}
+} 
+
+func (m *Middlewares) AuthMiddleware() gin.HandlerFunc {
 	return func (c *gin.Context){
 
 		token, err := c.Cookie("access_token")
@@ -18,7 +31,7 @@ func AuthMiddleware(jwtHandler domain.IJwtService) gin.HandlerFunc {
 			return
 		}
 
-		claims, err_ := jwtHandler.ValidateToken(token, domain.AccessToken)
+		claims, err_ := m.jwtHandler.ValidateToken(token, domain.AccessToken)
 		if err_ != nil {
 			c.IndentedJSON(
 				http.StatusUnauthorized, 
@@ -26,7 +39,6 @@ func AuthMiddleware(jwtHandler domain.IJwtService) gin.HandlerFunc {
 			)
 			return
 		}
-
 
 		userID := claims.UserID
 		c.Set("userID", userID)
