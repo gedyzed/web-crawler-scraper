@@ -27,7 +27,8 @@ func NewScraperUsecase(repo domain.IResultRepo, svs domain.IScraperServiceFactor
 func (s *scraperUsecase) Scrape(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError) {
 
 	svc := s.svsFactory.NewScraperService()
-	page, _, err := svc.FetchAndParse(input.URL, input.Depth)
+	resultID := uuid.New().String()
+	page, _, err := svc.FetchAndParse(input.URL, resultID, input.UserID)
 	if err != nil {
 		// Save failed scrape to history
 		history := &domain.History{

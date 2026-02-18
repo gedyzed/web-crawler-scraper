@@ -20,6 +20,12 @@ type IRefreshTokenRepo interface {
 	DeleteToken(ctx context.Context, token string) *AppError
 }
 
+type ISessionRepo interface {
+	Create(ctx context.Context, session *Session) *AppError
+	FindByID(ctx context.Context, id uint) (*Session, *AppError)
+	Delete(ctx context.Context, id uint) *AppError
+}
+
 // AUTH
 type IOAuthServices interface {
 	RefreshToken(ctx context.Context, token *RefreshToken) (*RefreshToken, *AppError)
@@ -30,6 +36,7 @@ type IOAuthServices interface {
 type IJwtService interface {
 	GenerateTokens(ctx context.Context, userID string) (*ExchangeData, *AppError)
 	ValidateToken(tokenString string, tokenName string) (*Claims, *AppError)
+	RefreshToken(ctx context.Context, refreshToken string) (*ExchangeData, *AppError)
 }
 
 type IPasswordService interface {
@@ -52,12 +59,12 @@ type ICrawlerService interface {
 }
 
 type IScrapeService interface {
-	FetchAndParse(targetURL string, depth int) (*Page, []string, *AppError)
+	FetchAndParse(targetURL string, resultID string, userID string) (*Page, []string, *AppError)
 }
 
 // ICrawlerServiceFactory creates a fresh ICrawlerService per crawl request
 type ICrawlerServiceFactory interface {
-	NewCrawlerService() ICrawlerService
+	NewCrawlerService(userID string) ICrawlerService
 }
 
 type IScraperServiceFactory interface {

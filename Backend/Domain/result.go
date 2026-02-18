@@ -1,36 +1,54 @@
 package domain
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type CrawlerResult struct {
-	CRID        string `gorm:"unique"`
-	UserID   	string 
-	Pages       []Page
-	gorm.Model			`json:"-"`
+	CRID       string `gorm:"unique"`
+	UserID     string
+	Pages      []Page `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:ResultID;references:CRID"`
+	gorm.Model `json:"-"`
 }
 
+type Product struct {
+	gorm.Model `json:"-"`
+	PageID 		uint `gorm:"index"`
+	Name        string `json:"name"`
+	Price       string `json:"price"`
+	ImageURL    string `json:"image_url"`
+	Currency    string `json:"currency"`
+	Description string `json:"description"`
+	URL         string `json:"url"`
+}
+
+type Link struct {
+	gorm.Model `json:"-"`
+	PageID  uint   `gorm:"index"` 
+	URL     string `gorm:"type:text"`
+	Type    string `gorm:"size:20"` 
+	
+}
 
 type Page struct {
-	URL             string
-	ParentURL       string
-	Depth           int
+	PageID 		string
+	ResultID 	string
+	URL       	string
+	ParentURL 	string
+	Depth     	int
 
-	StatusCode      int
-	ContentType     string
-	ResponseTimeMS  int64
-	FetchedAt       time.Time
+	StatusCode     int
+	ContentType    string
+	ResponseTimeMS int64
+	FetchedAt      time.Time
 
 	Title           string
 	MetaDescription string
 	TextContent     string
 
-	InternalLinks   []string
-	ExternalLinks   []string
-
-	ExtractedData   map[string]interface{}
-
-	Error           string
+	Links 	 []Link `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`	
+	Products []Product `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`
+	gorm.Model	
 }

@@ -104,7 +104,7 @@ func LoadConfig() *Config {
 		log.Fatal("Error in loading config files: ", err)
 	}
 
-													if err := ValidateConfig(&cfg); err != nil {
+		if err := ValidateConfig(&cfg); err != nil {
 		log.Fatal("Error in validating config files: ", err)
 	}
 

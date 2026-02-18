@@ -30,5 +30,6 @@ func DBConnect(cfg *config.DBConfig) *gorm.DB {
 	// 	domain.RefreshToken{},
 	// 	domain.AuthProvider{},
 	// )
+
 	return db
 }

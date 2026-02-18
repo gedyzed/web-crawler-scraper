@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 	domain "web_crawler_scraper/Domain"
-
 	"github.com/google/uuid"
 )
 
@@ -30,7 +29,7 @@ func NewCrawlerUsecase(
 }
 
 func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError) {
-	svc := c.cralwerSvsFactory.NewCrawlerService()
+	svc := c.cralwerSvsFactory.NewCrawlerService(input.UserID)
 	result, err := svc.Crawl(ctx, input.URL)
 	if err != nil {
 		// Save failed crawl to history
@@ -49,7 +48,6 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 	// Generate unique ID for the result
 	result.CRID = uuid.New().String()
 	result.UserID = input.UserID
-
 	// Save successful crawl result to database
 	if saveErr := c.repo.SaveResult(ctx, result); saveErr != nil {
 		return nil, saveErr
