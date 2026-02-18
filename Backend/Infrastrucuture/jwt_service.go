@@ -11,57 +11,57 @@ import (
 
 type jwtService struct {
 	config *config.JWTConfig
-
 }
+
 func NewJwtService(cfg *config.JWTConfig) domain.IJwtService {
 	return &jwtService{config: cfg}
 }
 
-func (js *jwtService) GenerateTokens(ctx context.Context, userID string) (*domain.ExchangeData, *domain.AppError){
+func (js *jwtService) GenerateTokens(ctx context.Context, userID string) (*domain.ExchangeData, *domain.AppError) {
 
 	accessToken, err := js.GenerateToken(userID, js.config.AccessKey, js.config.AccessTTL)
 	if err != nil {
 		return nil, &domain.AppError{
-			Message: "Something Went Wrong.",
+			Message:    "Something Went Wrong.",
 			HttpStatus: 500,
 		}
 	}
 	session := &domain.Session{
-		Token: accessToken,
+		Token:     accessToken,
 		ExpiresAt: time.Now().Add(js.config.AccessTTL),
 	}
 
 	refreshToken, err := js.GenerateToken(userID, js.config.RefreshKey, js.config.RefreshTTL)
 	if err != nil {
 		return nil, &domain.AppError{
-			Message: "Something Went Wrong.",
+			Message:    "Something Went Wrong.",
 			HttpStatus: 500,
 		}
 	}
 
 	refresh := &domain.RefreshToken{
-		Token: refreshToken,
+		Token:     refreshToken,
 		ExpiresAt: time.Now().Add(js.config.RefreshTTL),
 	}
-	
+
 	userData := &domain.ExchangeData{
-		Session: session,
+		Session:      session,
 		RefreshToken: refresh,
 	}
 
 	return userData, nil
 }
 
-func (js *jwtService) GenerateToken(userID, secret string, ttl time.Duration) (string, error){
+func (js *jwtService) GenerateToken(userID, secret string, ttl time.Duration) (string, error) {
 
 	now := time.Now()
 	expirationTime := now.Add(ttl)
 	claims := &domain.Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject: userID,
+			Subject:   userID,
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			Issuer: "SpiderGO",
+			Issuer:    "SpiderGO",
 		},
 	}
 
@@ -69,44 +69,36 @@ func (js *jwtService) GenerateToken(userID, secret string, ttl time.Duration) (s
 	return token.SignedString([]byte(secret))
 }
 
-func (js *jwtService) ValidateToken(tokenString string, tokenName string) (*domain.Claims, *domain.AppError){
+func (js *jwtService) ValidateToken(tokenString string, tokenName string) (*domain.Claims, *domain.AppError) {
 
-	key := js.config.AccessKey
+	key := []byte(js.config.AccessKey)
 	if tokenName != "AccessToken" {
-		key = js.config.RefreshKey
+		key = []byte(js.config.RefreshKey)
 	}
 
-	claims :=  &domain.Claims{}
+	claims := &domain.Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return key, nil
 	})
 
 	if err != nil {
-		if err == jwt.ErrSignatureInvalid {
-			return nil, &domain.AppError{
-				Message: "Unauthorized Request",
-				HttpStatus: 401,
-			}
-		}
 		return nil, &domain.AppError{
-			Message: "Bad Request",
-			HttpStatus: 400,
+			Message:    "Unauthorized Request",
+			HttpStatus: 401,
 		}
 	}
 
 	if !token.Valid {
 		return nil, &domain.AppError{
-				Message: "Unauthorized Request",
-				HttpStatus: 401,
-			} 
+			Message:    "Unauthorized Request",
+			HttpStatus: 401,
+		}
 	}
-
-
 
 	return claims, nil
 }
 
-func (js *jwtService) RefreshToken(ctx context.Context, refreshToken string)(*domain.ExchangeData, *domain.AppError) {
+func (js *jwtService) RefreshToken(ctx context.Context, refreshToken string) (*domain.ExchangeData, *domain.AppError) {
 
 	claims, err := js.ValidateToken(refreshToken, "RefreshToken")
 	if err != nil {
@@ -117,41 +109,43 @@ func (js *jwtService) RefreshToken(ctx context.Context, refreshToken string)(*do
 	accessToken, err_ := js.GenerateToken(UserID, js.config.AccessKey, js.config.AccessTTL)
 	if err_ != nil {
 		return nil, &domain.AppError{
-			Message: "Internal Server Error",
+			Message:    "Internal Server Error",
 			HttpStatus: 500,
 		}
 
 	}
 
 	newRefreshToken := ""
-	if claims.ExpiresAt.Sub(time.Now()) <= 30 * time.Second {
+	if claims.ExpiresAt.Sub(time.Now()) <= 30*time.Second {
 		newRefreshToken, err_ = js.GenerateToken(UserID, js.config.RefreshKey, js.config.RefreshTTL)
 		if err_ != nil {
 			return nil, &domain.AppError{
-			Message: "Internal Server Error",
-			HttpStatus: 500,
-		}
+				Message:    "Internal Server Error",
+				HttpStatus: 500,
+			}
 		}
 	}
 
+	var refresh *domain.RefreshToken
 	if newRefreshToken != "" {
-		refreshToken = newRefreshToken
+		refresh = &domain.RefreshToken{
+			UserID:    UserID,
+			Token:     newRefreshToken,
+			ExpiresAt: time.Now().Add(js.config.RefreshTTL),
+		}
 	}
 
 	userData := &domain.ExchangeData{
 		Session: &domain.Session{
-			UserID: UserID,
-			Token: accessToken,
-			ExpiresAt: time.Now().Add(js.config.AccessTTL),
+			UserID:    UserID,
+			Token:     accessToken,
+			ExpiresAt: time.Now().Add(time.Duration(js.config.AccessTTL)),
 		},
 
-		RefreshToken: &domain.RefreshToken{
-			UserID: UserID,
-			Token: refreshToken,
-			ExpiresAt: time.Now().Add(js.config.RefreshTTL),
-		},
+		RefreshToken: refresh,
 	}
 
 	return userData, nil
 }
+
 

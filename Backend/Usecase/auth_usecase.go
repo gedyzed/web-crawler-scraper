@@ -15,6 +15,7 @@ type IAuthUsecase interface {
 	Login(ctx context.Context, user *domain.User, ip string) (*domain.ExchangeData, *domain.AppError)
 	GetLoginURL(providerName string, state string) (string, *domain.AppError)
 	RegisterOrLogin(ctx context.Context, providerName string, code string, ip string) (*domain.ExchangeData, *domain.AppError)
+	RefreshToken(ctx context.Context, accessToken string) (string, *domain.AppError)
 }
 
 type IRateLimiter interface {
@@ -24,6 +25,7 @@ type IRateLimiter interface {
 type authUsecase struct {
 	repo            domain.IUserRepo
 	tokenRepo       domain.IRefreshTokenRepo
+	sessionRepo     domain.ISessionRepo
 	rateLimiter     IRateLimiter
 	oauthServices   domain.IOAuthServices
 	jwtService      domain.IJwtService
@@ -31,16 +33,18 @@ type authUsecase struct {
 }
 
 func NewAuthUsecase(
-		repo 			domain.IUserRepo, 
-		tokenRepo		domain.IRefreshTokenRepo,
-		rateLimiter 	IRateLimiter, 
-		oauthServices 	domain.IOAuthServices,
-		jwtService      domain.IJwtService,
-		passwordService domain.IPasswordService,
+	repo domain.IUserRepo,
+	tokenRepo domain.IRefreshTokenRepo,
+	sessionRepo domain.ISessionRepo,
+	rateLimiter IRateLimiter,
+	oauthServices domain.IOAuthServices,
+	jwtService domain.IJwtService,
+	passwordService domain.IPasswordService,
 ) IAuthUsecase {
 	return &authUsecase{
 		repo:            repo,
 		tokenRepo:       tokenRepo,
+		sessionRepo:     sessionRepo,
 		rateLimiter:     rateLimiter,
 		oauthServices:   oauthServices,
 		jwtService:      jwtService,
@@ -79,7 +83,7 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 
 	// check for duplicate email
 	old_user, err := ac.repo.FindByEmail(ctx, user.Email)
-	if err != nil && err.HttpStatus != http.StatusInternalServerError {
+	if err != nil && err.HttpStatus == http.StatusInternalServerError {
 		return &domain.AppError{
 			Message:    domain.ErrInternalServer,
 			HttpStatus: 500,
@@ -192,6 +196,9 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 	}
 
 	exchangeData.Session.UserID = old_user.UserID
+	if err := ac.sessionRepo.Create(ctx, exchangeData.Session); err != nil {
+		return nil, err
+	}
 	return exchangeData, nil
 }
 
@@ -268,6 +275,9 @@ func (ac *authUsecase) RegisterOrLogin(
 
 		// Set UserID in session
 		userData.Session.UserID = old_user.UserID
+		if err := ac.sessionRepo.Create(ctx, userData.Session); err != nil {
+			return nil, err
+		}
 	} else {
 		// register - new user
 		UserID, err_ := GenerateID(10)
@@ -292,7 +302,37 @@ func (ac *authUsecase) RegisterOrLogin(
 		}
 
 		userData.Session.UserID = UserID
+		if err := ac.sessionRepo.Create(ctx, userData.Session); err != nil {
+			return nil, err
+		}
 	}
 
 	return userData, nil
+}
+
+func (ac *authUsecase) RefreshToken(ctx context.Context, refreshToken string) (string, *domain.AppError) {
+
+	data, err := ac.jwtService.RefreshToken(ctx, refreshToken)
+	if err != nil || data == nil {
+		return "", err
+	}
+
+	session := data.Session
+	var accessToken string
+	if session != nil {
+		accessToken = session.Token
+		// save the session
+		if err := ac.sessionRepo.Create(ctx, session); err != nil {
+			return "", err
+		}
+	}
+
+	// save the refresh token
+	if data.RefreshToken != nil {
+		if err := ac.tokenRepo.Create(ctx, data.RefreshToken); err != nil {
+			return "", err
+		}
+	}
+
+	return accessToken, nil
 }

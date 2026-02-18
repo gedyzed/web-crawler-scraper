@@ -12,6 +12,7 @@ import (
 	domain "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
 
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -44,13 +45,19 @@ func NewCrawlerServiceFactory(cfg config.CrawlerConfig, rdb redis.Client) domain
 	}
 }
 
-func (f *CrawlerServiceFactory) NewCrawlerService() domain.ICrawlerService {
+func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawlerService {
+
+	result := &domain.CrawlerResult{
+		CRID: uuid.New().String(),
+		UserID: userID,
+
+	}
 	return &CrawlerServices{
 		Scraper:       NewScraper(&f.config),
 		mu:            &sync.Mutex{},
 		Visited:       make(map[string]bool),
 		CrawlerConfig: f.config,
-		Result:        &domain.CrawlerResult{},
+		Result:        result,
 		redisClient:   f.redisClient,
 		PageCount:     0,
 	}
@@ -114,7 +121,7 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 
 				// Each goroutine calls FetchAndParse which creates its own
 				// colly.Collector internally — no shared state.
-				page, links, err := cr.Scraper.FetchAndParse(item.URL, item.Depth)
+				page, links, err := cr.Scraper.FetchAndParse(item.URL,cr.Result.CRID, cr.Result.UserID)
 				if err != nil {
 					fmt.Printf("Error visiting %s: %v\n", item.URL, err.Message)
 					return

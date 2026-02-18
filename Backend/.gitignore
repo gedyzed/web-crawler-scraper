@@ -34,3 +34,5 @@ go.work.sum
 *yaml
 
 .tmp
+
+.vscode
