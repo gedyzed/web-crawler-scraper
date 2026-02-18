@@ -72,7 +72,7 @@ func (js *jwtService) GenerateToken(userID, secret string, ttl time.Duration) (s
 func (js *jwtService) ValidateToken(tokenString string, tokenName string) (*domain.Claims, *domain.AppError) {
 
 	key := []byte(js.config.AccessKey)
-	if tokenName != "AccessToken" {
+	if tokenName != domain.AccessToken {
 		key = []byte(js.config.RefreshKey)
 	}
 
