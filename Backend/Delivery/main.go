@@ -8,7 +8,7 @@ import (
 	infrastructure "web_crawler_scraper/Infrastrucuture"
 	"web_crawler_scraper/Infrastrucuture/config"
 	crawlerservicego "web_crawler_scraper/Infrastrucuture/crawler_service.go"
-	middleware "web_crawler_scraper/Infrastrucuture/middle_ware"
+	middleware "web_crawler_scraper/Infrastrucuture/middleware"
 	"web_crawler_scraper/Infrastrucuture/oauth"
 	repository "web_crawler_scraper/Repository"
 	usecase "web_crawler_scraper/Usecase"
@@ -81,14 +81,14 @@ func main() {
 	scraperController := controller.NewScraperController(scraperUsecase)
 
 	// Middlewares 
-	middleware := middleware.NewMiddleware(jwtService)
+	middlewares := middleware.NewMiddleware(jwtService)
 
 
 	router := gin.Default()
 	router.Use(cors.Default())
 
 	route.AuthRoutes(router, authController)
-	route.CrawlerAndScraperRoutes(router, crawlController, scraperController, middleware)
+	route.CrawlerAndScraperRoutes(router, crawlController, scraperController, middlewares)
 
 	router.Run(":" + cfg.App.Port)
 

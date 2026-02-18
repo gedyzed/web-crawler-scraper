@@ -2,7 +2,7 @@ package route
 
 import (
 	"web_crawler_scraper/Delivery/controller"
-	middleware "web_crawler_scraper/Infrastrucuture/middle_ware"
+	middleware "web_crawler_scraper/Infrastrucuture/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,17 +27,18 @@ func CrawlerAndScraperRoutes(
 	router 		   *gin.Engine,
 	crawlerHandler *controller.CrawlerController,
 	scraperHandler *controller.ScrapeController,
-	middleware    middleware.IMiddleware,
+	middlewares    middleware.IMiddleware,
 	) {
 
 		// crawler routes
 		crawl := router.Group("crawl")
-		crawl.Use(middleware.AuthMiddleware())
+		crawl.Use(middlewares.AuthMiddleware())
 		crawl.GET("", crawlerHandler.Crawler)
 
 
 		// scraper routes
 		scrape := router.Group("scrape")
-		scrape.Use(middleware.AuthMiddleware())
+		scrape.Use(middlewares.AuthMiddleware())
 		scrape.GET("", scraperHandler.Scrape)
+
 }

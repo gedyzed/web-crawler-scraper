@@ -34,6 +34,9 @@ func (sc *ScrapeController) Scrape(c *gin.Context){
 	}
 
 	input.Depth = 1
+	userID := c.GetString("userID")
+	input.UserID = userID
+	
 	response, err := sc.scrapeUC.Scrape(ctx, &input)
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
