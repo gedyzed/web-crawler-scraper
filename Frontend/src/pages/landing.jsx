@@ -221,56 +221,49 @@ function HeroSection() {
                 {/* ─── Search Bar ────────────────────────────── */}
                 <div className="mt-12 mx-auto max-w-2xl">
                     <div className="rounded-2xl border border-neutral-200 bg-white shadow-xl shadow-neutral-200/50 overflow-hidden">
-                        {/* Tabs */}
-                        <div className="border-b border-neutral-100 px-4 pt-3 pb-0">
-                            <Tabs value={activeTab} onValueChange={setActiveTab}>
-                                <TabsList className="bg-transparent p-0 h-auto gap-0">
-                                    <TabsTrigger
-                                        value="scrape"
-                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-600 data-[state=active]:text-cyan-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none bg-transparent px-5 pb-3 pt-1 text-sm font-medium text-neutral-500 hover:text-neutral-700 transition-colors"
-                                    >
-                                        <Search className="h-4 w-4 mr-1.5" />
-                                        Scrape
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value="crawl"
-                                        className="rounded-none border-b-2 border-transparent data-[state=active]:border-cyan-600 data-[state=active]:text-cyan-700 data-[state=active]:bg-transparent data-[state=active]:shadow-none bg-transparent px-5 pb-3 pt-1 text-sm font-medium text-neutral-500 hover:text-neutral-700 transition-colors"
-                                    >
-                                        <Globe className="h-4 w-4 mr-1.5" />
-                                        Crawl
-                                    </TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                        </div>
-
-                        {/* Input row */}
-                        <div className="flex items-center gap-3 p-4">
-                            <div className="relative flex-1">
-                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
+                        {/* URL Input */}
+                        <div className="px-5 pt-5 pb-3">
+                            <div className="relative">
+                                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-neutral-400" />
                                 <Input
                                     value={url}
                                     onChange={(e) => setUrl(e.target.value)}
                                     onKeyDown={(e) => e.key === "Enter" && handleRun()}
-                                    placeholder={
-                                        activeTab === "scrape"
-                                            ? "https://example.com/page"
-                                            : "https://example.com"
-                                    }
-                                    className="pl-10 h-12 rounded-xl border-neutral-200 bg-neutral-50 text-sm placeholder:text-neutral-400 focus-visible:ring-cyan-500"
+                                    placeholder="https://example.com"
+                                    className="pl-11 h-12 rounded-xl border-neutral-200 bg-neutral-50 text-sm placeholder:text-neutral-400 focus-visible:ring-cyan-500"
                                 />
                             </div>
+                        </div>
+
+                        {/* Tabs row + Go button */}
+                        <div className="flex items-center justify-between px-5 pb-4">
+                            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                                <TabsList className="bg-transparent p-0 h-auto gap-1">
+                                    <TabsTrigger
+                                        value="scrape"
+                                        className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 data-[state=active]:bg-neutral-100 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none transition-colors"
+                                    >
+                                        <Search className="h-3.5 w-3.5 mr-1.5" />
+                                        Scrape
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="crawl"
+                                        className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 data-[state=active]:bg-neutral-100 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none transition-colors"
+                                    >
+                                        <Globe className="h-3.5 w-3.5 mr-1.5" />
+                                        Crawl
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
                             <Button
                                 onClick={handleRun}
                                 disabled={loading || !url.trim()}
-                                className="h-12 px-6 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-sm shadow-lg shadow-cyan-200/50 transition-all hover:shadow-cyan-300/50"
+                                className="h-10 w-10 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white shadow-lg shadow-cyan-200/50 transition-all hover:shadow-cyan-300/50 p-0 flex items-center justify-center cursor-pointer"
                             >
                                 {loading ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                    <>
-                                        <Play className="h-4 w-4 mr-1.5 fill-white" />
-                                        {activeTab === "scrape" ? "Scrape" : "Crawl"}
-                                    </>
+                                    <ArrowRight className="h-4.5 w-4.5" />
                                 )}
                             </Button>
                         </div>
