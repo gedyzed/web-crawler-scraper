@@ -106,6 +106,8 @@ export const updatePassword = createAsyncThunk(
 
 // ─── Initial State ────────────────────────────────────────
 const initialState = {
+    isAuthenticated: false,
+    user: null, // { name, email }
     login: {
         email: '',
         password: '',
@@ -153,6 +155,11 @@ const authSlice = createSlice({
             state.login[field] = value
         },
         resetLogin: (state) => {
+            state.login = { ...initialState.login }
+        },
+        logout: (state) => {
+            state.isAuthenticated = false
+            state.user = null
             state.login = { ...initialState.login }
         },
 
@@ -217,8 +224,10 @@ const authSlice = createSlice({
                 state.login.loading = true
                 state.login.error = ''
             })
-            .addCase(loginUser.fulfilled, (state) => {
+            .addCase(loginUser.fulfilled, (state, action) => {
                 state.login.loading = false
+                state.isAuthenticated = true
+                state.user = { name: action.payload.email.split('@')[0], email: action.payload.email }
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.login.loading = false
@@ -319,6 +328,7 @@ const authSlice = createSlice({
 export const {
     setLoginField,
     resetLogin,
+    logout,
     setSignupField,
     resetSignup,
     setForgotPasswordField,
