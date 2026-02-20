@@ -137,7 +137,7 @@ function Navbar() {
                         Products <ChevronDown className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" className="text-sm text-neutral-600 hover:text-neutral-900" asChild>
-                        <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/gedyzed/web-crawler-scraper" target="_blank" rel="noopener noreferrer">
                             <BookOpen className="h-4 w-4 mr-1.5" /> Docs
                         </a>
                     </Button>
@@ -146,7 +146,7 @@ function Navbar() {
                 {/* Right side */}
                 <div className="flex items-center gap-3">
                     <a
-                        href="https://github.com"
+                        href="https://github.com/gedyzed/web-crawler-scraper"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition-colors text-sm text-neutral-700"
@@ -459,7 +459,7 @@ function CTASection() {
                                 asChild
                             >
                                 <a
-                                    href="https://github.com"
+                                    href="https://github.com/gedyzed/web-crawler-scraper"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
@@ -492,7 +492,7 @@ function Footer() {
                     {/* Links */}
                     <div className="flex items-center gap-6 text-sm text-neutral-500">
                         <a
-                            href="https://github.com"
+                            href="https://github.com/gedyzed/web-crawler-scraper"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:text-neutral-900 transition-colors flex items-center gap-1.5"
@@ -515,7 +515,7 @@ function Footer() {
 
                     {/* Copyright */}
                     <p className="text-xs text-neutral-400">
-                        © {new Date().getFullYear()} SpiderGo. All rights reserved.
+                        © {new Date().getFullYear()} SpiderGo by <a href="https://github.com/gedyzed" target="_blank" rel="noopener noreferrer" className="hover:text-neutral-900 transition-colors underline underline-offset-2">gedyzed</a>. All rights reserved.
                     </p>
                 </div>
             </div>
