@@ -186,7 +186,9 @@ const initialState = {
     jobError: '',
     // History
     history: mockHistory,
-    // Temp pattern input
+    // Search
+    searchQuery: '',
+    isSearchOpen: false,
     newAllowedPattern: '',
     newDeniedPattern: '',
 }
@@ -199,6 +201,9 @@ const dashboardSlice = createSlice({
         setConfigField: (state, action) => {
             const { field, value } = action.payload
             state.config[field] = value
+        },
+        setFullConfig: (state, action) => {
+            state.config = action.payload
         },
         addAllowedPattern: (state, action) => {
             const pattern = action.payload.trim()
@@ -240,6 +245,12 @@ const dashboardSlice = createSlice({
         clearHistory: (state) => {
             state.history = []
         },
+        setSearchQuery: (state, action) => {
+            state.searchQuery = action.payload
+        },
+        setIsSearchOpen: (state, action) => {
+            state.isSearchOpen = action.payload
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -261,6 +272,7 @@ const dashboardSlice = createSlice({
 
 export const {
     setConfigField,
+    setFullConfig,
     addAllowedPattern,
     removeAllowedPattern,
     addDeniedPattern,
@@ -271,6 +283,8 @@ export const {
     setNewDeniedPattern,
     clearJobError,
     clearHistory,
+    setSearchQuery,
+    setIsSearchOpen,
 } = dashboardSlice.actions
 
 export default dashboardSlice.reducer

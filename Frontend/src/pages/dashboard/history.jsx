@@ -67,11 +67,11 @@ function HistoryCard({ job }) {
                     <div className="flex items-center gap-4">
                         {/* Icon */}
                         <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${job.type === "crawl"
-                            ? "bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200"
-                            : "bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200"
+                            ? "bg-neutral-100 border border-neutral-200"
+                            : "bg-cyan-50 border border-cyan-100"
                             }`}>
                             {job.type === "crawl" ? (
-                                <Globe className="h-5 w-5 text-blue-600" />
+                                <Globe className="h-5 w-5 text-neutral-600" />
                             ) : (
                                 <Search className="h-5 w-5 text-cyan-600" />
                             )}
@@ -117,7 +117,7 @@ function HistoryCard({ job }) {
                             <Badge
                                 variant="outline"
                                 className={`text-xs capitalize font-medium ${job.type === "crawl"
-                                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                                    ? "bg-neutral-100 text-neutral-700 border-neutral-200"
                                     : "bg-cyan-50 text-cyan-700 border-cyan-200"
                                     }`}
                             >
@@ -134,6 +134,25 @@ function HistoryCard({ job }) {
                                     <span className="text-xs font-medium hidden sm:inline">Failed</span>
                                 </div>
                             )}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-neutral-400 hover:text-cyan-600 text-[10px] sm:text-xs font-semibold uppercase tracking-wider gap-1.5"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    const blob = new Blob([JSON.stringify(job, null, 2)], { type: "application/json" })
+                                    const url = URL.createObjectURL(blob)
+                                    const a = document.createElement("a")
+                                    a.href = url
+                                    a.download = `job-${job.id}.json`
+                                    a.click()
+                                    URL.revokeObjectURL(url)
+                                }}
+                                title="Export to JSON"
+                            >
+                                <Code2 className="h-3.5 w-3.5" />
+                                <span>Export</span>
+                            </Button>
                             <div className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${expanded ? "bg-neutral-100" : "bg-neutral-50"}`}>
                                 {expanded ? (
                                     <ChevronUp className="h-4 w-4 text-neutral-500" />
@@ -211,15 +230,34 @@ export default function HistoryPage() {
                     <p className="text-neutral-500 mt-1">Your recent crawl & scrape activity. Click a card to view details.</p>
                 </div>
                 {history.length > 0 && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => dispatch(clearHistory())}
-                        className="text-neutral-500 hover:text-red-600 hover:border-red-200"
-                    >
-                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                        Clear all
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                const blob = new Blob([JSON.stringify(history, null, 2)], { type: "application/json" })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement("a")
+                                a.href = url
+                                a.download = `spidergo-history-${new Date().toISOString().split('T')[0]}.json`
+                                a.click()
+                                URL.revokeObjectURL(url)
+                            }}
+                            className="h-9 px-4 border-neutral-200 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50 transition-colors"
+                        >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Export All
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => dispatch(clearHistory())}
+                            className="h-9 px-4 border-neutral-200 text-neutral-600 hover:text-red-600 hover:border-red-100 hover:bg-red-50/50 transition-colors"
+                        >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Clear all
+                        </Button>
+                    </div>
                 )}
             </div>
 

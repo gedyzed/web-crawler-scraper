@@ -1,174 +1,225 @@
+import { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import {
-    Layers,
-    Hash,
-    ShieldCheck,
-    ShieldOff,
-    X,
-    Plus,
+    Save,
+    RefreshCcw,
     Trash2,
+    CheckCircle2,
+    Plus,
+    X,
+    Settings as SettingsIcon,
 } from "lucide-react"
 import {
-    setConfigField,
-    addAllowedPattern,
-    removeAllowedPattern,
-    addDeniedPattern,
-    removeDeniedPattern,
-    setNewAllowedPattern,
-    setNewDeniedPattern,
+    setFullConfig,
 } from "@/store/dashboardSlice"
 
 export default function SettingsPage() {
     const dispatch = useDispatch()
-    const { config, newAllowedPattern, newDeniedPattern } = useSelector(
-        (state) => state.dashboard
-    )
+    const { config } = useSelector((state) => state.dashboard)
+    const [localConfig, setLocalConfig] = useState({ ...config })
+    const [success, setSuccess] = useState(false)
+    const [newAllowedPattern, setNewAllowedPattern] = useState("")
+    const [newDeniedPattern, setNewDeniedPattern] = useState("")
 
-    const handleAddAllowed = () => {
-        if (newAllowedPattern.trim()) {
-            dispatch(addAllowedPattern(newAllowedPattern))
-            dispatch(setNewAllowedPattern(""))
-        }
+    useEffect(() => {
+        setLocalConfig({ ...config })
+    }, [config])
+
+    const handleSave = () => {
+        dispatch(setFullConfig(localConfig))
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
     }
 
-    const handleAddDenied = () => {
-        if (newDeniedPattern.trim()) {
-            dispatch(addDeniedPattern(newDeniedPattern))
-            dispatch(setNewDeniedPattern(""))
+    const handleReset = () => {
+        setLocalConfig({ ...config })
+        setSuccess(false)
+    }
+
+    const updateField = (field, value) => {
+        setLocalConfig(prev => ({ ...prev, [field]: value }))
+    }
+
+    const addPattern = (type) => {
+        const pattern = type === 'allowed' ? newAllowedPattern.trim() : newDeniedPattern.trim()
+        if (!pattern) return
+
+        const field = type === 'allowed' ? 'allowedPatterns' : 'deniedPatterns'
+        if (!localConfig[field].includes(pattern)) {
+            setLocalConfig(prev => ({
+                ...prev,
+                [field]: [...prev[field], pattern]
+            }))
         }
+
+        if (type === 'allowed') setNewAllowedPattern("")
+        else setNewDeniedPattern("")
+    }
+
+    const removePattern = (type, pattern) => {
+        const field = type === 'allowed' ? 'allowedPatterns' : 'deniedPatterns'
+        setLocalConfig(prev => ({
+            ...prev,
+            [field]: prev[field].filter(p => p !== pattern)
+        }))
     }
 
     return (
-        <div className="space-y-6 max-w-3xl">
-            <div>
-                <h2 className="text-2xl font-bold text-neutral-900">Settings</h2>
-                <p className="text-neutral-500 mt-1">Configure your default crawler and scraper settings</p>
+        <div className="space-y-6 max-w-4xl">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-neutral-900">Settings</h2>
+                    <p className="text-neutral-500 mt-1">Configure your crawler and scraper settings</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {success && (
+                        <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium animate-in fade-in slide-in-from-right-2">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Saved
+                        </span>
+                    )}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleReset}
+                        className="h-9 gap-2"
+                    >
+                        <RefreshCcw className="h-4 w-4" />
+                        Reset
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={handleSave}
+                        className="h-9 gap-2 bg-cyan-600 hover:bg-cyan-700 text-white border-none shadow-sm"
+                    >
+                        <Save className="h-4 w-4" />
+                        Save Changes
+                    </Button>
+                </div>
             </div>
 
-            {/* ─── Default Crawler Configuration ───────────── */}
-            <Card className="border-neutral-200 shadow-sm">
-                <CardContent className="p-6">
-                    <h3 className="text-base font-semibold text-neutral-900 mb-5 flex items-center gap-2">
-                        <Layers className="h-4 w-4 text-cyan-600" />
-                        Crawler Configuration
-                    </h3>
-                    <div className="space-y-5">
-                        <div className="grid sm:grid-cols-2 gap-5">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
-                                    <Hash className="h-3.5 w-3.5 text-neutral-400" /> Max Pages
-                                </label>
-                                <Input
-                                    type="number"
-                                    min={1}
-                                    max={1000}
-                                    value={config.maxPages}
-                                    onChange={(e) => dispatch(setConfigField({ field: "maxPages", value: parseInt(e.target.value) || 1 }))}
-                                    className="h-10 rounded-lg border-neutral-200 bg-neutral-50 text-sm focus-visible:ring-cyan-500"
-                                />
-                                <p className="text-xs text-neutral-400">Maximum number of pages to crawl per job</p>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
-                                    <Layers className="h-3.5 w-3.5 text-neutral-400" /> Depth
-                                </label>
-                                <Input
-                                    type="number"
-                                    min={0}
-                                    max={10}
-                                    value={config.depth}
-                                    onChange={(e) => dispatch(setConfigField({ field: "depth", value: parseInt(e.target.value) || 0 }))}
-                                    className="h-10 rounded-lg border-neutral-200 bg-neutral-50 text-sm focus-visible:ring-cyan-500"
-                                />
-                                <p className="text-xs text-neutral-400">How deep to follow links from the seed URL</p>
-                            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card className="border-neutral-200 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-3 bg-neutral-50 border-b border-neutral-200">
+                        <SettingsIcon className="h-4 w-4 text-cyan-600" />
+                        <span className="text-sm font-semibold text-neutral-600 uppercase tracking-wider">General Config</span>
+                    </div>
+                    <CardContent className="p-6 space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="maxPages">Max Pages</Label>
+                            <Input
+                                id="maxPages"
+                                type="number"
+                                value={localConfig.maxPages}
+                                onChange={(e) => updateField('maxPages', parseInt(e.target.value) || 0)}
+                                placeholder="e.g. 50"
+                            />
+                            <p className="text-[11px] text-neutral-400">The maximum number of pages to crawl per job.</p>
                         </div>
 
-                        {/* Allowed Patterns */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
-                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Allowed Patterns
-                            </label>
+                            <Label htmlFor="depth">Max Crawl Depth</Label>
+                            <Input
+                                id="depth"
+                                type="number"
+                                value={localConfig.depth}
+                                onChange={(e) => updateField('depth', parseInt(e.target.value) || 0)}
+                                placeholder="e.g. 3"
+                            />
+                            <p className="text-[11px] text-neutral-400">How many levels of links to follow from the seed URL.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="space-y-6">
+                    {/* Allowed Patterns */}
+                    <Card className="border-neutral-200 shadow-sm">
+                        <div className="flex items-center gap-2 px-4 py-3 bg-neutral-50 border-b border-neutral-200">
+                            <Plus className="h-4 w-4 text-emerald-600" />
+                            <span className="text-sm font-semibold text-neutral-600 uppercase tracking-wider">Allowed Patterns</span>
+                        </div>
+                        <CardContent className="p-4 space-y-4">
                             <div className="flex gap-2">
                                 <Input
                                     value={newAllowedPattern}
-                                    onChange={(e) => dispatch(setNewAllowedPattern(e.target.value))}
-                                    onKeyDown={(e) => e.key === "Enter" && handleAddAllowed()}
-                                    placeholder="e.g. /blog/*, /docs/*"
-                                    className="h-9 rounded-lg border-neutral-200 bg-neutral-50 text-sm focus-visible:ring-cyan-500"
+                                    onChange={(e) => setNewAllowedPattern(e.target.value)}
+                                    placeholder="e.g. /blog/*"
+                                    onKeyDown={(e) => e.key === 'Enter' && addPattern('allowed')}
+                                    className="h-8 text-xs"
                                 />
-                                <Button size="sm" variant="outline" onClick={handleAddAllowed} className="h-9 px-2.5 shrink-0">
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => addPattern('allowed')}>
                                     <Plus className="h-3.5 w-3.5" />
                                 </Button>
                             </div>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                                {config.allowedPatterns.map((p, i) => (
-                                    <Badge key={i} variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-2 py-0.5 text-xs gap-1">
-                                        {p}
-                                        <button onClick={() => dispatch(removeAllowedPattern(p))} className="hover:text-red-500 ml-0.5">
+                            <div className="flex flex-wrap gap-2">
+                                {localConfig.allowedPatterns.map(pattern => (
+                                    <div key={pattern} className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 border border-emerald-100 rounded text-xs text-emerald-700 font-mono">
+                                        {pattern}
+                                        <button onClick={() => removePattern('allowed', pattern)} className="hover:text-emerald-900">
                                             <X className="h-3 w-3" />
                                         </button>
-                                    </Badge>
+                                    </div>
                                 ))}
-                                {config.allowedPatterns.length === 0 && <span className="text-xs text-neutral-400">No patterns — all URLs allowed</span>}
+                                {localConfig.allowedPatterns.length === 0 && (
+                                    <p className="text-xs text-neutral-400 italic">No inclusion patterns defined.</p>
+                                )}
                             </div>
-                        </div>
+                        </CardContent>
+                    </Card>
 
-                        {/* Denied Patterns */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-neutral-700 flex items-center gap-1.5">
-                                <ShieldOff className="h-3.5 w-3.5 text-red-500" /> Denied Patterns
-                            </label>
+                    {/* Denied Patterns */}
+                    <Card className="border-neutral-200 shadow-sm">
+                        <div className="flex items-center gap-2 px-4 py-3 bg-neutral-50 border-b border-neutral-200">
+                            <X className="h-4 w-4 text-red-500" />
+                            <span className="text-sm font-semibold text-neutral-600 uppercase tracking-wider">Denied Patterns</span>
+                        </div>
+                        <CardContent className="p-4 space-y-4">
                             <div className="flex gap-2">
                                 <Input
                                     value={newDeniedPattern}
-                                    onChange={(e) => dispatch(setNewDeniedPattern(e.target.value))}
-                                    onKeyDown={(e) => e.key === "Enter" && handleAddDenied()}
-                                    placeholder="e.g. /admin/*, /private/*"
-                                    className="h-9 rounded-lg border-neutral-200 bg-neutral-50 text-sm focus-visible:ring-cyan-500"
+                                    onChange={(e) => setNewDeniedPattern(e.target.value)}
+                                    placeholder="e.g. /admin/*"
+                                    onKeyDown={(e) => e.key === 'Enter' && addPattern('denied')}
+                                    className="h-8 text-xs"
                                 />
-                                <Button size="sm" variant="outline" onClick={handleAddDenied} className="h-9 px-2.5 shrink-0">
+                                <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => addPattern('denied')}>
                                     <Plus className="h-3.5 w-3.5" />
                                 </Button>
                             </div>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                                {config.deniedPatterns.map((p, i) => (
-                                    <Badge key={i} variant="outline" className="bg-red-50 text-red-700 border-red-200 px-2 py-0.5 text-xs gap-1">
-                                        {p}
-                                        <button onClick={() => dispatch(removeDeniedPattern(p))} className="hover:text-red-800 ml-0.5">
+                            <div className="flex flex-wrap gap-2">
+                                {localConfig.deniedPatterns.map(pattern => (
+                                    <div key={pattern} className="flex items-center gap-1.5 px-2 py-1 bg-red-50 border border-red-100 rounded text-xs text-red-700 font-mono">
+                                        {pattern}
+                                        <button onClick={() => removePattern('denied', pattern)} className="hover:text-red-900">
                                             <X className="h-3 w-3" />
                                         </button>
-                                    </Badge>
+                                    </div>
                                 ))}
-                                {config.deniedPatterns.length === 0 && <span className="text-xs text-neutral-400">No patterns — no URLs blocked</span>}
+                                {localConfig.deniedPatterns.length === 0 && (
+                                    <p className="text-xs text-neutral-400 italic">No exclusion patterns defined.</p>
+                                )}
                             </div>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
 
-            {/* ─── Danger Zone ──────────────────────────────── */}
-            <Card className="border-red-200 shadow-sm">
-                <CardContent className="p-6">
-                    <h3 className="text-base font-semibold text-red-600 mb-4 flex items-center gap-2">
-                        <Trash2 className="h-4 w-4" />
-                        Danger Zone
-                    </h3>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-neutral-900">Delete Account</p>
-                            <p className="text-xs text-neutral-400">Permanently delete your account and all data</p>
-                        </div>
-                        <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50">
-                            Delete Account
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="p-4 rounded-xl border border-red-100 bg-red-50/30">
+                <h4 className="text-sm font-semibold text-red-900 mb-2 flex items-center gap-2">
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                    Danger Zone
+                </h4>
+                <div className="flex items-center justify-between">
+                    <p className="text-xs text-neutral-500">Delete all your account data permanently. This action cannot be undone.</p>
+                    <Button variant="outline" size="sm" className="text-red-600 border-red-200 h-8 text-xs hover:bg-red-50">
+                        Delete Account
+                    </Button>
+                </div>
+            </div>
         </div>
     )
 }

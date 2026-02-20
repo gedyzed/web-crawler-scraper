@@ -42,56 +42,66 @@ export default function DashboardPage() {
                 <p className="text-neutral-500 mt-1">Start a new crawl or scrape job below.</p>
             </div>
 
-            {/* ─── Run a Job ───────────────────────────────── */}
-            <Card className="border-neutral-200 shadow-sm">
-                <CardContent className="p-6">
-                    <h3 className="text-base font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-cyan-600" />
-                        New Job
-                    </h3>
-                    <div className="space-y-4">
+            {/*  Run a Job  */}
+            <Card className="border-neutral-200 shadow-sm overflow-hidden">
+                <CardContent className="p-0">
+                    <div className="px-5 pt-4 pb-1">
+                        <h3 className="text-base font-semibold text-neutral-900 mb-3 flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-cyan-600" />
+                            New Job
+                        </h3>
+                    </div>
+
+                    {/* URL Input */}
+                    <div className="px-5 pb-3">
+                        <div className="relative">
+                            <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-neutral-400" />
+                            <Input
+                                value={jobUrl}
+                                onChange={(e) => dispatch(setJobUrl(e.target.value))}
+                                onKeyDown={(e) => e.key === "Enter" && handleRun()}
+                                placeholder={jobType === "scrape" ? "https://example.com/page" : "https://example.com"}
+                                className="pl-11 h-12 rounded-xl border-neutral-200 bg-neutral-50 text-sm focus-visible:ring-cyan-500"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Tabs row + Go button */}
+                    <div className="flex items-center justify-between px-5 pb-4">
                         <Tabs value={jobType} onValueChange={(v) => dispatch(setJobType(v))}>
-                            <TabsList className="bg-neutral-100 p-1 rounded-lg">
-                                <TabsTrigger value="scrape" className="rounded-md text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                            <TabsList className="bg-transparent p-0 h-auto gap-1">
+                                <TabsTrigger
+                                    value="scrape"
+                                    className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 data-[state=active]:bg-neutral-100 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none transition-colors"
+                                >
                                     <Search className="h-3.5 w-3.5 mr-1.5" /> Scrape
                                 </TabsTrigger>
-                                <TabsTrigger value="crawl" className="rounded-md text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                                <TabsTrigger
+                                    value="crawl"
+                                    className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 data-[state=active]:bg-neutral-100 data-[state=active]:text-neutral-900 data-[state=active]:shadow-none transition-colors"
+                                >
                                     <Globe className="h-3.5 w-3.5 mr-1.5" /> Crawl
                                 </TabsTrigger>
                             </TabsList>
                         </Tabs>
-                        <div className="flex gap-3">
-                            <div className="relative flex-1">
-                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
-                                <Input
-                                    value={jobUrl}
-                                    onChange={(e) => dispatch(setJobUrl(e.target.value))}
-                                    onKeyDown={(e) => e.key === "Enter" && handleRun()}
-                                    placeholder={jobType === "scrape" ? "https://example.com/page" : "https://example.com"}
-                                    className="pl-10 h-11 rounded-lg border-neutral-200 bg-neutral-50 text-sm focus-visible:ring-cyan-500"
-                                />
-                            </div>
-                            <Button
-                                onClick={handleRun}
-                                disabled={jobLoading || !jobUrl.trim()}
-                                className="h-11 px-6 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-sm shadow-sm"
-                            >
-                                {jobLoading ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    <>
-                                        <Play className="h-4 w-4 mr-1.5 fill-white" />
-                                        {jobType === "scrape" ? "Scrape" : "Crawl"}
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                        {jobError && <p className="text-sm text-red-500">{jobError}</p>}
+                        <Button
+                            onClick={handleRun}
+                            disabled={jobLoading || !jobUrl.trim()}
+                            className="h-10 w-10 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm transition-all hover:shadow-md p-0 flex items-center justify-center cursor-pointer"
+                        >
+                            {jobLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <ArrowRight className="h-4.5 w-4.5" />
+                            )}
+                        </Button>
                     </div>
+
+                    {jobError && <p className="text-sm text-red-500 px-5 pb-4">{jobError}</p>}
                 </CardContent>
             </Card>
 
-            {/* ─── Recent Activity (quick preview) ──────────── */}
+            {/*  Recent Activity (quick preview) */}
             {recentJobs.length > 0 && (
                 <div>
                     <div className="flex items-center justify-between mb-4">
@@ -106,8 +116,8 @@ export default function DashboardPage() {
                                 key={job.id}
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl border border-neutral-200 bg-white hover:shadow-sm transition-shadow"
                             >
-                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${job.type === "crawl" ? "bg-blue-50 border border-blue-100" : "bg-cyan-50 border border-cyan-100"}`}>
-                                    {job.type === "crawl" ? <Globe className="h-4 w-4 text-blue-600" /> : <Search className="h-4 w-4 text-cyan-600" />}
+                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${job.type === "crawl" ? "bg-neutral-100 border border-neutral-200" : "bg-cyan-50 border border-cyan-100"}`}>
+                                    {job.type === "crawl" ? <Globe className="h-4 w-4 text-neutral-600" /> : <Search className="h-4 w-4 text-cyan-600" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-neutral-900 truncate">{job.url}</p>
