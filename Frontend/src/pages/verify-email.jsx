@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react"
+import { useEffect, useRef } from "react"
+import { useSelector, useDispatch } from "react-redux"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -10,27 +11,35 @@ import {
 import { Input } from "@/components/ui/input"
 import { Link } from "react-router-dom"
 import { ShieldCheck, Loader2, CheckCircle2, RotateCcw } from "lucide-react"
+import {
+    setVerifyEmailCode,
+    clearVerifyEmailError,
+    resetVerifyEmail,
+    verifyEmailCode,
+} from "@/store/authSlice"
 
 const CODE_LENGTH = 6
 
 export default function VerifyEmailPage() {
-    const [code, setCode] = useState(Array(CODE_LENGTH).fill(""))
-    const [loading, setLoading] = useState(false)
-    const [verified, setVerified] = useState(false)
-    const [error, setError] = useState("")
+    const dispatch = useDispatch()
     const inputRefs = useRef([])
 
+    const { code, loading, verified, error } = useSelector(
+        (state) => state.auth.verifyEmail
+    )
+
+    // Focus first input on mount, cleanup on unmount
     useEffect(() => {
         inputRefs.current[0]?.focus()
-    }, [])
+        return () => dispatch(resetVerifyEmail())
+    }, [dispatch])
 
     const handleChange = (index, value) => {
         if (!/^\d*$/.test(value)) return // digits only
 
-        const newCode = [...code]
-        newCode[index] = value.slice(-1) // take only last digit
-        setCode(newCode)
-        setError("")
+        const digit = value.slice(-1)
+        dispatch(setVerifyEmailCode({ index, value: digit }))
+        dispatch(clearVerifyEmailError())
 
         // Auto-advance to next input
         if (value && index < CODE_LENGTH - 1) {
@@ -38,8 +47,10 @@ export default function VerifyEmailPage() {
         }
 
         // Auto-submit when all digits entered
+        const newCode = [...code]
+        newCode[index] = digit
         if (newCode.every((d) => d !== "") && newCode.join("").length === CODE_LENGTH) {
-            handleVerify(newCode.join(""))
+            dispatch(verifyEmailCode({ code: newCode.join("") }))
         }
     }
 
@@ -54,40 +65,23 @@ export default function VerifyEmailPage() {
         const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH)
         if (pasted.length === 0) return
 
-        const newCode = [...code]
         for (let i = 0; i < CODE_LENGTH; i++) {
-            newCode[i] = pasted[i] || ""
+            dispatch(setVerifyEmailCode({ index: i, value: pasted[i] || "" }))
         }
-        setCode(newCode)
 
+        const newCode = Array.from({ length: CODE_LENGTH }, (_, i) => pasted[i] || "")
         const nextEmpty = newCode.findIndex((d) => d === "")
         if (nextEmpty === -1) {
             inputRefs.current[CODE_LENGTH - 1]?.focus()
-            handleVerify(newCode.join(""))
+            dispatch(verifyEmailCode({ code: newCode.join("") }))
         } else {
             inputRefs.current[nextEmpty]?.focus()
         }
     }
 
-    const handleVerify = (codeStr) => {
-        setLoading(true)
-        setError("")
-        // Simulate verification
-        setTimeout(() => {
-            setLoading(false)
-            // Accept any 6-digit code for demo
-            if (codeStr.length === CODE_LENGTH) {
-                setVerified(true)
-            } else {
-                setError("Invalid verification code. Please try again.")
-            }
-        }, 1500)
-    }
-
     const handleResend = () => {
-        setCode(Array(CODE_LENGTH).fill(""))
-        setError("")
-        inputRefs.current[0]?.focus()
+        dispatch(resetVerifyEmail())
+        setTimeout(() => inputRefs.current[0]?.focus(), 0)
     }
 
     return (
