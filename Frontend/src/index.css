@@ -47,71 +47,76 @@
 
 :root {
   --radius: 0.625rem;
-  --background: hsl(0 0% 100%);
+  --background: hsl(210 20% 98%);
   --foreground: hsl(0 0% 9%);
   --card: hsl(0 0% 100%);
   --card-foreground: hsl(0 0% 9%);
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(0 0% 9%);
-  --primary: hsl(0 0% 9%);
+  --primary: hsl(192, 90%, 42%);
   --primary-foreground: hsl(0 0% 98%);
-  --secondary: hsl(0 0% 97%);
+  --secondary: hsl(192, 90%, 45%);
   --secondary-foreground: hsl(0 0% 15%);
-  --muted: hsl(0 0% 97%);
+  --muted: hsl(210 20% 95%);
   --muted-foreground: hsl(0 0% 45%);
-  --accent: hsl(192 85% 45%);
+  --success: hsl(142, 70%, 45%);
+  --accent: hsl(192, 100%, 42%);
   --accent-foreground: hsl(0 0% 100%);
   --destructive: hsl(0 84% 60%);
-  --border: hsl(0 0% 90%);
-  --input: hsl(0 0% 90%);
-  --ring: hsla(192 85% 45% / 0.5);
-  --chart-1: hsl(192 85% 45%);
-  --chart-2: hsl(0 0% 9%);
-  --chart-3: hsl(0 0% 45%);
-  --chart-4: hsl(0 0% 90%);
-  --chart-5: hsl(192 85% 45%);
-  --sidebar: hsl(0 0% 98%);
+  --text-main: hsl(215, 25%, 15%);
+  --text-muted: hsl(215, 15%, 50%);
+  --border: hsl(210 20% 92%);
+  --input: hsl(210 20% 92%);
+  --ring: hsla(192 90% 42% / 0.5);
+  --chart-1: hsl(192 90% 42%);
+  --chart-2: hsl(158 64% 52%);
+  --chart-3: hsl(142 70% 45%);
+  --chart-4: hsl(178 65% 50%);
+  --chart-5: hsl(152 68% 40%);
+  --sidebar: hsl(210 20% 97%);
   --sidebar-foreground: hsl(0 0% 9%);
-  --sidebar-primary: hsl(192 85% 45%);
+  --sidebar-primary: hsl(192 90% 42%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(0 0% 90%);
+  --sidebar-accent: hsl(210 20% 94%);
   --sidebar-accent-foreground: hsl(0 0% 9%);
-  --sidebar-border: hsl(0 0% 90%);
-  --sidebar-ring: hsla(192 85% 45% / 0.5);
+  --sidebar-border: hsl(210 20% 94%);
+  --sidebar-ring: hsla(192 90% 42% / 0.5);
 }
 
 .dark {
-  --background: hsl(0 0% 9%);
-  --foreground: hsl(0 0% 98%);
-  --card: hsl(0 0% 15%);
-  --card-foreground: hsl(0 0% 98%);
-  --popover: hsl(0 0% 15%);
-  --popover-foreground: hsl(0 0% 98%);
-  --primary: hsl(0 0% 90%);
-  --primary-foreground: hsl(0 0% 15%);
-  --secondary: hsl(0 0% 21%);
-  --secondary-foreground: hsl(0 0% 98%);
-  --muted: hsl(0 0% 21%);
-  --muted-foreground: hsl(0 0% 64%);
-  --accent: hsl(0 0% 21%);
-  --accent-foreground: hsl(0 0% 98%);
-  --destructive: hsl(0 62% 30%);
-  --border: hsl(0 0% 100% / 10%);
-  --input: hsl(0 0% 100% / 15%);
-  --ring: hsl(0 0% 45%);
-  --chart-1: hsl(220 70% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
-  --sidebar: hsl(0 0% 15%);
-  --sidebar-foreground: hsl(0 0% 98%);
-  --sidebar-primary: hsl(192, 84%, 34%);
-  --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(0 0% 21%);
-  --sidebar-accent-foreground: hsl(0 0% 98%);
-  --sidebar-border: hsl(0 0% 100% / 10%);
-  --sidebar-ring: hsl(0 0% 45%);
+  --background: hsl(216 33% 5%);
+  --foreground: hsl(210 20% 90%);
+  --card: hsl(216 30% 8%);
+  --card-foreground: hsl(210 20% 90%);
+  --popover: hsl(216 30% 8%);
+  --popover-foreground: hsl(210 20% 90%);
+  --primary: hsl(192 90% 42%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(216 25% 14%);
+  --secondary-foreground: hsl(210 20% 90%);
+  --muted: hsl(216 25% 12%);
+  --muted-foreground: hsl(215 15% 55%);
+  --accent: hsl(192 80% 45%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 62% 45%);
+  --text-main: hsl(210 20% 88%);
+  --text-muted: hsl(215 15% 55%);
+  --border: hsl(216 20% 16%);
+  --input: hsl(216 20% 16%);
+  --ring: hsla(192 90% 42% / 0.4);
+  --chart-1: hsl(192 80% 45%);
+  --chart-2: hsl(158 64% 52%);
+  --chart-3: hsl(142 70% 45%);
+  --chart-4: hsl(178 65% 50%);
+  --chart-5: hsl(152 68% 40%);
+  --sidebar: hsl(216 30% 7%);
+  --sidebar-foreground: hsl(210 20% 85%);
+  --sidebar-primary: hsl(192 80% 42%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(216 25% 14%);
+  --sidebar-accent-foreground: hsl(210 20% 85%);
+  --sidebar-border: hsl(216 20% 14%);
+  --sidebar-ring: hsla(192 90% 42% / 0.4);
 }
 
 @layer base {
@@ -121,7 +126,24 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Roboto Mono', monospace, system-ui, -apple-system, sans-serif;
+    font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-display {
+    font-family: 'Clash Display', 'Satoshi', system-ui, sans-serif;
+  }
+
+  code,
+  pre,
+  .font-mono,
+  kbd {
+    font-family: 'JetBrains Mono', monospace;
   }
 
   html {
