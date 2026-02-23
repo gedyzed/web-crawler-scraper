@@ -75,8 +75,14 @@ export default function CrawlerBackground() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const stateRef = useRef<CanvasState | null>(null);
     const rafRef = useRef<number | null>(null);
+    const paletteRef = useRef<Palette>(resolvedTheme === "dark" ? DARK : LIGHT);
 
-    const palette = resolvedTheme === "dark" ? DARK : LIGHT;
+    // Keep paletteRef in sync with the current theme
+    useEffect(() => {
+        paletteRef.current = resolvedTheme === "dark" ? DARK : LIGHT;
+    }, [resolvedTheme]);
+
+    const palette = paletteRef.current;
 
     // Build grid nodes from canvas dimensions
     const buildGrid = useCallback((w: number, h: number) => {
@@ -176,14 +182,8 @@ export default function CrawlerBackground() {
         };
     }, [buildGrid]);
 
-    // Redraw on theme change without rebuilding the grid
-    useEffect(() => {
-        // Force an immediate redraw with the new palette
-        const state = stateRef.current;
-        if (state && state.ctx) {
-            draw(state, performance.now());
-        }
-    }, [resolvedTheme]);
+    // paletteRef is already updated via the effect above,
+    // so the animation loop's draw() will pick up the new palette automatically.
 
     return (
         <div
@@ -229,7 +229,7 @@ export default function CrawlerBackground() {
     // ─── Draw ───────────────────────────────────────────────
     function draw(state: CanvasState, now: number) {
         const { ctx, width, height } = state;
-        const pal = resolvedTheme === "dark" ? DARK : LIGHT;
+        const pal = paletteRef.current;
 
         // Clear
         ctx.fillStyle = pal.bgColor;
