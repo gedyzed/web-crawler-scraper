@@ -84,9 +84,6 @@ func LoadConfig() *Config {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("./Infrastrucuture/config")
-	viper.AddConfigPath("../Infrastrucuture/config")
-	viper.AddConfigPath("../../Infrastrucuture/config")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Error in loading config file: %v", err)

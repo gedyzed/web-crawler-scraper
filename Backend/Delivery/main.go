@@ -84,6 +84,7 @@ func main() {
 	middlewares := middleware.NewMiddleware(jwtService)
 
 
+	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(cors.Default())
 

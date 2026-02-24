@@ -7,6 +7,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func DBConnect(cfg *config.DBConfig) *gorm.DB {
@@ -15,7 +16,9 @@ func DBConnect(cfg *config.DBConfig) *gorm.DB {
 		log.Fatal("DB DNS is not set")
 	}
 	dns := cfg.DNS
-	db, err := gorm.Open(postgres.Open(dns), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dns), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		log.Fatal("Failed to connect to postgress database", err)
 	}
