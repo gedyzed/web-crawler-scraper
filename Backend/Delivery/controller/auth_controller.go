@@ -156,7 +156,7 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		return
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetSameSite(http.SameSiteNoneMode)
 
 	c.SetCookie(
 		domain.AccessToken,
@@ -289,7 +289,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context){
 		return
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetSameSite(http.SameSiteNoneMode)
 
 	c.SetCookie(
 		domain.AccessToken,
