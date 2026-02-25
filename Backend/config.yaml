@@ -15,8 +15,8 @@ redis:
   db: 0
 
 jwt_config:
-    access_key: "your-screet-key"
-    refresh_key: "your-refresh-screet-key"
+    access_key: your-screet-key
+    refresh_key: your-refresh-screet-key
     access_ttl: 10m
     refresh_ttl: 48h
 
