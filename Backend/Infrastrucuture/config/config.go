@@ -1,13 +1,16 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
+	// "github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -32,7 +35,7 @@ type DBConfig struct {
 
 type AppConfig struct {
 	Name          string `mapstructure:"name"`
-	Port          string `mapstructure:"port" validate:"required"`
+	Port          string `mapstructure:"port"`
 	Env           string `mapstructure:"env"`
 	Debug         bool   `mapstructure:"debug"`
 	Domain        string `mapstructure:"domain" validate:"required"`
@@ -81,41 +84,36 @@ func ValidateConfig(cfg *Config) error {
 	return validate.Struct(cfg)
 }
 
-func LoadConfig() *Config {
-	// Read from .env file
-	viper.SetConfigFile(".env")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Warning: .env file not found or error reading it: %v", err)
-	}
+func LoadConfig(path string) *Config {
 
+	_ = godotenv.Load()
+	
 	// Read from config.yaml as fallback or primary
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(path)
 
 	if err := viper.MergeInConfig(); err != nil {
 		log.Printf("Warning: config.yaml not found or error reading it: %v", err)
 	}
 
+
 	// Environment variables
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	// Manual bindings for legacy or special cases
-	viper.BindEnv("db.dns", "DB_DNS")
-	viper.BindEnv("app.port", "PORT")
-	viper.BindEnv("app.port", "APP_PORT")
-
 	viper.SetDefault("google_oauth.scopes", []string{"openid", "email", "profile"})
 	viper.SetDefault("github.scopes", []string{"read:user", "users:email"})
 	viper.SetDefault("security.min_entropy_bits", 30)
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
+		fmt.Println(cfg)
 		log.Fatal("Error in loading config files: ", err)
 	}
 
+
 	if err := ValidateConfig(&cfg); err != nil {
+		fmt.Println(cfg)
 		log.Fatal("Error in validating config files: ", err)
 	}
 

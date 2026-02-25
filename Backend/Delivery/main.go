@@ -22,7 +22,7 @@ import (
 func main() {
 
 	// Initialization
-	cfg := config.LoadConfig()
+	cfg := config.LoadConfig(".")
 
 	// Logger Initialization
 	logrus.SetFormatter(&logrus.JSONFormatter{})
@@ -84,7 +84,7 @@ func main() {
 	middlewares := middleware.NewMiddleware(jwtService)
 
 
-	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(cors.Default())
 
