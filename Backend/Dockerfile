@@ -24,7 +24,6 @@ RUN apk add --no-cache ca-certificates
 
 # Copy binary and config from builder
 COPY --from=builder /app/app .
-COPY --from=builder /app/config.yaml .
 EXPOSE 8080
 
 CMD ["./app"]

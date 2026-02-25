@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -81,17 +82,30 @@ func ValidateConfig(cfg *Config) error {
 }
 
 func LoadConfig() *Config {
+	// Read from .env file
+	viper.SetConfigFile(".env")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("Warning: .env file not found or error reading it: %v", err)
+	}
+
+	// Read from config.yaml as fallback or primary
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Error in loading config file: %v", err)
+	if err := viper.MergeInConfig(); err != nil {
+		log.Printf("Warning: config.yaml not found or error reading it: %v", err)
 	}
 
+	// Environment variables
 	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// Manual bindings for legacy or special cases
 	viper.BindEnv("db.dns", "DB_DNS")
 	viper.BindEnv("app.port", "PORT")
+	viper.BindEnv("app.port", "APP_PORT")
+
 	viper.SetDefault("google_oauth.scopes", []string{"openid", "email", "profile"})
 	viper.SetDefault("github.scopes", []string{"read:user", "users:email"})
 	viper.SetDefault("security.min_entropy_bits", 30)
@@ -101,7 +115,7 @@ func LoadConfig() *Config {
 		log.Fatal("Error in loading config files: ", err)
 	}
 
-		if err := ValidateConfig(&cfg); err != nil {
+	if err := ValidateConfig(&cfg); err != nil {
 		log.Fatal("Error in validating config files: ", err)
 	}
 
