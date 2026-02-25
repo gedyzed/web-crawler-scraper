@@ -1,0 +1,50 @@
+app:
+  port: 8080
+  name: spidergo
+  dev: true
+  debug: true
+  domain: localhost
+  secure_cookies: true
+
+db:
+  dns: your-postgress-dns
+
+redis:
+  address: your-redis-address
+  password: your-redis-password
+  db: 0
+
+jwt_config:
+    access_key: "your-screet-key"
+    refresh_key: "your-refresh-screet-key"
+    access_ttl: 10m
+    refresh_ttl: 48h
+
+
+google_oauth:
+    client_id: your-google-cloud-client-id
+    client_secret: your-google-app-client-screet
+    redirect_url: your-redirect-url
+    user_url: your-user-url
+  
+github_oauth: 
+    client_id: your-github-client-id
+    client_secret: your-google-app-client-screet
+    redirect_url:  your-redirect-url
+    user_url:  your-user-url
+
+email: 
+    stmp_host: your-stmp-host
+    stmp_port: 8000
+    username: your-email-account
+    app_password: your-app-password
+
+crawler:
+    allowed_domains:
+    max_depth: 10
+    max_pages: 100
+    allowed_paths:
+    denied_patterns:
+     
+
+

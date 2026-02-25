@@ -31,8 +31,6 @@ go.work.sum
 # .idea/
 # .vscode/
 
-*yaml
-
 .tmp
 
 .vscode
