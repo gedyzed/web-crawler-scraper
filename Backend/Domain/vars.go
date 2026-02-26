@@ -105,6 +105,12 @@ var (
 	ErrSeedURLNeeded = "Seed URL is not provided"
 )
 
+// For Email
+var (
+	EmailVerification    = "Email Verification"
+	EmailVerificationMsg = "Please verify your email to continue. Your verification code is: %d"
+)
+
 type AppError struct {
 	Message    string
 	Err        string

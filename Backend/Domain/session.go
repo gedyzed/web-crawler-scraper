@@ -9,7 +9,7 @@ import (
 type Session struct {
 	gorm.Model
 	UserID 		string
-	Token  		string `gorm:"unique;not null"`
+	Token  		string 		`gorm:"unique;not null"`
 	ExpiresAt 	time.Time
 	IPAddress   string
 } 
@@ -17,7 +17,13 @@ type Session struct {
 type RefreshToken struct {
 	gorm.Model
 	UserID 		string
-	Token  		string `gorm:"unique;not null"`
+	Token  		string 		`gorm:"unique;not null"`
 	ExpiresAt 	time.Time
 	DeviceInfo  string
+}
+
+type VerificationCode struct {
+	Email 		string 		`gorm:"unique;not null"`
+	Code  		int64 		`gorm:"unique;not null"`
+	ExpiresAt 	time.Time
 }

@@ -111,3 +111,28 @@ func (r *userRepo) SaveProvider(ctx context.Context, provider *domain.AuthProvid
 	return nil
 
 }
+
+func (r *userRepo) CreateVerificationCode(ctx context.Context, verification *domain.VerificationCode) *domain.AppError {
+
+	if err := r.db.WithContext(ctx).Where("email = ?", verification.Email).Delete(&domain.VerificationCode{}).Error; err != nil {
+		logger.WithFields(logger.Fields{
+			"email": verification.Email,
+			"error": err,
+		}).Error("Failed to delete existing verification code")
+	}
+
+	err := r.db.WithContext(ctx).Create(verification).Error
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"verification": verification,
+			"error":        err,
+		}).Error(domain.LogFailedCreateUser)
+      
+		return &domain.AppError{
+			Message:    domain.ErrInternalServer,
+			HttpStatus: 500,
+		}
+	}
+
+	return nil
+}

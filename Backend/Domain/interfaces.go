@@ -12,6 +12,7 @@ type IUserRepo interface {
 	FindByEmail(ctx context.Context, field string) (*User, *AppError)
 	Update(ctx context.Context, user *User) (*User, *AppError)
 	SaveProvider(ctx context.Context, provider *AuthProvider) *AppError
+	CreateVerificationCode(ctx context.Context, verification *VerificationCode) *AppError
 }
 
 type IRefreshTokenRepo interface {

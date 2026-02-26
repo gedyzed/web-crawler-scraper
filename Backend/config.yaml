@@ -34,8 +34,8 @@ github_oauth:
     user_url:  your-user-url
 
 email: 
-    stmp_host: your-stmp-host
-    stmp_port: 8000
+    smtp_host: your-stmp-host
+    smtp_port: 8000
     username: your-email-account
     app_password: your-app-password
 

@@ -65,8 +65,8 @@ type JWTConfig struct {
 }
 
 type EmailConfig struct {
-	StmpHost    string `mapstructure:"stmp_host"`
-	StmpPort    int    `mapstructure:"stmp_port"`
+	SmtpHost    string `mapstructure:"smtp_host"`
+	SmtpPort    int    `mapstructure:"smtp_port"`
 	Username    string `mapstructure:"username"`
 	AppPassword string `mapstructure:"app_password"`
 }

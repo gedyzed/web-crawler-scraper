@@ -267,12 +267,12 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 	c.IndentedJSON(http.StatusOK, response.Session)
 }
 
-func (ac *AuthController) RefreshToken(c *gin.Context){
+func (ac *AuthController) RefreshToken(c *gin.Context) {
 
-	ctx  := c.Request.Context()
+	ctx := c.Request.Context()
 
 	refreshToken, err := c.Cookie(domain.RefreshTokenLocal)
-	if refreshToken == "" || err != nil  {
+	if refreshToken == "" || err != nil {
 		c.IndentedJSON(
 			http.StatusBadRequest,
 			gin.H{"error": "Invalid refresh token"},
@@ -312,8 +312,30 @@ func (ac *AuthController) RefreshToken(c *gin.Context){
 			true,
 		)
 	}
-	 
+
 }
 
+func (ac *AuthController) ResendVerificationEmail(c *gin.Context) {
+	ctx := c.Request.Context()
+	var request struct {
+		Email string `json:"email" binding:"required"`
+	}
 
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		return
+	}
 
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidEmail})
+		return
+	}
+
+	appErr := ac.authUC.SendVerificationEmail(ctx, strings.ToLower(request.Email))
+	if appErr != nil {
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Verification email sent successfully"})
+}

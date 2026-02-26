@@ -58,9 +58,11 @@ func main() {
 	// services
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
 	passwordService := infrastructure.NewPasswordService()
+	emailService := infrastructure.NewEmailService(&cfg.Email)
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
 	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, *redis)
 	scraperFactory := crawlerservicego.NewScraperServiceFactory(&cfg.Crawler)
+
 
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,
@@ -70,6 +72,7 @@ func main() {
 		oauthServices,
 		jwtService,
 		passwordService,
+		emailService,
 	)
 	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory)
 	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory)
@@ -84,7 +87,7 @@ func main() {
 	middlewares := middleware.NewMiddleware(jwtService)
 
 
-	gin.SetMode(gin.ReleaseMode)
+	// gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(cors.Default())
 

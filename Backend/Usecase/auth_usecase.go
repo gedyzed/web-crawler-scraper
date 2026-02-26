@@ -4,7 +4,10 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"math/big"
 	"net/http"
+	"fmt"
+	"time"
 	domain "web_crawler_scraper/Domain"
 
 	logger "github.com/sirupsen/logrus"
@@ -16,6 +19,7 @@ type IAuthUsecase interface {
 	GetLoginURL(providerName string, state string) (string, *domain.AppError)
 	RegisterOrLogin(ctx context.Context, providerName string, code string, ip string) (*domain.ExchangeData, *domain.AppError)
 	RefreshToken(ctx context.Context, accessToken string) (string, string, *domain.AppError)
+	SendVerificationEmail(ctx context.Context, email string) *domain.AppError
 }
 
 type IRateLimiter interface {
@@ -30,6 +34,7 @@ type authUsecase struct {
 	oauthServices   domain.IOAuthServices
 	jwtService      domain.IJwtService
 	passwordService domain.IPasswordService
+	emailServcie	domain.IEmailService
 }
 
 func NewAuthUsecase(
@@ -40,6 +45,7 @@ func NewAuthUsecase(
 	oauthServices domain.IOAuthServices,
 	jwtService domain.IJwtService,
 	passwordService domain.IPasswordService,
+	emailService 	domain.IEmailService,
 ) IAuthUsecase {
 	return &authUsecase{
 		repo:            repo,
@@ -49,6 +55,7 @@ func NewAuthUsecase(
 		oauthServices:   oauthServices,
 		jwtService:      jwtService,
 		passwordService: passwordService,
+		emailServcie: 	emailService,
 	}
 }
 
@@ -115,6 +122,10 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 	}
 	user.UserID = userID
 	user.Password = string(hashedPassword)
+
+	if err := ac.SendVerificationEmail(ctx, user.Email); err != nil {
+		return err
+	}
 
 	if err := ac.repo.Create(ctx, user); err != nil {
 		return err
@@ -339,3 +350,38 @@ func (ac *authUsecase) RefreshToken(ctx context.Context, refreshToken string) (s
 
 	return newAccessToken, newRefreshToken, nil
 }
+
+func (ac *authUsecase) SendVerificationEmail(ctx context.Context, email string) *domain.AppError {
+	uniqueCode, err := generateSecureNumber(100000, 999999)
+	if err != nil {
+		return &domain.AppError{
+			Message:    domain.ErrSomethingWentWrong,
+			HttpStatus: 500,
+		}
+	}
+
+	verfication := &domain.VerificationCode{
+		Email: email,
+		Code: uniqueCode,
+		ExpiresAt: time.Now().Add(time.Minute * 10),
+	}
+
+	if err := ac.repo.CreateVerificationCode(ctx, verfication); err != nil {
+		return err
+	}
+
+	return ac.emailServcie.SendEmail(
+									domain.EmailVerification, 
+									fmt.Sprintf(domain.EmailVerificationMsg, uniqueCode), 
+									email,
+								)	
+}
+
+func generateSecureNumber(min, max int64) (int64, error) {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(max-min+1))
+	if err != nil {
+		return 0, err
+	}
+	return nBig.Int64() + min, nil
+}
+ 

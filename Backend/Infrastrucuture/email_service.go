@@ -22,7 +22,7 @@ func NewEmailService(cfg *config.EmailConfig) domain.IEmailService {
 func (s *emailService) SendEmail(subject, msg, to string) *domain.AppError { 
 
 	tpl :=  `
-		<h1>Hello, {{.User} </h1>
+		<h1>Hello, {{.User}} </h1>
 		<p>{{.Msg}}</p>`
 	
 	user := "user"
@@ -45,8 +45,8 @@ func (s *emailService) SendEmail(subject, msg, to string) *domain.AppError {
 	message.SetBody("text/html",html)
 
 	dailer := gomail.NewDialer(
-			s.config.StmpHost, 
-			s.config.StmpPort, 
+			s.config.SmtpHost, 
+			s.config.SmtpPort, 
 			s.config.Username, 
 			s.config.AppPassword,
 		)
