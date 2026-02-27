@@ -52,6 +52,7 @@ var (
 	LogFailedDeleteRefreshToken = "Failed to Delete Refresh Token"
 	LogFailedSaveCrawlerResult  = "Failed to Save Crawler Result"
 	LogFailedSaveHistory        = "Failed to Save Crawler History"
+	LogVerificationCodeNotFound = "Verification Code Not Found"
 )
 
 // Repository - Error Messages
@@ -62,10 +63,13 @@ var (
 
 // Usecase - Error Messages
 var (
-	ErrSomethingWentWrong    = "Something Went Wrong. Try again"
-	ErrTooManyRequests       = "Too Many Request. Try again Later!"
-	ErrUserAlreadyRegistered = "User Already Registered"
-	ErrInvalidCredentials    = "Invalid Email or Password"
+	ErrSomethingWentWrong      = "Something Went Wrong. Try again"
+	ErrTooManyRequests         = "Too Many Request. Try again Later!"
+	ErrUserAlreadyRegistered   = "User Already Registered"
+	ErrInvalidCredentials      = "Invalid Email or Password"
+	ErrInvalidVerificationCode = "Invalid Verification Code"
+	ErrVerificationCodeExpired = "Verification Code Has Expired"
+	MsgEmailVerifiedSuccess    = "Email Verified Successfully"
 )
 
 // Usecase - Log Messages

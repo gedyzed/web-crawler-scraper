@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"net/http"
-	"fmt"
 	"time"
 	domain "web_crawler_scraper/Domain"
 
@@ -20,6 +20,7 @@ type IAuthUsecase interface {
 	RegisterOrLogin(ctx context.Context, providerName string, code string, ip string) (*domain.ExchangeData, *domain.AppError)
 	RefreshToken(ctx context.Context, accessToken string) (string, string, *domain.AppError)
 	SendVerificationEmail(ctx context.Context, email string) *domain.AppError
+	VerifyEmail(ctx context.Context, email string, code int64) *domain.AppError
 }
 
 type IRateLimiter interface {
@@ -34,7 +35,7 @@ type authUsecase struct {
 	oauthServices   domain.IOAuthServices
 	jwtService      domain.IJwtService
 	passwordService domain.IPasswordService
-	emailServcie	domain.IEmailService
+	emailServcie    domain.IEmailService
 }
 
 func NewAuthUsecase(
@@ -45,7 +46,7 @@ func NewAuthUsecase(
 	oauthServices domain.IOAuthServices,
 	jwtService domain.IJwtService,
 	passwordService domain.IPasswordService,
-	emailService 	domain.IEmailService,
+	emailService domain.IEmailService,
 ) IAuthUsecase {
 	return &authUsecase{
 		repo:            repo,
@@ -55,7 +56,7 @@ func NewAuthUsecase(
 		oauthServices:   oauthServices,
 		jwtService:      jwtService,
 		passwordService: passwordService,
-		emailServcie: 	emailService,
+		emailServcie:    emailService,
 	}
 }
 
@@ -325,7 +326,7 @@ func (ac *authUsecase) RefreshToken(ctx context.Context, refreshToken string) (s
 
 	var newAccessToken string
 	var newRefreshToken string
-	
+
 	data, err := ac.jwtService.RefreshToken(ctx, refreshToken)
 	if err != nil || data == nil {
 		return "", "", err
@@ -361,8 +362,8 @@ func (ac *authUsecase) SendVerificationEmail(ctx context.Context, email string) 
 	}
 
 	verfication := &domain.VerificationCode{
-		Email: email,
-		Code: uniqueCode,
+		Email:     email,
+		Code:      uniqueCode,
 		ExpiresAt: time.Now().Add(time.Minute * 10),
 	}
 
@@ -371,10 +372,10 @@ func (ac *authUsecase) SendVerificationEmail(ctx context.Context, email string) 
 	}
 
 	return ac.emailServcie.SendEmail(
-									domain.EmailVerification, 
-									fmt.Sprintf(domain.EmailVerificationMsg, uniqueCode), 
-									email,
-								)	
+		domain.EmailVerification,
+		fmt.Sprintf(domain.EmailVerificationMsg, uniqueCode),
+		email,
+	)
 }
 
 func generateSecureNumber(min, max int64) (int64, error) {
@@ -384,4 +385,45 @@ func generateSecureNumber(min, max int64) (int64, error) {
 	}
 	return nBig.Int64() + min, nil
 }
- 
+
+func (ac *authUsecase) VerifyEmail(ctx context.Context, email string, code int64) *domain.AppError {
+	// Find the verification code
+	verification, err := ac.repo.FindVerificationCode(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	// Check if the code has expired
+	if time.Now().After(verification.ExpiresAt) {
+		ac.repo.DeleteVerificationCode(ctx, email)
+		return &domain.AppError{
+			Message:    domain.ErrVerificationCodeExpired,
+			HttpStatus: 400,
+		}
+	}
+
+	// Compare codes
+	if verification.Code != code {
+		return &domain.AppError{
+			Message:    domain.ErrInvalidVerificationCode,
+			HttpStatus: 400,
+		}
+	}
+
+	// Mark user as verified
+	user, err := ac.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	user.Is_Verified = true
+	_, err = ac.repo.Update(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	// Delete the used verification code
+	ac.repo.DeleteVerificationCode(ctx, email)
+
+	return nil
+}

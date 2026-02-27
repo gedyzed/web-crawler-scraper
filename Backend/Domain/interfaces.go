@@ -13,6 +13,8 @@ type IUserRepo interface {
 	Update(ctx context.Context, user *User) (*User, *AppError)
 	SaveProvider(ctx context.Context, provider *AuthProvider) *AppError
 	CreateVerificationCode(ctx context.Context, verification *VerificationCode) *AppError
+	FindVerificationCode(ctx context.Context, email string) (*VerificationCode, *AppError)
+	DeleteVerificationCode(ctx context.Context, email string) *AppError
 }
 
 type IRefreshTokenRepo interface {

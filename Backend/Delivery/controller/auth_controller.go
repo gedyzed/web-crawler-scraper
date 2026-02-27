@@ -339,3 +339,29 @@ func (ac *AuthController) ResendVerificationEmail(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Verification email sent successfully"})
 }
+
+func (ac *AuthController) VerifyEmail(c *gin.Context) {
+	ctx := c.Request.Context()
+	var request struct {
+		Email string `json:"email" binding:"required"`
+		Code  int64  `json:"code" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		return
+	}
+
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidEmail})
+		return
+	}
+
+	appErr := ac.authUC.VerifyEmail(ctx, strings.ToLower(request.Email), request.Code)
+	if appErr != nil {
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": domain.MsgEmailVerifiedSuccess})
+}

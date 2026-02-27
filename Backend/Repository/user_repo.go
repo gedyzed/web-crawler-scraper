@@ -127,12 +127,47 @@ func (r *userRepo) CreateVerificationCode(ctx context.Context, verification *dom
 			"verification": verification,
 			"error":        err,
 		}).Error(domain.LogFailedCreateUser)
-      
+
 		return &domain.AppError{
 			Message:    domain.ErrInternalServer,
 			HttpStatus: 500,
 		}
 	}
 
+	return nil
+}
+
+func (r *userRepo) FindVerificationCode(ctx context.Context, email string) (*domain.VerificationCode, *domain.AppError) {
+	var verification domain.VerificationCode
+	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&verification).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			logger.WithFields(logger.Fields{
+				"email": email,
+				"error": err,
+			}).Error(domain.LogVerificationCodeNotFound)
+			return nil, &domain.AppError{
+				Message:    domain.ErrInvalidVerificationCode,
+				HttpStatus: 404,
+			}
+		}
+		return nil, &domain.AppError{
+			Message:    domain.ErrInternalServer,
+			HttpStatus: 500,
+		}
+	}
+	return &verification, nil
+}
+
+func (r *userRepo) DeleteVerificationCode(ctx context.Context, email string) *domain.AppError {
+	if err := r.db.WithContext(ctx).Where("email = ?", email).Delete(&domain.VerificationCode{}).Error; err != nil {
+		logger.WithFields(logger.Fields{
+			"email": email,
+			"error": err,
+		}).Error("Failed to delete verification code")
+		return &domain.AppError{
+			Message:    domain.ErrInternalServer,
+			HttpStatus: 500,
+		}
+	}
 	return nil
 }
