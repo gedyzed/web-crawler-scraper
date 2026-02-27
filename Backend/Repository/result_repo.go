@@ -52,3 +52,21 @@ func (r *resultRepo) SaveHistory(ctx context.Context, history *domain.History) *
 	}
 	return nil
 }
+
+func (r *resultRepo) FindAllHistory(ctx context.Context, userID string) ([]domain.History, *domain.AppError) {
+	var history []domain.History
+	err := r.db.WithContext(ctx).Where("user_id = ?", userID).Order("timestamp desc").Find(&history).Error
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"userID": userID,
+			"error":  err,
+		}).Error(domain.LogFailedFetchHistory)
+
+		return nil, &domain.AppError{
+			Message:    domain.ErrFailedFetchHistory,
+			Err:        err.Error(),
+			HttpStatus: 500,
+		}
+	}
+	return history, nil
+}

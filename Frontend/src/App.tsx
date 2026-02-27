@@ -1,4 +1,7 @@
+import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
+import { useAppDispatch } from "./store/hooks";
+import { checkAuth } from "./store/authSlice";
 import LandingPage from "./pages/landing";
 import LoginPage from "./pages/login";
 import SignupPage from "./pages/signup";
@@ -13,6 +16,12 @@ import ProfilePage from "./pages/dashboard/profile";
 import SettingsPage from "./pages/dashboard/settings";
 
 function App() {
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(checkAuth());
+    }, [dispatch]);
+
     return (
         <Routes>
             {/* Public routes */}

@@ -56,6 +56,7 @@ type IEmailService interface {
 type IResultRepo interface {
 	SaveResult(ctx context.Context, result *CrawlerResult) *AppError
 	SaveHistory(ctx context.Context, history *History) *AppError
+	FindAllHistory(ctx context.Context, userID string) ([]History, *AppError)
 }
 type ICrawlerService interface {
 	Crawl(ctx context.Context, seedURL string) (*CrawlerResult, *AppError)

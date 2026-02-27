@@ -53,12 +53,14 @@ var (
 	LogFailedSaveCrawlerResult  = "Failed to Save Crawler Result"
 	LogFailedSaveHistory        = "Failed to Save Crawler History"
 	LogVerificationCodeNotFound = "Verification Code Not Found"
+	LogFailedFetchHistory       = "Failed to Fetch Crawler History"
 )
 
 // Repository - Error Messages
 var (
 	ErrFailedSaveCrawlerResult = "Failed to Save Crawler Result"
 	ErrFailedSaveHistory       = "Failed to Save Crawler History"
+	ErrFailedFetchHistory      = "Failed to Fetch Crawler History"
 )
 
 // Usecase - Error Messages

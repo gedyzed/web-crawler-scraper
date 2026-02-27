@@ -37,7 +37,7 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 	userID := c.GetString("userID")
 	input.Depth = cl.config.MaxDepth
 	input.UserID = userID
-	
+
 	response, err := cl.CralwerUC.Crawl(ctx, &input)
 	if err != nil {
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
@@ -45,4 +45,17 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, gin.H{"message": response})
+}
+
+func (cl *CrawlerController) GetHistory(c *gin.Context) {
+	ctx := c.Request.Context()
+	userID := c.GetString("userID")
+
+	history, err := cl.CralwerUC.FetchHistory(ctx, userID)
+	if err != nil {
+		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, history)
 }

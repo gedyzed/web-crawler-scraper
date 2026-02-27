@@ -304,15 +304,89 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	if newRefreshToken != "" {
 		c.SetCookie(
 			domain.RefreshTokenLocal,
-			newAccessToken,
-			int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
+			newRefreshToken,
+			int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 			"/auth/refresh",
 			ac.cfg.App.Domain,
 			ac.cfg.App.SecureCookies,
 			true,
 		)
 	}
+}
 
+func (ac *AuthController) GetProfile(c *gin.Context) {
+	ctx := c.Request.Context()
+	userID := c.GetString("userID")
+
+	user, err := ac.authUC.GetUserByID(ctx, userID)
+	if err != nil {
+		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, user)
+}
+
+func (ac *AuthController) ForgotPassword(c *gin.Context) {
+	ctx := c.Request.Context()
+	var request struct {
+		Email string `json:"email" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		return
+	}
+
+	appErr := ac.authUC.ForgotPassword(ctx, request.Email)
+	if appErr != nil {
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Reset code sent to your email"})
+}
+
+func (ac *AuthController) VerifyResetCode(c *gin.Context) {
+	ctx := c.Request.Context()
+	var request struct {
+		Email string `json:"email" binding:"required"`
+		Code  string `json:"code" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		return
+	}
+
+	appErr := ac.authUC.VerifyResetCode(ctx, request.Email, request.Code)
+	if appErr != nil {
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Code verified successfully"})
+}
+
+func (ac *AuthController) ResetPassword(c *gin.Context) {
+	ctx := c.Request.Context()
+	var request struct {
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		return
+	}
+
+	appErr := ac.authUC.ResetPassword(ctx, request.Email, request.Password)
+	if appErr != nil {
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 
 func (ac *AuthController) ResendVerificationEmail(c *gin.Context) {

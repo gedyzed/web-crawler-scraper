@@ -21,6 +21,10 @@ type IAuthUsecase interface {
 	RefreshToken(ctx context.Context, accessToken string) (string, string, *domain.AppError)
 	SendVerificationEmail(ctx context.Context, email string) *domain.AppError
 	VerifyEmail(ctx context.Context, email string, code int64) *domain.AppError
+	ForgotPassword(ctx context.Context, email string) *domain.AppError
+	VerifyResetCode(ctx context.Context, email string, code string) *domain.AppError
+	ResetPassword(ctx context.Context, email string, password string) *domain.AppError
+	GetUserByID(ctx context.Context, id string) (*domain.User, *domain.AppError)
 }
 
 type IRateLimiter interface {
@@ -424,6 +428,50 @@ func (ac *authUsecase) VerifyEmail(ctx context.Context, email string, code int64
 
 	// Delete the used verification code
 	ac.repo.DeleteVerificationCode(ctx, email)
-
 	return nil
+}
+
+func (ac *authUsecase) GetUserByID(ctx context.Context, id string) (*domain.User, *domain.AppError) {
+	return ac.repo.FindByID(ctx, id)
+}
+
+func (ac *authUsecase) ForgotPassword(ctx context.Context, email string) *domain.AppError {
+	// check if user exists
+	user, err := ac.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return &domain.AppError{Message: domain.ErrUserNotFound, HttpStatus: 404}
+	}
+
+	// Generate and send reset code (reusing verification code logic for simplicity if appropriate, or separate repo call)
+	return ac.SendVerificationEmail(ctx, email)
+}
+
+func (ac *authUsecase) VerifyResetCode(ctx context.Context, email string, code string) *domain.AppError {
+	// Convert code to int64
+	var codeInt int64
+	_, err_ := fmt.Sscanf(code, "%d", &codeInt)
+	if err_ != nil {
+		return &domain.AppError{Message: domain.ErrInvalidInputFormat, HttpStatus: 400}
+	}
+
+	return ac.VerifyEmail(ctx, email, codeInt) // Reusing VerifyEmail logic as it checks code existence and validity
+}
+
+func (ac *authUsecase) ResetPassword(ctx context.Context, email string, password string) *domain.AppError {
+	user, err := ac.repo.FindByEmail(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	hashedPassword, err := ac.passwordService.HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	user.Password = hashedPassword
+	_, err = ac.repo.Update(ctx, user)
+	return err
 }

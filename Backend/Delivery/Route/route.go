@@ -9,7 +9,7 @@ import (
 
 func AuthRoutes(router *gin.Engine,
 	authHandler *controller.AuthController,
-
+	middlewares middleware.IMiddleware,
 ) {
 
 	auth := router.Group("auth")
@@ -21,7 +21,17 @@ func AuthRoutes(router *gin.Engine,
 		auth.GET("oauth/github-callback", authHandler.GithubOAuthCallBack)
 		auth.POST("/resend-email", authHandler.ResendVerificationEmail)
 		auth.POST("/verify-email", authHandler.VerifyEmail)
-		auth.POST("/me", authHandler.RefreshToken)
+		auth.POST("/refresh", authHandler.RefreshToken)
+		auth.POST("/forgot-password", authHandler.ForgotPassword)
+		auth.POST("/verify-reset-code", authHandler.VerifyResetCode)
+		auth.POST("/reset-password", authHandler.ResetPassword)
+	}
+
+	// Profile route
+	profile := router.Group("auth/me")
+	profile.Use(middlewares.AuthMiddleware())
+	{
+		profile.GET("", authHandler.GetProfile)
 	}
 }
 
@@ -35,11 +45,16 @@ func CrawlerAndScraperRoutes(
 	// crawler routes
 	crawl := router.Group("crawl")
 	crawl.Use(middlewares.AuthMiddleware())
-	crawl.GET("", crawlerHandler.Crawler)
+	crawl.POST("", crawlerHandler.Crawler)
 
 	// scraper routes
 	scrape := router.Group("scrape")
 	scrape.Use(middlewares.AuthMiddleware())
-	scrape.GET("", scraperHandler.Scrape)
+	scrape.POST("", scraperHandler.Scrape)
+
+	// history routes
+	history := router.Group("history")
+	history.Use(middlewares.AuthMiddleware())
+	history.GET("", crawlerHandler.GetHistory)
 
 }

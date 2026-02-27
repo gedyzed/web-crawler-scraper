@@ -1,4 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import api from '../lib/api'
+import Cookies from 'js-cookie'
 
 const CODE_LENGTH = 6
 const RESEND_COOLDOWN = 60
@@ -51,24 +53,26 @@ interface AuthState {
 
 export const loginUser = createAsyncThunk(
     'auth/loginUser',
-    async ({ email }: { email: string; password: string }, { rejectWithValue }) => {
+    async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500))
-            return { email }
+            const response = await api.post('/auth/login', { email, password })
+            const { token, user } = response.data
+            Cookies.set('accessToken', token, { expires: 1 / 24 }) // Set access token in cookie for 1 hour
+            return user
         } catch (err: any) {
-            return rejectWithValue(err.message || 'Login failed')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Login failed')
         }
     }
 )
 
 export const signupUser = createAsyncThunk(
     'auth/signupUser',
-    async ({ name, email }: { name: string; email: string; password: string }, { rejectWithValue }) => {
+    async ({ name, email, password }: { name: string; email: string; password: string }, { rejectWithValue }) => {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500))
-            return { name, email }
+            const response = await api.post('/auth/register', { name, email, password })
+            return response.data
         } catch (err: any) {
-            return rejectWithValue(err.message || 'Signup failed')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Signup failed')
         }
     }
 )
@@ -77,10 +81,10 @@ export const sendResetCode = createAsyncThunk(
     'auth/sendResetCode',
     async ({ email }: { email: string }, { rejectWithValue }) => {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            await api.post('/auth/forgot-password', { email })
             return { email }
         } catch (err: any) {
-            return rejectWithValue(err.message || 'Failed to send code')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to send code')
         }
     }
 )
@@ -89,58 +93,64 @@ export const verifyResetCode = createAsyncThunk(
     'auth/verifyResetCode',
     async ({ email, code }: { email: string; code: string }, { rejectWithValue }) => {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500))
-            if (code.length === CODE_LENGTH) {
-                return { email, code }
-            }
-            return rejectWithValue('Invalid code. Please try again.')
+            const response = await api.post('/auth/verify-reset-code', { email, code })
+            return response.data
         } catch (err: any) {
-            return rejectWithValue(err.message || 'Verification failed')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Verification failed')
         }
     }
 )
 
 export const resendResetCode = createAsyncThunk(
     'auth/resendResetCode',
-    async (_, { rejectWithValue }) => {
+    async ({ email }: { email: string }, { rejectWithValue }) => {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000))
+            await api.post('/auth/forgot-password', { email })
             return true
         } catch (err: any) {
-            return rejectWithValue(err.message || 'Failed to resend code')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to resend code')
         }
     }
 )
 
 export const verifyEmailCode = createAsyncThunk(
     'auth/verifyEmailCode',
-    async ({ code }: { code: string }, { rejectWithValue }) => {
+    async ({ email, code }: { email: string; code: string }, { rejectWithValue }) => {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500))
-            if (code.length === CODE_LENGTH) {
-                return true
-            }
-            return rejectWithValue('Invalid verification code. Please try again.')
+            await api.post('/auth/verify-email', { email, code: parseInt(code) })
+            return true
         } catch (err: any) {
-            return rejectWithValue(err.message || 'Verification failed')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Verification failed')
         }
     }
 )
 
 export const updatePassword = createAsyncThunk(
     'auth/updatePassword',
-    async ({ password, confirmPassword }: { password: string; confirmPassword: string }, { rejectWithValue }) => {
+    async ({ email, password, confirmPassword }: { email: string; password: string; confirmPassword: string }, { rejectWithValue }) => {
         if (password !== confirmPassword) {
             return rejectWithValue('Passwords do not match')
         }
-        if (password.length < 8) {
-            return rejectWithValue('Password must be at least 8 characters')
-        }
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            await api.post('/auth/reset-password', { email, password })
             return true
         } catch (err: any) {
-            return rejectWithValue(err.message || 'Failed to update password')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to update password')
+        }
+    }
+)
+
+export const checkAuth = createAsyncThunk(
+    'auth/checkAuth',
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = Cookies.get('accessToken')
+            if (!token) return rejectWithValue('No token found')
+            const response = await api.get('/auth/me')
+            return response.data
+        } catch (err: any) {
+            Cookies.remove('accessToken')
+            return rejectWithValue(err.response?.data?.message || err.message || 'Session expired')
         }
     }
 )
@@ -202,6 +212,7 @@ const authSlice = createSlice({
             state.isAuthenticated = false
             state.user = null
             state.login = { ...initialState.login }
+            Cookies.remove('accessToken')
         },
 
         // ── Signup ──
@@ -362,6 +373,17 @@ const authSlice = createSlice({
             .addCase(updatePassword.rejected, (state, action) => {
                 state.updatePassword.loading = false
                 state.updatePassword.error = (action.payload as string) || 'Update failed'
+            })
+
+        // ── Check Auth ──
+        builder
+            .addCase(checkAuth.fulfilled, (state, action) => {
+                state.isAuthenticated = true
+                state.user = action.payload
+            })
+            .addCase(checkAuth.rejected, (state) => {
+                state.isAuthenticated = false
+                state.user = null
             })
     },
 })

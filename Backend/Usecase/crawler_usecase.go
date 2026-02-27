@@ -4,11 +4,13 @@ import (
 	"context"
 	"time"
 	domain "web_crawler_scraper/Domain"
+
 	"github.com/google/uuid"
 )
 
 type ICrawlerUsecase interface {
 	Crawl(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError)
+	FetchHistory(ctx context.Context, userID string) ([]domain.History, *domain.AppError)
 }
 
 type crawlerUsecase struct {
@@ -64,4 +66,8 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 	c.repo.SaveHistory(ctx, history)
 
 	return result, nil
+}
+
+func (c *crawlerUsecase) FetchHistory(ctx context.Context, userID string) ([]domain.History, *domain.AppError) {
+	return c.repo.FindAllHistory(ctx, userID)
 }
