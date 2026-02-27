@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeft, Mail, Loader2, KeyRound, RotateCcw } from "lucide-react"
+import { ArrowLeft, Mail, Loader2, KeyRound, RotateCcw, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
     setForgotPasswordField,
     setForgotPasswordCode,
@@ -98,7 +99,7 @@ export default function ForgotPasswordPage() {
 
     const handleResend = () => {
         if (timer > 0) return
-        dispatch(resendResetCode()).then(() => {
+        dispatch(resendResetCode({ email })).then(() => {
             inputRefs.current[0]?.focus()
         })
     }
@@ -184,7 +185,12 @@ export default function ForgotPasswordPage() {
                                         />
                                     ))}
                                 </div>
-                                {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+                                {error && (
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
+                                )}
                                 {loading && (
                                     <div className="flex items-center justify-center gap-2 text-sm text-neutral-500">
                                         <Loader2 className="h-4 w-4 animate-spin" />

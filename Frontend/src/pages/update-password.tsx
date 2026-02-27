@@ -13,8 +13,9 @@ import {
     FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Link } from "react-router-dom"
-import { ArrowLeft, LockKeyhole, Loader2, CheckCircle2 } from "lucide-react"
+import { Link, useLocation } from "react-router-dom"
+import { ArrowLeft, LockKeyhole, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
     setUpdatePasswordField,
     resetUpdatePassword,
@@ -24,6 +25,8 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks"
 
 export default function UpdatePasswordPage() {
     const dispatch = useAppDispatch()
+    const location = useLocation()
+    const email = location.state?.email || ""
 
     const { password, confirmPassword, loading, success, error } = useAppSelector(
         (state) => state.auth.updatePassword
@@ -38,7 +41,7 @@ export default function UpdatePasswordPage() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        dispatch(updatePassword({ password, confirmPassword }))
+        dispatch(updatePassword({ email, password, confirmPassword }))
     }
 
     return (
@@ -114,7 +117,12 @@ export default function UpdatePasswordPage() {
                                             required
                                         />
                                     </Field>
-                                    {error && <p className="text-sm text-red-500">{error}</p>}
+                                    {error && (
+                                        <Alert variant="destructive">
+                                            <AlertCircle className="h-4 w-4" />
+                                            <AlertDescription>{error}</AlertDescription>
+                                        </Alert>
+                                    )}
                                     <Button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-700 shadow-cyan-200/50" disabled={loading}>
                                         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update password"}
                                     </Button>

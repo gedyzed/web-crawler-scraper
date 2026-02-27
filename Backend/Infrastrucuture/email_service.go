@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"bytes"
 	"html/template"
+	"crypto/tls"
 	domain "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
 
@@ -50,6 +51,11 @@ func (s *emailService) SendEmail(subject, msg, to string) *domain.AppError {
 			s.config.Username, 
 			s.config.AppPassword,
 		)
+	
+	dailer.TLSConfig = &tls.Config{
+		InsecureSkipVerify: true,
+	}  
+	
 	
 	if err := dailer.DialAndSend(message); err != nil {
 		logrus.WithError(err).Error(domain.ErrInternalServer)

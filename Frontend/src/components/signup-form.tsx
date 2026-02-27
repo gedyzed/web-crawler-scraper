@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Link, useNavigate } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { setSignupField, signupUser } from "@/store/authSlice"
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface SignupFormProps extends React.ComponentPropsWithoutRef<"form"> { }
 
@@ -45,9 +46,10 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                 </div>
 
                 {error && (
-                    <p className="text-sm text-red-500 text-center bg-red-50 border border-red-100 rounded-lg py-2 px-3">
-                        {error}
-                    </p>
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
                 )}
 
                 <Field>

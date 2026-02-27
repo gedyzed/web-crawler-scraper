@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Link } from "react-router-dom"
-import { ShieldCheck, Loader2, CheckCircle2, RotateCcw } from "lucide-react"
+import { ShieldCheck, Loader2, CheckCircle2, RotateCcw, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
     setVerifyEmailCode,
     clearVerifyEmailError,
@@ -27,6 +28,7 @@ export default function VerifyEmailPage() {
     const { code, loading, verified, error } = useAppSelector(
         (state) => state.auth.verifyEmail
     )
+    const signupEmail = useAppSelector((state) => state.auth.signup.email)
 
     // Focus first input on mount, cleanup on unmount
     useEffect(() => {
@@ -52,7 +54,7 @@ export default function VerifyEmailPage() {
         const newCode = [...code]
         newCode[index] = digit
         if (newCode.every((d) => d !== "") && newCode.join("").length === CODE_LENGTH) {
-            dispatch(verifyEmailCode({ code: newCode.join("") }))
+            dispatch(verifyEmailCode({ email: signupEmail, code: newCode.join("") }))
         }
     }
 
@@ -75,7 +77,7 @@ export default function VerifyEmailPage() {
         const nextEmpty = newCode.findIndex((d) => d === "")
         if (nextEmpty === -1) {
             inputRefs.current[CODE_LENGTH - 1]?.focus()
-            dispatch(verifyEmailCode({ code: newCode.join("") }))
+            dispatch(verifyEmailCode({ email: signupEmail, code: newCode.join("") }))
         } else {
             inputRefs.current[nextEmpty]?.focus()
         }
@@ -83,6 +85,7 @@ export default function VerifyEmailPage() {
 
     const handleResend = () => {
         dispatch(resetVerifyEmail())
+        // If there's a resend email thunk, call it here with signupEmail
         setTimeout(() => inputRefs.current[0]?.focus(), 0)
     }
 
@@ -157,7 +160,10 @@ export default function VerifyEmailPage() {
                                 </div>
 
                                 {error && (
-                                    <p className="text-sm text-red-500 text-center">{error}</p>
+                                    <Alert variant="destructive">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertDescription>{error}</AlertDescription>
+                                    </Alert>
                                 )}
 
                                 {loading && (
