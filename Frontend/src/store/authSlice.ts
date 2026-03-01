@@ -38,6 +38,7 @@ interface AuthState {
         code: string[];
         loading: boolean;
         verified: boolean;
+        timer: number;
         error: string;
     };
     updatePassword: {
@@ -125,6 +126,18 @@ export const verifyEmailCode = createAsyncThunk(
     }
 )
 
+export const resendVerificationCode = createAsyncThunk(
+    'auth/resendVerificationCode',
+    async ({ email }: { email: string }, { rejectWithValue }) => {
+        try {
+            await api.post('/auth/resend-email', { email })
+            return true
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to resend code')
+        }
+    }
+)
+
 export const updatePassword = createAsyncThunk(
     'auth/updatePassword',
     async ({ email, password, confirmPassword }: { email: string; password: string; confirmPassword: string }, { rejectWithValue }) => {
@@ -184,6 +197,7 @@ const initialState: AuthState = {
         code: Array(CODE_LENGTH).fill(''),
         loading: false,
         verified: false,
+        timer: 0,
         error: '',
     },
     updatePassword: {
@@ -253,6 +267,11 @@ const authSlice = createSlice({
         clearVerifyEmailError: (state) => {
             state.verifyEmail.error = ''
         },
+        decrementVerifyEmailTimer: (state) => {
+            if (state.verifyEmail.timer > 0) {
+                state.verifyEmail.timer -= 1
+            }
+        },
         resetVerifyEmail: (state) => {
             state.verifyEmail = { ...initialState.verifyEmail, code: Array(CODE_LENGTH).fill('') }
         },
@@ -294,6 +313,7 @@ const authSlice = createSlice({
             })
             .addCase(signupUser.fulfilled, (state) => {
                 state.signup.loading = false
+                state.verifyEmail.timer = RESEND_COOLDOWN
             })
             .addCase(signupUser.rejected, (state, action) => {
                 state.signup.loading = false
@@ -385,6 +405,21 @@ const authSlice = createSlice({
                 state.isAuthenticated = false
                 state.user = null
             })
+
+        // ── Resend Verification Code ──
+        builder
+            .addCase(resendVerificationCode.pending, (state) => {
+                state.verifyEmail.loading = true
+            })
+            .addCase(resendVerificationCode.fulfilled, (state) => {
+                state.verifyEmail.loading = false
+                state.verifyEmail.timer = RESEND_COOLDOWN
+                state.verifyEmail.code = Array(CODE_LENGTH).fill('')
+            })
+            .addCase(resendVerificationCode.rejected, (state, action) => {
+                state.verifyEmail.loading = false
+                state.verifyEmail.error = (action.payload as string) || 'Failed to resend'
+            })
     },
 })
 
@@ -401,6 +436,7 @@ export const {
     resetForgotPassword,
     setVerifyEmailCode,
     clearVerifyEmailError,
+    decrementVerifyEmailTimer,
     resetVerifyEmail,
     setUpdatePasswordField,
     clearUpdatePasswordError,

@@ -16,6 +16,8 @@ import {
     clearVerifyEmailError,
     resetVerifyEmail,
     verifyEmailCode,
+    decrementVerifyEmailTimer,
+    resendVerificationCode,
 } from "@/store/authSlice"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 
@@ -25,7 +27,7 @@ export default function VerifyEmailPage() {
     const dispatch = useAppDispatch()
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-    const { code, loading, verified, error } = useAppSelector(
+    const { code, loading, verified, timer, error } = useAppSelector(
         (state) => state.auth.verifyEmail
     )
     const signupEmail = useAppSelector((state) => state.auth.signup.email)
@@ -37,6 +39,19 @@ export default function VerifyEmailPage() {
             dispatch(resetVerifyEmail())
         }
     }, [dispatch])
+
+    // Timer countdown
+    useEffect(() => {
+        let interval: NodeJS.Timeout
+        if (timer > 0) {
+            interval = setInterval(() => {
+                dispatch(decrementVerifyEmailTimer())
+            }, 1000)
+        }
+        return () => {
+            if (interval) clearInterval(interval)
+        }
+    }, [timer, dispatch])
 
     const handleChange = (index: number, value: string) => {
         if (!/^\d*$/.test(value)) return // digits only
@@ -84,9 +99,10 @@ export default function VerifyEmailPage() {
     }
 
     const handleResend = () => {
-        dispatch(resetVerifyEmail())
-        // If there's a resend email thunk, call it here with signupEmail
-        setTimeout(() => inputRefs.current[0]?.focus(), 0)
+        if (timer > 0) return
+        dispatch(resendVerificationCode({ email: signupEmail })).then(() => {
+            inputRefs.current[0]?.focus()
+        })
     }
 
     return (
@@ -175,13 +191,14 @@ export default function VerifyEmailPage() {
 
                                 <div className="flex flex-col items-center gap-3">
                                     <p className="text-sm text-neutral-500">
-                                        Didn't receive the code?
+                                        Didn't receive the code? {timer > 0 && <span>Resend in {timer}s</span>}
                                     </p>
                                     <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={handleResend}
-                                        className="text-sm text-neutral-700 hover:text-neutral-900"
+                                        disabled={timer > 0 || loading}
+                                        className="text-cyan-600 hover:text-cyan-700 font-medium"
                                     >
                                         <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                                         Resend code
