@@ -87,7 +87,10 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{cfg.App.Domain},
+		AllowOrigins:     []string{
+			cfg.App.Domain, 
+			"https://web-crawler-scraper.vercel.app",
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization", "Origin"},
 		ExposeHeaders:    []string{"Content-Length"},
