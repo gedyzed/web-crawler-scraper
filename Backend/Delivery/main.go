@@ -6,6 +6,7 @@ import (
 	"web_crawler_scraper/Delivery/controller"
 	domain "web_crawler_scraper/Domain"
 	infrastructure "web_crawler_scraper/Infrastrucuture"
+	emailService "web_crawler_scraper/Infrastrucuture/email_service"
 	"web_crawler_scraper/Infrastrucuture/config"
 	crawlerservicego "web_crawler_scraper/Infrastrucuture/crawler_service.go"
 	middleware "web_crawler_scraper/Infrastrucuture/middleware"
@@ -58,7 +59,7 @@ func main() {
 	// services
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
 	passwordService := infrastructure.NewPasswordService()
-	emailService := infrastructure.NewEmailService(&cfg.Email)
+	emailService := emailService.NewEmailService(&cfg.Email)
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
 	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, *redis)
 	scraperFactory := crawlerservicego.NewScraperServiceFactory(&cfg.Crawler)

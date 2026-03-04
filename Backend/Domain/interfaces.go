@@ -48,7 +48,7 @@ type IPasswordService interface {
 }
 
 type IEmailService interface {
-	SendEmail(string, string, string) *AppError
+	SendEmail(name, subject, otp string, to []string) *AppError
 }
 
 // Crawler & Scraper Results

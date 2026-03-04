@@ -376,9 +376,10 @@ func (ac *authUsecase) SendVerificationEmail(ctx context.Context, email string) 
 	}
 
 	return ac.emailServcie.SendEmail(
+		"user",
 		domain.EmailVerification,
-		fmt.Sprintf(domain.EmailVerificationMsg, uniqueCode),
-		email,
+	 	fmt.Sprintf("%d", uniqueCode),
+		[]string{email},
 	)
 }
 
