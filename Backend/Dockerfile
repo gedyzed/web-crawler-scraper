@@ -25,6 +25,7 @@ RUN apk add --no-cache ca-certificates
 # Copy binary and config from builder
 COPY --from=builder /app/app .
 COPY --from=builder /app/config.yaml .
+COPY --from=builder /app/Infrastrucuture/email_service/templates ./Infrastrucuture/email_service/templates
 EXPOSE 8080
 
 CMD ["./app"]
