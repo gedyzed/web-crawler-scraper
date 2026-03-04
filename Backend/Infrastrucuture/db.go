@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	// "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
 
 	logrus "github.com/sirupsen/logrus"
@@ -31,8 +32,9 @@ func DBConnect(cfg *config.DBConfig) *gorm.DB {
 	// 	domain.Session{},
 	// 	domain.RefreshToken{},
 	// 	domain.AuthProvider{},
-	//  domain.VerificationCode{},
+	//  	domain.VerificationCode{},
 	// )
 
+	
 	return db
 }

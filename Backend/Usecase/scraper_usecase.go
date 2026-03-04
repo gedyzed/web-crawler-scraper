@@ -45,6 +45,7 @@ func (s *scraperUsecase) Scrape(ctx context.Context, input *domain.URLFrontier) 
 			HID:          uuid.New().String(),
 			UserID:       input.UserID,
 			URL:          input.URL,
+			Type:         domain.TypeScraped,
 			Status:       "failed",
 			ErrorMessage: err.Message,
 			FetchedAt:    time.Now(),
@@ -68,7 +69,9 @@ func (s *scraperUsecase) Scrape(ctx context.Context, input *domain.URLFrontier) 
 	history := &domain.History{
 		HID:       uuid.New().String(),
 		UserID:    input.UserID,
+		ResultID:  result.CRID,
 		URL:       input.URL,
+		Type:      domain.TypeScraped,
 		Status:    "success",
 		FetchedAt: time.Now(),
 	}

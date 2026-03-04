@@ -145,6 +145,12 @@ var (
 	LogHTMLParseError   = "Error parsing HTML"
 )
 
+// History - Types
+var (
+	TypeScraped = "scraped"
+	TypeCrawled = "crawled"
+)
+
 // Email - Log Messages
 var (
 	LogFailedSendEmail     = "Failed to Send Email"

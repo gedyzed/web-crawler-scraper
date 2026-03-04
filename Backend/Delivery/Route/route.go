@@ -45,12 +45,12 @@ func CrawlerAndScraperRoutes(
 	// crawler routes
 	crawl := router.Group("crawl")
 	crawl.Use(middlewares.AuthMiddleware())
-	crawl.POST("", crawlerHandler.Crawler)
+	crawl.GET("", crawlerHandler.Crawler)
 
 	// scraper routes
 	scrape := router.Group("scrape")
 	scrape.Use(middlewares.AuthMiddleware())
-	scrape.POST("", scraperHandler.Scrape)
+	scrape.GET("", scraperHandler.Scrape)
 
 	// history routes
 	history := router.Group("history")

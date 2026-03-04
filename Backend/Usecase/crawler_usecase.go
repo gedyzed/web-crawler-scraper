@@ -50,6 +50,7 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 			HID:          uuid.New().String(),
 			UserID:       input.UserID,
 			URL:          input.URL,
+			Type:         domain.TypeCrawled,
 			Status:       "failed",
 			ErrorMessage: err.Message,
 			FetchedAt:    time.Now(),
@@ -70,7 +71,9 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 	history := &domain.History{
 		HID:       uuid.New().String(),
 		UserID:    input.UserID,
+		ResultID:  result.CRID,
 		URL:       input.URL,
+		Type:      domain.TypeCrawled,
 		Status:    "success",
 		FetchedAt: time.Now(),
 	}
