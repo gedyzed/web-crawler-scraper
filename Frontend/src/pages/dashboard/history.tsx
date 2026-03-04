@@ -4,26 +4,23 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
     Globe,
-    Search,
     Clock,
     CheckCircle2,
     XCircle,
-    Layers,
     ExternalLink,
     Trash2,
     History as HistoryIcon,
     ChevronDown,
     ChevronUp,
     FileText,
-    Send,
-    ArrowDownLeft,
     Code2,
 } from "lucide-react"
 import { clearHistory } from "@/store/dashboardSlice"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { type Job } from "@/store/dashboardSlice"
+import { type HistoryItem } from "@/store/dashboardSlice"
 
 function formatDate(dateStr: string) {
+    if (!dateStr) return "N/A"
     const date = new Date(dateStr)
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
@@ -60,7 +57,7 @@ function JsonBlock({ data, label }: JsonBlockProps) {
 }
 
 interface HistoryCardProps {
-    job: Job
+    job: HistoryItem
 }
 
 function HistoryCard({ job }: HistoryCardProps) {
@@ -76,15 +73,8 @@ function HistoryCard({ job }: HistoryCardProps) {
                 <CardContent className="p-5">
                     <div className="flex items-center gap-4">
                         {/* Icon */}
-                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${job.type === "crawl"
-                            ? "bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10"
-                            : "bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40"
-                            }`}>
-                            {job.type === "crawl" ? (
-                                <Globe className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
-                            ) : (
-                                <Search className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-                            )}
+                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10`}>
+                            <Globe className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
                         </div>
 
                         {/* Main info */}
@@ -104,21 +94,8 @@ function HistoryCard({ job }: HistoryCardProps) {
                             <div className="flex items-center gap-2.5 text-xs text-neutral-400">
                                 <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
-                                    {formatDate(job.timestamp)}
+                                    {formatDate(job.fetched_at)}
                                 </span>
-                                <span className="text-neutral-200 dark:text-white/10">·</span>
-                                <span>{job.duration}</span>
-                                <span className="text-neutral-200 dark:text-white/10">·</span>
-                                <span>{job.pagesFound} {job.pagesFound === 1 ? "page" : "pages"}</span>
-                                {job.type === "crawl" && (
-                                    <>
-                                        <span className="text-neutral-200 dark:text-white/10">·</span>
-                                        <span className="flex items-center gap-1">
-                                            <Layers className="h-3 w-3" />
-                                            Depth {job.depth}
-                                        </span>
-                                    </>
-                                )}
                             </div>
                         </div>
 
@@ -126,22 +103,19 @@ function HistoryCard({ job }: HistoryCardProps) {
                         <div className="flex items-center gap-3 shrink-0">
                             <Badge
                                 variant="outline"
-                                className={`text-xs capitalize font-medium ${job.type === "crawl"
-                                    ? "bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-white/10"
-                                    : "bg-cyan-50 dark:bg-cyan-950/30 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-900/40"
-                                    }`}
+                                className="text-xs bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-white/10"
                             >
-                                {job.type}
+                                {job.status}
                             </Badge>
-                            {job.status === "completed" ? (
+                            {job.response_code === 200 ? (
                                 <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
                                     <CheckCircle2 className="h-4.5 w-4.5" />
-                                    <span className="text-xs font-medium hidden sm:inline">Completed</span>
+                                    <span className="text-xs font-medium hidden sm:inline">Success</span>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-1.5 text-red-500 dark:text-red-400">
                                     <XCircle className="h-4.5 w-4.5" />
-                                    <span className="text-xs font-medium hidden sm:inline">Failed</span>
+                                    <span className="text-xs font-medium hidden sm:inline">Error</span>
                                 </div>
                             )}
                             <Button
@@ -154,7 +128,7 @@ function HistoryCard({ job }: HistoryCardProps) {
                                     const url = URL.createObjectURL(blob)
                                     const a = document.createElement("a")
                                     a.href = url
-                                    a.download = `job-${job.id}.json`
+                                    a.download = `job-${job.hid}.json`
                                     a.click()
                                     URL.revokeObjectURL(url)
                                 }}
@@ -179,46 +153,20 @@ function HistoryCard({ job }: HistoryCardProps) {
             {expanded && (
                 <div className="border-t border-neutral-200 dark:border-white/10 bg-neutral-50/50 dark:bg-black/20">
                     <div className="p-5 space-y-4">
-                        {/* Tabs: Request / Response */}
-                        <div className="grid md:grid-cols-2 gap-4">
-                            {/* Request */}
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                                    <Send className="h-3.5 w-3.5 text-cyan-600" />
-                                    Request
-                                </div>
-                                {job.request && (
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <Badge className="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 text-xs font-mono">{job.request.method}</Badge>
-                                            <span className="text-sm text-neutral-600 dark:text-neutral-400 font-mono">{job.request.endpoint}</span>
-                                        </div>
-                                        <JsonBlock data={job.request.body} label="Request Body" />
-                                    </div>
-                                )}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                                Status Details
+                                <Badge
+                                    variant="outline"
+                                    className={`text-xs font-mono ml-1 ${job.response_code >= 200 && job.response_code < 300
+                                        ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
+                                        : "text-red-700 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
+                                        }`}
+                                >
+                                    {job.response_code}
+                                </Badge>
                             </div>
-
-                            {/* Response */}
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                                    <ArrowDownLeft className="h-3.5 w-3.5 text-cyan-600" />
-                                    Response
-                                    {job.response && (
-                                        <Badge
-                                            variant="outline"
-                                            className={`text-xs font-mono ml-1 ${job.response.statusCode >= 200 && job.response.statusCode < 300
-                                                ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
-                                                : "text-red-700 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
-                                                }`}
-                                        >
-                                            {job.response.statusCode}
-                                        </Badge>
-                                    )}
-                                </div>
-                                {job.response && (
-                                    <JsonBlock data={job.response} label="Response Body" />
-                                )}
-                            </div>
+                            <JsonBlock data={job} label="Full Result Data" />
                         </div>
                     </div>
                 </div>
@@ -283,7 +231,7 @@ export default function HistoryPage() {
             ) : (
                 <div className="space-y-3">
                     {history.map((job) => (
-                        <HistoryCard key={job.id} job={job} />
+                        <HistoryCard key={job.hid} job={job} />
                     ))}
                 </div>
             )}

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import api from '../lib/api'
 
-// ─── Interfaces ──────────────────────────────────────────
+// ─── Interfaces (matching backend domain structs) ────────
 
 export interface JobConfig {
     maxPages: number;
@@ -10,52 +10,54 @@ export interface JobConfig {
     deniedPatterns: string[];
 }
 
-export interface CrawlPage {
-    url: string;
-    title: string;
-    statusCode: number;
-    links: number;
-}
-
-export interface ScrapeData {
-    title: string;
+export interface Product {
+    name: string;
+    price: string;
+    image_url: string;
+    currency: string;
     description: string;
-    content: string | { text: string; html: string };
-    links: string[];
-}
-
-export interface JobMetadata {
-    totalLinks?: number;
-    avgResponseTime?: string;
-    crawlDuration?: string;
-    language?: string;
-    responseTime?: string;
-    contentLength?: string;
-}
-
-export interface Job {
-    id: number;
     url: string;
-    type: 'crawl' | 'scrape';
-    status: 'completed' | 'failed';
-    timestamp: string;
-    pagesFound: number;
-    depth: number;
-    duration: string;
-    request: {
-        method: string;
-        endpoint: string;
-        headers: Record<string, string>;
-        body: any;
-    };
-    response: {
-        statusCode: number;
-        pages?: CrawlPage[];
-        data?: ScrapeData;
-        metadata?: JobMetadata;
-        error?: string;
-        message?: string;
-    };
+}
+
+export interface LinkItem {
+    URL: string;
+    Type: string;
+}
+
+export interface PageResult {
+    PageID: string;
+    ResultID: string;
+    URL: string;
+    ParentURL: string;
+    Depth: number;
+    StatusCode: number;
+    ContentType: string;
+    ResponseTimeMS: number;
+    FetchedAt: string;
+    Title: string;
+    MetaDescription: string;
+    TextContent: string;
+    Links: LinkItem[] | null;
+    Products: Product[] | null;
+    ID: number;
+}
+
+export interface CrawlerResult {
+    CRID: string;
+    UserID: string;
+    Pages: PageResult[];
+}
+
+export interface HistoryItem {
+    hid: string;
+    user_id?: string;
+    url: string;
+    status: string;
+    response_code: number;
+    error_message: string;
+    fetched_at: string;
+    ID?: number;
+    CreatedAt?: string;
 }
 
 interface DashboardState {
@@ -64,7 +66,10 @@ interface DashboardState {
     jobType: 'scrape' | 'crawl';
     jobLoading: boolean;
     jobError: string;
-    history: Job[];
+    history: HistoryItem[];
+    lastResult: CrawlerResult | null;
+    sampleScrapeResult: CrawlerResult;
+    sampleCrawlResult: CrawlerResult;
     searchQuery: string;
     isSearchOpen: boolean;
     newAllowedPattern: string;
@@ -79,14 +84,14 @@ export const fetchHistory = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await api.get('/history')
-            return response.data
+            return response.data as HistoryItem[]
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch history')
+            return rejectWithValue(err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to fetch history')
         }
     }
 )
 
-export const runJob = createAsyncThunk<Job, { url: string; type: 'crawl' | 'scrape'; config: JobConfig }>(
+export const runJob = createAsyncThunk<CrawlerResult, { url: string; type: 'crawl' | 'scrape'; config: JobConfig }>(
     'dashboard/runJob',
     async ({ url, type, config }, { rejectWithValue }) => {
         try {
@@ -96,9 +101,10 @@ export const runJob = createAsyncThunk<Job, { url: string; type: 'crawl' | 'scra
                 : { url }
 
             const response = await api.post(endpoint, body)
-            return response.data
+            // Backend returns { message: CrawlerResult }
+            return response.data.message as CrawlerResult
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.message || err.message || 'Job failed')
+            return rejectWithValue(err.response?.data?.error || err.response?.data?.message || err.message || 'Job failed')
         }
     }
 )
@@ -114,11 +120,99 @@ const initialState: DashboardState = {
     },
     // Job execution
     jobUrl: '',
-    jobType: 'scrape', // 'scrape' | 'crawl'
+    jobType: 'scrape',
     jobLoading: false,
     jobError: '',
     // History
     history: [],
+    lastResult: null,
+    // Sample data matching real API response shape for landing page demo
+    sampleScrapeResult: {
+        CRID: 'demo-scrape-001',
+        UserID: 'demo-user',
+        Pages: [
+            {
+                PageID: 'page-001',
+                ResultID: 'demo-scrape-001',
+                URL: 'https://woocommerce.com',
+                ParentURL: '',
+                Depth: 0,
+                StatusCode: 200,
+                ContentType: 'text/html; charset=UTF-8',
+                ResponseTimeMS: 4949,
+                FetchedAt: new Date().toISOString(),
+                Title: 'WooCommerce - Open Source ecommerce Platform',
+                MetaDescription: 'WooCommerce is a customizable, open-source ecommerce platform built on WordPress.',
+                TextContent: 'Forget cookie-cutter ecommerce. Every business is unique, and every store should be too. WooCommerce empowers you to build, sell, and grow on your terms.',
+                Links: [
+                    { URL: 'https://woocommerce.com/features', Type: 'internal' },
+                    { URL: 'https://woocommerce.com/pricing', Type: 'internal' },
+                ],
+                Products: null,
+                ID: 1,
+            },
+        ],
+    },
+    sampleCrawlResult: {
+        CRID: 'demo-crawl-001',
+        UserID: 'demo-user',
+        Pages: [
+            {
+                PageID: 'page-001',
+                ResultID: 'demo-crawl-001',
+                URL: 'https://example.com',
+                ParentURL: '',
+                Depth: 0,
+                StatusCode: 200,
+                ContentType: 'text/html; charset=UTF-8',
+                ResponseTimeMS: 320,
+                FetchedAt: new Date().toISOString(),
+                Title: 'Example Domain',
+                MetaDescription: 'Example domain for documentation.',
+                TextContent: 'This domain is for use in illustrative examples in documents.',
+                Links: [
+                    { URL: 'https://example.com/about', Type: 'internal' },
+                    { URL: 'https://example.com/contact', Type: 'internal' },
+                ],
+                Products: null,
+                ID: 1,
+            },
+            {
+                PageID: 'page-002',
+                ResultID: 'demo-crawl-001',
+                URL: 'https://example.com/about',
+                ParentURL: 'https://example.com',
+                Depth: 1,
+                StatusCode: 200,
+                ContentType: 'text/html; charset=UTF-8',
+                ResponseTimeMS: 210,
+                FetchedAt: new Date().toISOString(),
+                Title: 'About Us - Example',
+                MetaDescription: 'Learn more about Example.',
+                TextContent: 'We are a sample company used for demonstrations.',
+                Links: null,
+                Products: null,
+                ID: 2,
+            },
+            {
+                PageID: 'page-003',
+                ResultID: 'demo-crawl-001',
+                URL: 'https://example.com/contact',
+                ParentURL: 'https://example.com',
+                Depth: 1,
+                StatusCode: 404,
+                ContentType: 'text/html',
+                ResponseTimeMS: 85,
+                FetchedAt: new Date().toISOString(),
+                Title: 'Not Found',
+                MetaDescription: '',
+                TextContent: 'Page not found.',
+                Links: null,
+                Products: null,
+                ID: 3,
+            },
+        ],
+    },
     // Search
     searchQuery: '',
     isSearchOpen: false,
@@ -205,7 +299,7 @@ const dashboardSlice = createSlice({
             })
             .addCase(runJob.fulfilled, (state, action) => {
                 state.jobLoading = false
-                state.history.unshift(action.payload)
+                state.lastResult = action.payload
                 state.jobUrl = ''
             })
             .addCase(runJob.rejected, (state, action) => {

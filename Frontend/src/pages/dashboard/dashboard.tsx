@@ -112,18 +112,18 @@ export default function DashboardPage() {
                     <div className="space-y-2">
                         {recentJobs.map((job) => (
                             <div
-                                key={job.id}
+                                key={job.hid}
                                 className="flex items-center gap-3 px-4 py-3 rounded-xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.03] hover:shadow-sm transition-shadow"
                             >
-                                <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${job.type === "crawl" ? "bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10" : "bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-100 dark:border-cyan-900/40"}`}>
-                                    {job.type === "crawl" ? <Globe className="h-4 w-4 text-neutral-600 dark:text-neutral-400" /> : <Search className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />}
+                                <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10">
+                                    <Globe className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">{job.url}</p>
-                                    <p className="text-xs text-neutral-400">{job.type} · {job.pagesFound} {job.pagesFound === 1 ? "page" : "pages"} · {job.duration}</p>
+                                    <p className="text-xs text-neutral-400">{job.status} · {new Date(job.fetched_at).toLocaleDateString()}</p>
                                 </div>
-                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${job.status === "completed" ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>
-                                    {job.status}
+                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${job.response_code === 200 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>
+                                    {job.response_code === 200 ? "Completed" : "Failed"}
                                 </span>
                             </div>
                         ))}

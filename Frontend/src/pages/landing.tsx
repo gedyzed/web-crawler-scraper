@@ -115,14 +115,14 @@ function HeroSection() {
     const [result, setResult] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
-    const { mockScrapeData, mockCrawlData } = useAppSelector((state) => state.dashboard);
+    const { sampleScrapeResult, sampleCrawlResult } = useAppSelector((state) => state.dashboard);
 
     const handleRun = () => {
         if (!url.trim()) return;
         setLoading(true);
         setResult(null);
         setTimeout(() => {
-            setResult(activeTab === "scrape" ? mockScrapeData : mockCrawlData);
+            setResult(activeTab === "scrape" ? sampleScrapeResult : sampleCrawlResult);
             setLoading(false);
         }, 1500);
     };

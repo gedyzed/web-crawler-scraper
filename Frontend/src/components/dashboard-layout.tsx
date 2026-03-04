@@ -1,5 +1,5 @@
 import { Outlet, useLocation, Link, useNavigate } from "react-router-dom"
-import { Search, Globe, History, LayoutDashboard, User, Settings2, Command, X, type LucideIcon } from "lucide-react"
+import { Search, Globe, History, LayoutDashboard, User, Settings2, X, type LucideIcon } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
     SidebarInset,
@@ -62,7 +62,7 @@ export default function DashboardLayout() {
     )
 
     const filteredHistory = history.filter(job =>
-        job.url.toLowerCase().includes(searchQuery.toLowerCase())
+        job.url?.toLowerCase().includes(searchQuery.toLowerCase())
     ).slice(0, 5)
 
     return (
@@ -149,7 +149,7 @@ export default function DashboardLayout() {
                                                                 <div className="px-3 py-1.5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Recent Jobs</div>
                                                                 {filteredHistory.map(job => (
                                                                     <button
-                                                                        key={job.id}
+                                                                        key={job.hid}
                                                                         onClick={() => {
                                                                             navigate("/dashboard/history")
                                                                             dispatch(setIsSearchOpen(false))
@@ -157,11 +157,11 @@ export default function DashboardLayout() {
                                                                         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 text-left transition-colors group"
                                                                     >
                                                                         <div className="h-7 w-7 rounded-md bg-neutral-100 flex items-center justify-center text-neutral-500 group-hover:bg-cyan-50 group-hover:text-cyan-600">
-                                                                            {job.type === 'crawl' ? <Globe className="h-4 w-4" /> : <Command className="h-4 w-4" />}
+                                                                            <Globe className="h-4 w-4" />
                                                                         </div>
                                                                         <div className="flex-1 min-w-0">
                                                                             <div className="text-sm font-medium text-neutral-700 dark:text-neutral-300 truncate">{job.url}</div>
-                                                                            <div className="text-[10px] text-neutral-400">{job.type} · {job.status}</div>
+                                                                            <div className="text-[10px] text-neutral-400">{job.status} · {job.response_code}</div>
                                                                         </div>
                                                                     </button>
                                                                 ))}
