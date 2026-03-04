@@ -59,7 +59,7 @@ export const loginUser = createAsyncThunk(
             await api.post('/auth/login', { email, password })
             // Tokens are set as HttpOnly cookies by the backend.
             // Fetch user profile using the session cookie.
-            const profileRes = await api.get('/auth/refresh')
+            const profileRes = await api.get('/auth/me')
             return profileRes.data
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message || 'Login failed')
@@ -158,7 +158,7 @@ export const checkAuth = createAsyncThunk(
     'auth/checkAuth',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/auth/refresh')
+            const response = await api.get('/auth/me')
             return response.data
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message || 'Session expired')

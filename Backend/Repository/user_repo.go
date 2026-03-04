@@ -37,10 +37,10 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) *domain.AppErr
 func (r *userRepo) FindByID(ctx context.Context, id string) (*domain.User, *domain.AppError) {
 
 	var user domain.User
-	if err := r.db.WithContext(ctx).First(&user, id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ?", id).First(&user).Error; err != nil {
 		logger.WithFields(logger.Fields{
-			"user":  user,
-			"error": err,
+			"user_id": id,
+			"error":   err,
 		}).Error(domain.LogUserNotFound)
 
 		return nil, &domain.AppError{

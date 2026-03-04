@@ -21,7 +21,7 @@ func AuthRoutes(router *gin.Engine,
 		auth.GET("/oauth/github", authHandler.GithubOAuthCallBack)
 		auth.POST("/resend-email", authHandler.ResendVerificationEmail)
 		auth.POST("/verify-email", authHandler.VerifyEmail)
-		auth.POST("/refresh", authHandler.RefreshToken)
+		auth.GET("/refresh", authHandler.RefreshToken)
 		auth.POST("/forgot-password", authHandler.ForgotPassword)
 		auth.POST("/verify-reset-code", authHandler.VerifyResetCode)
 		auth.POST("/reset-password", authHandler.ResetPassword)
