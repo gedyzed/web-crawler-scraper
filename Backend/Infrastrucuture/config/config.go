@@ -1,16 +1,14 @@
 package config
 
 import (
-	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+	logrus "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
-	// "github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -85,16 +83,15 @@ func ValidateConfig(cfg *Config) error {
 func LoadConfig(path string) *Config {
 
 	_ = godotenv.Load()
-	
+
 	// Read from config.yaml as fallback or primary
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(path)
 
 	if err := viper.MergeInConfig(); err != nil {
-		log.Printf("Warning: config.yaml not found or error reading it: %v", err)
+		logrus.WithError(err).Warn("config.yaml not found or error reading it")
 	}
-
 
 	// Environment variables
 	viper.AutomaticEnv()
@@ -105,14 +102,11 @@ func LoadConfig(path string) *Config {
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
-		fmt.Println(cfg)
-		log.Fatal("Error in loading config files: ", err)
+		logrus.WithError(err).Fatal("Error in loading config files")
 	}
 
-
 	if err := ValidateConfig(&cfg); err != nil {
-		fmt.Println(cfg)
-		log.Fatal("Error in validating config files: ", err)
+		logrus.WithError(err).Fatal("Error in validating config files")
 	}
 
 	return &cfg

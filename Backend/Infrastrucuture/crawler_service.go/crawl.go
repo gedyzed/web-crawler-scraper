@@ -3,9 +3,7 @@ package crawlerservicego
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
-	// "net/http"
 	"strings"
 	"sync"
 	"time"
@@ -14,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type QueueItem struct {
@@ -48,9 +47,8 @@ func NewCrawlerServiceFactory(cfg config.CrawlerConfig, rdb redis.Client) domain
 func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawlerService {
 
 	result := &domain.CrawlerResult{
-		CRID: uuid.New().String(),
+		CRID:   uuid.New().String(),
 		UserID: userID,
-
 	}
 	return &CrawlerServices{
 		Scraper:       NewScraper(&f.config),
@@ -121,15 +119,18 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 
 				// Each goroutine calls FetchAndParse which creates its own
 				// colly.Collector internally — no shared state.
-				page, links, err := cr.Scraper.FetchAndParse(item.URL,cr.Result.CRID, cr.Result.UserID)
+				page, links, err := cr.Scraper.FetchAndParse(item.URL, cr.Result.CRID, cr.Result.UserID)
 				if err != nil {
-					fmt.Printf("Error visiting %s: %v\n", item.URL, err.Message)
+					logrus.WithFields(logrus.Fields{
+						"url":   item.URL,
+						"error": err.Message,
+					}).Warn(domain.LogCrawlPageError)
 					return
 				}
 
 				cr.mu.Lock()
 				if cr.PageCount < cr.CrawlerConfig.MaxPages {
-					cr.PageCount++ 
+					cr.PageCount++
 					cr.Result.Pages = append(cr.Result.Pages, *page)
 					for _, link := range links {
 						if !cr.Visited[link] {
@@ -158,7 +159,7 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 		cr.redisClient.Set(ctx, seedURL, string(jsonBytes), time.Hour*4)
 	}
 
-	fmt.Println("pages: ", cr.PageCount)
+	logrus.WithField("pages", cr.PageCount).Info(domain.LogCrawlCompleted)
 
 	return cr.Result, nil
 }

@@ -6,9 +6,8 @@ import (
 	usecase "web_crawler_scraper/Usecase"
 
 	"github.com/gin-gonic/gin"
+	logrus "github.com/sirupsen/logrus"
 )
-
-
 
 type ScrapeController struct {
 	scrapeUC usecase.IScraperUsecase
@@ -18,7 +17,7 @@ func NewScraperController(su usecase.IScraperUsecase) *ScrapeController {
 	return &ScrapeController{scrapeUC: su}
 }
 
-func (sc *ScrapeController) Scrape(c *gin.Context){
+func (sc *ScrapeController) Scrape(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
@@ -36,9 +35,15 @@ func (sc *ScrapeController) Scrape(c *gin.Context){
 	input.Depth = 1
 	userID := c.GetString("userID")
 	input.UserID = userID
-	
+
 	response, err := sc.scrapeUC.Scrape(ctx, &input)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":         input.URL,
+			"userID":      userID,
+			"error":       err.Message,
+			"http_status": err.HttpStatus,
+		}).Error(domain.LogScrapeFailed)
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
 		return
 	}

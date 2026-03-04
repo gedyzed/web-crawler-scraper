@@ -23,7 +23,7 @@ func (r *sessionRepo) Create(ctx context.Context, session *domain.Session) *doma
 		logger.WithFields(logger.Fields{
 			"userID": session.UserID,
 			"error":  err,
-		}).Error("Failed to delete existing session")
+		}).Error(domain.LogFailedDeleteSession)
 	}
 
 	err := r.db.WithContext(ctx).Create(session).Error
@@ -31,7 +31,7 @@ func (r *sessionRepo) Create(ctx context.Context, session *domain.Session) *doma
 		logger.WithFields(logger.Fields{
 			"session": session,
 			"error":   err,
-		}).Error("Failed to create session")
+		}).Error(domain.LogFailedCreateSession)
 
 		return &domain.AppError{
 			Message:    domain.ErrInternalServer,

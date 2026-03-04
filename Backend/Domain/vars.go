@@ -117,6 +117,62 @@ var (
 	EmailVerificationMsg = "Please verify your email to continue. Your verification code is: %d"
 )
 
+// Session - Log Messages
+var (
+	LogFailedCreateSession = "Failed to Create Session"
+	LogFailedDeleteSession = "Failed to Delete Existing Session"
+)
+
+// Provider/Verification - Log Messages
+var (
+	LogFailedCreateProvider         = "Failed to Create OAuth Provider"
+	LogFailedCreateVerificationCode = "Failed to Create Verification Code"
+	LogFailedDeleteVerificationCode = "Failed to Delete Verification Code"
+)
+
+// Crawler - Log Messages
+var (
+	LogCrawlStarted     = "Crawl started"
+	LogCrawlCompleted   = "Crawl completed"
+	LogCrawlPageError   = "Error visiting page during crawl"
+	LogCrawlFailed      = "Crawl failed"
+	LogScrapeStarted    = "Scrape started"
+	LogScrapeCompleted  = "Scrape completed"
+	LogScrapeFailed     = "Scrape failed"
+	LogHTMLExtractError = "Error extracting HTML"
+	LogHTMLParseError   = "Error parsing HTML"
+)
+
+// Email - Log Messages
+var (
+	LogFailedSendEmail     = "Failed to Send Email"
+	LogFailedParseTemplate = "Failed to Parse Email Template"
+	LogFailedExecTemplate  = "Failed to Execute Email Template"
+)
+
+// JWT - Log Messages
+var (
+	LogFailedGenerateToken = "Failed to Generate JWT Token"
+	LogFailedValidateToken = "Failed to Validate JWT Token"
+	LogFailedRefreshToken  = "Failed to Refresh JWT Token"
+)
+
+// Middleware - Log Messages
+var (
+	LogTokenNotFound       = "Access token not found in request"
+	LogUnauthorizedRequest = "Unauthorized request - token validation failed"
+)
+
+// Redis - Log Messages
+var (
+	LogRateLimiterError = "Rate limiter Redis error"
+)
+
+// Request - Log Messages
+var (
+	LogIncomingRequest = "Incoming HTTP request"
+)
+
 type AppError struct {
 	Message    string
 	Err        string

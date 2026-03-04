@@ -6,6 +6,7 @@ import (
 	domain "web_crawler_scraper/Domain"
 
 	"github.com/google/uuid"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type IScraperUsecase interface {
@@ -25,11 +26,20 @@ func NewScraperUsecase(repo domain.IResultRepo, svs domain.IScraperServiceFactor
 }
 
 func (s *scraperUsecase) Scrape(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError) {
+	logrus.WithFields(logrus.Fields{
+		"url":    input.URL,
+		"userID": input.UserID,
+	}).Info(domain.LogScrapeStarted)
 
 	svc := s.svsFactory.NewScraperService()
 	resultID := uuid.New().String()
 	page, _, err := svc.FetchAndParse(input.URL, resultID, input.UserID)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":    input.URL,
+			"userID": input.UserID,
+			"error":  err.Message,
+		}).Error(domain.LogScrapeFailed)
 		// Save failed scrape to history
 		history := &domain.History{
 			HID:          uuid.New().String(),

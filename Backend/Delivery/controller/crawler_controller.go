@@ -7,6 +7,7 @@ import (
 	usecase "web_crawler_scraper/Usecase"
 
 	"github.com/gin-gonic/gin"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type CrawlerController struct {
@@ -40,6 +41,12 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 
 	response, err := cl.CralwerUC.Crawl(ctx, &input)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":         input.URL,
+			"userID":      userID,
+			"error":       err.Message,
+			"http_status": err.HttpStatus,
+		}).Error(domain.LogCrawlFailed)
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
 		return
 	}
@@ -53,6 +60,10 @@ func (cl *CrawlerController) GetHistory(c *gin.Context) {
 
 	history, err := cl.CralwerUC.FetchHistory(ctx, userID)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"userID": userID,
+			"error":  err.Message,
+		}).Error(domain.LogFailedFetchHistory)
 		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
 		return
 	}

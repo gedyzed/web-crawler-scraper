@@ -6,9 +6,9 @@ import (
 	"web_crawler_scraper/Delivery/controller"
 	domain "web_crawler_scraper/Domain"
 	infrastructure "web_crawler_scraper/Infrastrucuture"
-	emailService "web_crawler_scraper/Infrastrucuture/email_service"
 	"web_crawler_scraper/Infrastrucuture/config"
 	crawlerservicego "web_crawler_scraper/Infrastrucuture/crawler_service.go"
+	emailService "web_crawler_scraper/Infrastrucuture/email_service"
 	middleware "web_crawler_scraper/Infrastrucuture/middleware"
 	"web_crawler_scraper/Infrastrucuture/oauth"
 	repository "web_crawler_scraper/Repository"
@@ -85,11 +85,15 @@ func main() {
 	// Middlewares
 	middlewares := middleware.NewMiddleware(jwtService)
 
-	gin.SetMode(gin.ReleaseMode)
+	if cfg.App.Debug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{
-			cfg.App.Domain, 
+		AllowOrigins: []string{
+			cfg.App.Domain,
 			"https://web-crawler-scraper.vercel.app",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -98,6 +102,8 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	router.Use(middlewares.RequestLogger())
 
 	route.AuthRoutes(router, authController, middlewares)
 	route.CrawlerAndScraperRoutes(router, crawlController, scraperController, middlewares)

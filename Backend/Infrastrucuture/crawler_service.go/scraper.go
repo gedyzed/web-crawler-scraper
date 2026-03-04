@@ -15,6 +15,7 @@ import (
 	colly "github.com/gocolly/colly"
 
 	"github.com/google/uuid"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type ScraperServiceFactory struct {
@@ -48,8 +49,8 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 	// Local state — safe for concurrent use since each goroutine
 	// gets its own FetchAndParse call with its own locals.
 	page := &domain.Page{
-		PageID:   uuid.New().String(),
-		ResultID: resultID,
+		PageID:    uuid.New().String(),
+		ResultID:  resultID,
 		URL:       targetURL,
 		FetchedAt: time.Now(),
 	}
@@ -84,19 +85,19 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 			return
 		}
 
-		discoveredLinks = append(discoveredLinks, link)		
+		discoveredLinks = append(discoveredLinks, link)
 	})
 
 	collector.OnHTML("html", func(e *colly.HTMLElement) {
 		rawHTML, err := e.DOM.Html()
 		if err != nil {
-			fmt.Printf("Error extracting html: %s\n", err)
+			logrus.WithError(err).Warn(domain.LogHTMLExtractError)
 			return
 		}
 
 		article, parseErr := ParseRawHTML(rawHTML, e.Request.URL)
 		if parseErr != nil {
-			fmt.Printf("Error parsing html: %s\n", parseErr.Message)
+			logrus.WithField("error", parseErr.Message).Warn(domain.LogHTMLParseError)
 			return
 		}
 
@@ -120,7 +121,6 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 
 	return page, discoveredLinks, nil
 }
-
 
 // E-commerce Product Extraction
 // extractProducts runs all three extraction strategies and returns
@@ -268,7 +268,7 @@ func extractOfferPrice(offer map[string]interface{}, p *domain.Product) {
 	}
 }
 
-// Strategy 2: Common CSS Selectors 
+// Strategy 2: Common CSS Selectors
 // productSelectors defines common e-commerce CSS patterns to look for.
 var productSelectors = []string{
 	".product",
@@ -403,7 +403,7 @@ func extractSingleProductFromCard(el *colly.HTMLElement, pageURL string) *domain
 	return p
 }
 
-// Strategy 3: Open Graph Meta Tags 
+// Strategy 3: Open Graph Meta Tags
 
 func extractFromOpenGraph(e *colly.HTMLElement, pageURL string) *domain.Product {
 	var ogTitle, ogImage, ogPrice, ogCurrency, ogDescription, ogURL string

@@ -7,6 +7,7 @@ import (
 	"web_crawler_scraper/Infrastrucuture/config"
 
 	"github.com/golang-jwt/jwt/v5"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type jwtService struct {
@@ -21,6 +22,7 @@ func (js *jwtService) GenerateTokens(ctx context.Context, userID string) (*domai
 
 	accessToken, err := js.GenerateToken(userID, js.config.AccessKey, js.config.AccessTTL)
 	if err != nil {
+		logrus.WithError(err).Error(domain.LogFailedGenerateToken)
 		return nil, &domain.AppError{
 			Message:    "Something Went Wrong.",
 			HttpStatus: 500,
@@ -33,6 +35,7 @@ func (js *jwtService) GenerateTokens(ctx context.Context, userID string) (*domai
 
 	refreshToken, err := js.GenerateToken(userID, js.config.RefreshKey, js.config.RefreshTTL)
 	if err != nil {
+		logrus.WithError(err).Error(domain.LogFailedGenerateToken)
 		return nil, &domain.AppError{
 			Message:    "Something Went Wrong.",
 			HttpStatus: 500,
@@ -82,6 +85,7 @@ func (js *jwtService) ValidateToken(tokenString string, tokenName string) (*doma
 	})
 
 	if err != nil {
+		logrus.WithError(err).Debug(domain.LogFailedValidateToken)
 		return nil, &domain.AppError{
 			Message:    "Unauthorized Request",
 			HttpStatus: 401,
@@ -89,6 +93,7 @@ func (js *jwtService) ValidateToken(tokenString string, tokenName string) (*doma
 	}
 
 	if !token.Valid {
+		logrus.Debug(domain.LogFailedValidateToken)
 		return nil, &domain.AppError{
 			Message:    "Unauthorized Request",
 			HttpStatus: 401,
@@ -108,17 +113,18 @@ func (js *jwtService) RefreshToken(ctx context.Context, refreshToken string) (*d
 	UserID := claims.UserID
 	accessToken, err_ := js.GenerateToken(UserID, js.config.AccessKey, js.config.AccessTTL)
 	if err_ != nil {
+		logrus.WithError(err_).Error(domain.LogFailedRefreshToken)
 		return nil, &domain.AppError{
 			Message:    "Internal Server Error",
 			HttpStatus: 500,
 		}
-
 	}
 
 	newRefreshToken := ""
-	if claims.ExpiresAt.Sub(time.Now()) <= 30*time.Second {
+	if time.Until(claims.ExpiresAt.Time) <= 30*time.Second {
 		newRefreshToken, err_ = js.GenerateToken(UserID, js.config.RefreshKey, js.config.RefreshTTL)
 		if err_ != nil {
+			logrus.WithError(err_).Error(domain.LogFailedRefreshToken)
 			return nil, &domain.AppError{
 				Message:    "Internal Server Error",
 				HttpStatus: 500,
@@ -147,5 +153,3 @@ func (js *jwtService) RefreshToken(ctx context.Context, refreshToken string) (*d
 
 	return userData, nil
 }
-
-

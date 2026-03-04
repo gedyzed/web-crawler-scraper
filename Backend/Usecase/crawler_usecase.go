@@ -6,6 +6,7 @@ import (
 	domain "web_crawler_scraper/Domain"
 
 	"github.com/google/uuid"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type ICrawlerUsecase interface {
@@ -31,9 +32,19 @@ func NewCrawlerUsecase(
 }
 
 func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError) {
+	logrus.WithFields(logrus.Fields{
+		"url":    input.URL,
+		"userID": input.UserID,
+	}).Info(domain.LogCrawlStarted)
+
 	svc := c.cralwerSvsFactory.NewCrawlerService(input.UserID)
 	result, err := svc.Crawl(ctx, input.URL)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":    input.URL,
+			"userID": input.UserID,
+			"error":  err.Message,
+		}).Error(domain.LogCrawlFailed)
 		// Save failed crawl to history
 		history := &domain.History{
 			HID:          uuid.New().String(),

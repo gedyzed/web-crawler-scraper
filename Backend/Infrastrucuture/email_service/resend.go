@@ -7,6 +7,7 @@ import (
 	"web_crawler_scraper/Infrastrucuture/config"
 
 	"github.com/resend/resend-go/v3"
+	logrus "github.com/sirupsen/logrus"
 )
 
 type OTPData struct {
@@ -23,63 +24,64 @@ func NewEmailService(cfg *config.EmailConfig) domain.IEmailService {
 	return &emailService{config: cfg}
 }
 
-func (s *emailService) SendEmail(name, subject, otp string, to []string) *domain.AppError { 
+func (s *emailService) SendEmail(name, subject, otp string, to []string) *domain.AppError {
 
+	apiKey := s.config.ApiKey
 
-    apiKey := s.config.ApiKey
+	client := resend.NewClient(apiKey)
+	htmlBody, err := resendOTP(name, otp)
+	if err != nil {
+		return err
+	}
 
-    client := resend.NewClient(apiKey)
-    htmlBody, err := resendOTP(name, otp)
-    if err != nil {
-        return err
-    }
+	params := &resend.SendEmailRequest{
+		From:    s.config.Username,
+		To:      to,
+		Subject: subject,
+		Html:    htmlBody,
+	}
 
-    params := &resend.SendEmailRequest{
-        From:    s.config.Username,
-        To:      to,
-        Subject: subject,
-        Html:    htmlBody,
-    }
-
-    _, err_ := client.Emails.Send(params)
-    if err_ != nil {
-        return &domain.AppError{
-			Message: "Errr in sending email",
+	_, err_ := client.Emails.Send(params)
+	if err_ != nil {
+		logrus.WithFields(logrus.Fields{
+			"to":    to,
+			"error": err_,
+		}).Error(domain.LogFailedSendEmail)
+		return &domain.AppError{
+			Message:    "Error in sending email",
 			HttpStatus: 500,
 		}
-    }
+	}
 
 	return nil
 }
 
 func resendOTP(name, otp string) (string, *domain.AppError) {
 
-    tmpl, err := template.ParseFiles("Infrastrucuture/email_service/templates/otp.html")
-    if err != nil {
-        return "", &domain.AppError{
-            Message: "Error in parsing template",
-            HttpStatus: 500,
-        }
-    }
+	tmpl, err := template.ParseFiles("Infrastrucuture/email_service/templates/otp.html")
+	if err != nil {
+		logrus.WithError(err).Error(domain.LogFailedParseTemplate)
+		return "", &domain.AppError{
+			Message:    "Error in parsing template",
+			HttpStatus: 500,
+		}
+	}
 
-    data := &OTPData{
-		Name: name,
-        OTP:  otp,
-        Expiry: 10,
-    }
+	data := &OTPData{
+		Name:   name,
+		OTP:    otp,
+		Expiry: 10,
+	}
 
-    var body bytes.Buffer
-    err = tmpl.Execute(&body, data)
-    if err != nil {
-        return "", &domain.AppError{
-            Message: "Error in executing template",
-            HttpStatus: 500,
-        }
-    }
+	var body bytes.Buffer
+	err = tmpl.Execute(&body, data)
+	if err != nil {
+		logrus.WithError(err).Error(domain.LogFailedExecTemplate)
+		return "", &domain.AppError{
+			Message:    "Error in executing template",
+			HttpStatus: 500,
+		}
+	}
 
-
-    return body.String(), nil
+	return body.String(), nil
 }
-	
-
-

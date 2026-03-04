@@ -9,30 +9,34 @@ import (
 	usecase "web_crawler_scraper/Usecase"
 
 	"github.com/redis/go-redis/v9"
+	logrus "github.com/sirupsen/logrus"
 )
-
 
 func NewRedisRateLimiter(cl *redis.Client, limit int64, window time.Duration) usecase.IRateLimiter {
 	return &RedisRateLimiter{
 		client: cl,
-		limit: limit,
+		limit:  limit,
 		window: window,
 	}
 }
 
 type RedisRateLimiter struct {
 	client *redis.Client
-	limit int64
+	limit  int64
 	window time.Duration
 }
 
-func(rl *RedisRateLimiter) Allow(ctx context.Context, ip string)(bool, *domain.AppError){
+func (rl *RedisRateLimiter) Allow(ctx context.Context, ip string) (bool, *domain.AppError) {
 
 	key := fmt.Sprintf("rate:%s", ip)
 	count, err := rl.client.Incr(ctx, key).Result()
 	if err != nil {
-		return false,  &domain.AppError{
-			Message: "Internal Server Error",
+		logrus.WithFields(logrus.Fields{
+			"ip":    ip,
+			"error": err,
+		}).Error(domain.LogRateLimiterError)
+		return false, &domain.AppError{
+			Message:    "Internal Server Error",
 			HttpStatus: 500,
 		}
 	}
@@ -48,12 +52,12 @@ func(rl *RedisRateLimiter) Allow(ctx context.Context, ip string)(bool, *domain.A
 	return true, nil
 }
 
-func NewRedisClient(cfg *config.RedisConfig) *redis.Client{
+func NewRedisClient(cfg *config.RedisConfig) *redis.Client {
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr: cfg.Address,
+		Addr:     cfg.Address,
 		Password: cfg.Password,
-		DB: cfg.DB,
+		DB:       cfg.DB,
 	})
 
 	return rdb

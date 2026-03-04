@@ -100,7 +100,7 @@ func (r *userRepo) SaveProvider(ctx context.Context, provider *domain.AuthProvid
 		logger.WithFields(logger.Fields{
 			"provider": provider,
 			"error":    err,
-		}).Error(domain.LogFailedCreateUser)
+		}).Error(domain.LogFailedCreateProvider)
 
 		return &domain.AppError{
 			Message:    domain.ErrInternalServer,
@@ -118,7 +118,7 @@ func (r *userRepo) CreateVerificationCode(ctx context.Context, verification *dom
 		logger.WithFields(logger.Fields{
 			"email": verification.Email,
 			"error": err,
-		}).Error("Failed to delete existing verification code")
+		}).Error(domain.LogFailedDeleteVerificationCode)
 	}
 
 	err := r.db.WithContext(ctx).Create(verification).Error
@@ -126,7 +126,7 @@ func (r *userRepo) CreateVerificationCode(ctx context.Context, verification *dom
 		logger.WithFields(logger.Fields{
 			"verification": verification,
 			"error":        err,
-		}).Error(domain.LogFailedCreateUser)
+		}).Error(domain.LogFailedCreateVerificationCode)
 
 		return &domain.AppError{
 			Message:    domain.ErrInternalServer,
@@ -163,7 +163,7 @@ func (r *userRepo) DeleteVerificationCode(ctx context.Context, email string) *do
 		logger.WithFields(logger.Fields{
 			"email": email,
 			"error": err,
-		}).Error("Failed to delete verification code")
+		}).Error(domain.LogFailedDeleteVerificationCode)
 		return &domain.AppError{
 			Message:    domain.ErrInternalServer,
 			HttpStatus: 500,

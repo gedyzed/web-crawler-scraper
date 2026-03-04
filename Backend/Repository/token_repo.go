@@ -18,8 +18,6 @@ func NewRefreshTokenRepo(db *gorm.DB) domain.IRefreshTokenRepo {
 
 func (r *tokenRepo) Create(ctx context.Context, token *domain.RefreshToken) *domain.AppError {
 
-	logger.SetFormatter(&logger.JSONFormatter{})
-
 	// Overwrite existing token for the same UserID
 	if err := r.db.WithContext(ctx).Where("user_id = ?", token.UserID).Delete(&domain.RefreshToken{}).Error; err != nil {
 		logger.WithFields(logger.Fields{
