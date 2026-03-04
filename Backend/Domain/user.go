@@ -10,10 +10,10 @@ type User struct {
 	UserID      string `gorm:"unique;not null" json:"user_id"`
 	Email       string `gorm:"unique;not null" json:"email"`
 	Role        string `gorm:"default:user" json:"role"`
-	Password    string `json:"-"`
-	FirstName   string `json:"name"`
+	Password    string `json:"password"`
+	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
-	Is_Verified bool   `gorm:"default:false"`
+	Is_Verified bool   `gorm:"default:false" json:"is_verified"`
 	Signed_In   time.Time
 	AvatarURL   string `json:"avatar_url"`
 	gorm.Model

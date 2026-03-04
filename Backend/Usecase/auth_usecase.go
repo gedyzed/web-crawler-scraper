@@ -212,6 +212,7 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 		}
 	}
 
+	exchangeData.User = old_user
 	exchangeData.Session.UserID = old_user.UserID
 	if err := ac.sessionRepo.Create(ctx, exchangeData.Session); err != nil {
 		return nil, err
@@ -259,6 +260,13 @@ func (ac *authUsecase) RegisterOrLogin(
 		}
 	}
 
+	if userData == nil || userData.User == nil {
+		return nil, &domain.AppError{
+			Message:    domain.ErrSomethingWentWrong,
+			HttpStatus: 500,
+		}
+	}
+
 	user := userData.User
 	old_user, err := ac.repo.FindByEmail(ctx, user.Email)
 	if err != nil && err.HttpStatus != http.StatusNotFound {
@@ -267,6 +275,7 @@ func (ac *authUsecase) RegisterOrLogin(
 
 	// login - existing user
 	if old_user != nil {
+		userData.User = old_user
 		userData.Provider.UserID = old_user.UserID
 		err := ac.repo.SaveProvider(ctx, userData.Provider)
 		if err != nil {

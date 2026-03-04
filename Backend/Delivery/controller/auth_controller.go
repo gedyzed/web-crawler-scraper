@@ -178,7 +178,16 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 		true,
 	)
 
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "welcome to homepage"})
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"user_id":     response.User.UserID,
+			"first_name":  response.User.FirstName,
+			"last_name":   response.User.LastName,
+			"email":       response.User.Email,
+			"is_verified": response.User.Is_Verified,
+			"avatar_url":  response.User.AvatarURL,
+		},
+	})
 
 }
 
@@ -228,9 +237,14 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		return
 	}
 
+	if response == nil || response.Session == nil || response.RefreshToken == nil {
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Authentication failed"})
+		return
+	}
+
 	c.SetSameSite(http.SameSiteLaxMode)
 
-	expiryTime := response.Session.ExpiresAt.Sub(time.Now()).Seconds()
+	expiryTime := time.Until(response.Session.ExpiresAt).Seconds()
 	c.SetCookie(
 		domain.AccessToken,
 		response.Session.Token,
@@ -253,10 +267,9 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		return
 	}
 
-	refreshToken := response.RefreshToken
 	c.SetCookie(
 		tokenName,
-		refreshToken.Token,
+		response.RefreshToken.Token,
 		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 		"/auth/oauth/refresh",
 		ac.cfg.App.Domain,
@@ -264,7 +277,21 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		true,
 	)
 
-	c.IndentedJSON(http.StatusOK, response.Session)
+	userResponse := gin.H{}
+	if response.User != nil {
+		userResponse = gin.H{
+			"user_id":     response.User.UserID,
+			"first_name":  response.User.FirstName,
+			"last_name":   response.User.LastName,
+			"email":       response.User.Email,
+			"is_verified": response.User.Is_Verified,
+			"avatar_url":  response.User.AvatarURL,
+		}
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"user": userResponse,
+	})
 }
 
 func (ac *AuthController) RefreshToken(c *gin.Context) {
@@ -324,7 +351,14 @@ func (ac *AuthController) GetProfile(c *gin.Context) {
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, user)
+	c.IndentedJSON(http.StatusOK, gin.H{
+		"user_id":     user.UserID,
+		"first_name":  user.FirstName,
+		"last_name":   user.LastName,
+		"email":       user.Email,
+		"is_verified": user.Is_Verified,
+		"avatar_url":  user.AvatarURL,
+	})
 }
 
 func (ac *AuthController) ForgotPassword(c *gin.Context) {
