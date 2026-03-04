@@ -56,10 +56,11 @@ export const loginUser = createAsyncThunk(
     'auth/loginUser',
     async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
         try {
-            const response = await api.post('/auth/login', { email, password })
-            const { token, user } = response.data
-            Cookies.set('accessToken', token, { expires: 1 / 24 }) // Set access token in cookie for 1 hour
-            return user
+            await api.post('/auth/login', { email, password })
+            // Tokens are set as HttpOnly cookies by the backend.
+            // Fetch user profile using the session cookie.
+            const profileRes = await api.get('/auth/refresh')
+            return profileRes.data
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message || 'Login failed')
         }
@@ -157,12 +158,9 @@ export const checkAuth = createAsyncThunk(
     'auth/checkAuth',
     async (_, { rejectWithValue }) => {
         try {
-            const token = Cookies.get('accessToken')
-            if (!token) return rejectWithValue('No token found')
-            const response = await api.get('/auth/me')
+            const response = await api.get('/auth/refresh')
             return response.data
         } catch (err: any) {
-            Cookies.remove('accessToken')
             return rejectWithValue(err.response?.data?.message || err.message || 'Session expired')
         }
     }
@@ -298,7 +296,8 @@ const authSlice = createSlice({
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.login.loading = false
                 state.isAuthenticated = true
-                state.user = { name: action.payload.email.split('@')[0], email: action.payload.email }
+                const email = action.payload?.Email || action.payload?.email || ''
+                state.user = { name: email.split('@')[0] || 'User', email }
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.login.loading = false
@@ -399,7 +398,8 @@ const authSlice = createSlice({
         builder
             .addCase(checkAuth.fulfilled, (state, action) => {
                 state.isAuthenticated = true
-                state.user = action.payload
+                const email = action.payload?.Email || action.payload?.email || ''
+                state.user = { name: email.split('@')[0] || 'User', email }
             })
             .addCase(checkAuth.rejected, (state) => {
                 state.isAuthenticated = false
