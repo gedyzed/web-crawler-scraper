@@ -113,8 +113,10 @@ var (
 
 // For Email
 var (
-	EmailVerification    = "Email Verification"
-	EmailVerificationMsg = "Please verify your email to continue. Your verification code is: %d"
+	EmailVerification      = "Email Verification"
+	EmailVerificationMsg   = "Please verify your email to continue. Your verification code is: %d"
+	EmailForgotPassword    = "Reset Your Password"
+	EmailForgotPasswordMsg = "Please use the code below to reset your password. Your reset code is: %d"
 )
 
 // Session - Log Messages

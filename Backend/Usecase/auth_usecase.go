@@ -22,6 +22,7 @@ type IAuthUsecase interface {
 	SendVerificationEmail(ctx context.Context, email string) *domain.AppError
 	VerifyEmail(ctx context.Context, email string, code int64) *domain.AppError
 	ForgotPassword(ctx context.Context, email string) *domain.AppError
+	SendForgotPasswordEmail(ctx context.Context, email string) *domain.AppError
 	VerifyResetCode(ctx context.Context, email string, code string) *domain.AppError
 	ResetPassword(ctx context.Context, email string, password string) *domain.AppError
 	GetUserByID(ctx context.Context, id string) (*domain.User, *domain.AppError)
@@ -378,7 +379,34 @@ func (ac *authUsecase) SendVerificationEmail(ctx context.Context, email string) 
 	return ac.emailServcie.SendEmail(
 		"user",
 		domain.EmailVerification,
-	 	fmt.Sprintf("%d", uniqueCode),
+		fmt.Sprintf("%d", uniqueCode),
+		[]string{email},
+	)
+}
+
+func (ac *authUsecase) SendForgotPasswordEmail(ctx context.Context, email string) *domain.AppError {
+	uniqueCode, err := generateSecureNumber(100000, 999999)
+	if err != nil {
+		return &domain.AppError{
+			Message:    domain.ErrSomethingWentWrong,
+			HttpStatus: 500,
+		}
+	}
+
+	verfication := &domain.VerificationCode{
+		Email:     email,
+		Code:      uniqueCode,
+		ExpiresAt: time.Now().Add(time.Minute * 10),
+	}
+
+	if err := ac.repo.CreateVerificationCode(ctx, verfication); err != nil {
+		return err
+	}
+
+	return ac.emailServcie.SendEmail(
+		"user",
+		domain.EmailForgotPassword,
+		fmt.Sprintf("%d", uniqueCode),
 		[]string{email},
 	)
 }
@@ -446,8 +474,8 @@ func (ac *authUsecase) ForgotPassword(ctx context.Context, email string) *domain
 		return &domain.AppError{Message: domain.ErrUserNotFound, HttpStatus: 404}
 	}
 
-	// Generate and send reset code (reusing verification code logic for simplicity if appropriate, or separate repo call)
-	return ac.SendVerificationEmail(ctx, email)
+	// Generate and send reset code
+	return ac.SendForgotPasswordEmail(ctx, email)
 }
 
 func (ac *authUsecase) VerifyResetCode(ctx context.Context, email string, code string) *domain.AppError {

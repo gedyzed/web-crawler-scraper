@@ -120,7 +120,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                             variant="outline"
                             type="button"
                             className="flex-1"
-                            onClick={() => window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/github`}
+                            onClick={() => window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/oauth?provider=github`}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-4">
                                 <path
@@ -134,7 +134,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                             variant="outline"
                             type="button"
                             className="flex-1"
-                            onClick={() => window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`}
+                            onClick={() => window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/oauth?provider=google`}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-4">
                                 <path

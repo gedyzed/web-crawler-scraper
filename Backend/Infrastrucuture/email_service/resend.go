@@ -29,7 +29,13 @@ func (s *emailService) SendEmail(name, subject, otp string, to []string) *domain
 	apiKey := s.config.ApiKey
 
 	client := resend.NewClient(apiKey)
-	htmlBody, err := resendOTP(name, otp)
+
+	templatePath := "Infrastrucuture/email_service/templates/otp.html"
+	if subject == domain.EmailForgotPassword {
+		templatePath = "Infrastrucuture/email_service/templates/forgot_password.html"
+	}
+
+	htmlBody, err := renderTemplate(name, otp, templatePath)
 	if err != nil {
 		return err
 	}
@@ -56,9 +62,9 @@ func (s *emailService) SendEmail(name, subject, otp string, to []string) *domain
 	return nil
 }
 
-func resendOTP(name, otp string) (string, *domain.AppError) {
+func renderTemplate(name, otp, templatePath string) (string, *domain.AppError) {
 
-	tmpl, err := template.ParseFiles("Infrastrucuture/email_service/templates/otp.html")
+	tmpl, err := template.ParseFiles(templatePath)
 	if err != nil {
 		logrus.WithError(err).Error(domain.LogFailedParseTemplate)
 		return "", &domain.AppError{
