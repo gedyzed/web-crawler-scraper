@@ -95,6 +95,7 @@ func main() {
 		AllowOrigins: []string{
 			cfg.App.Domain,
 			"https://web-crawler-scraper.vercel.app",
+			"https://www.spidergo.app",
 		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization", "Origin"},
