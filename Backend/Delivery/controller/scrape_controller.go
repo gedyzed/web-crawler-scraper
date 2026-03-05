@@ -23,12 +23,12 @@ func (sc *ScrapeController) Scrape(c *gin.Context) {
 
 	var input domain.URLFrontier
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	if input.URL == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrSeedURLNeeded})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrSeedURLNeeded})
 		return
 	}
 
@@ -44,7 +44,7 @@ func (sc *ScrapeController) Scrape(c *gin.Context) {
 			"error":       err.Message,
 			"http_status": err.HttpStatus,
 		}).Error(domain.LogScrapeFailed)
-		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
 		return
 	}
 

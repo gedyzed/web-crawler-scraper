@@ -33,7 +33,7 @@ func (m *Middlewares) AuthMiddleware() gin.HandlerFunc {
 			}).Debug(domain.LogTokenNotFound)
 			c.IndentedJSON(
 				http.StatusUnauthorized,
-				gin.H{"error": "token not found"},
+				gin.H{"message": "token not found"},
 			)
 			c.Abort()
 			return
@@ -47,7 +47,7 @@ func (m *Middlewares) AuthMiddleware() gin.HandlerFunc {
 			}).Debug(domain.LogUnauthorizedRequest)
 			c.IndentedJSON(
 				http.StatusUnauthorized,
-				gin.H{"error": "Unauthorized request"},
+				gin.H{"message": "Unauthorized request"},
 			)
 			c.Abort()
 			return

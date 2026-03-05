@@ -58,13 +58,13 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		logrus.WithError(err).Debug(domain.LogRegisterBindingError)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	if user.Email == "" || !IsValidEmail(user.Email) {
 		logrus.WithField("email", user.Email).Debug(domain.LogRegisterInvalidEmail)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidEmail})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
 		return
 	}
 
@@ -77,7 +77,7 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 	err := passwordvalidator.Validate(user.Password, minEntropyBits)
 	if err != nil {
 		logrus.WithError(err).Debug(domain.LogRegisterWeakPassword)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -98,7 +98,7 @@ func (ac *AuthController) RegisterUser(c *gin.Context) {
 				"http_status": appError.HttpStatus,
 			}).Debug(domain.LogRegisterClientError)
 		}
-		c.IndentedJSON(appError.HttpStatus, gin.H{"error": appError.Message})
+		c.IndentedJSON(appError.HttpStatus, gin.H{"message": appError.Message})
 		return
 	}
 
@@ -122,7 +122,7 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&user); err != nil {
 		logrus.WithError(err).Debug(domain.LogLoginBindingError)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
@@ -132,7 +132,7 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	isValid := IsValidEmail(user.Email)
 	if !isValid || user.Password == "" {
 		logrus.WithField("email", user.Email).Debug(domain.LogLoginInvalidEmail)
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidCredentials})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidCredentials})
 		return
 	}
 
@@ -153,7 +153,7 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 				"ip":          ip,
 			}).Debug(domain.LogLoginClientError)
 		}
-		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
 		return
 	}
 
@@ -197,7 +197,7 @@ func (ac *AuthController) OAuthHandler(c *gin.Context) {
 	providerName := c.Query("provider")
 	url, err := ac.authUC.GetLoginURL(providerName, "state")
 	if err != nil {
-		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
 		return
 	}
 
@@ -298,7 +298,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	if refreshToken == "" || err != nil {
 		c.IndentedJSON(
 			http.StatusBadRequest,
-			gin.H{"error": "Invalid refresh token"},
+			gin.H{"message": "Invalid refresh token"},
 		)
 		return
 	}
@@ -307,7 +307,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	if err_ != nil {
 		c.IndentedJSON(
 			err_.HttpStatus,
-			gin.H{"error": err_.Message},
+			gin.H{"message": err_.Message},
 		)
 		return
 	}
@@ -343,7 +343,7 @@ func (ac *AuthController) GetProfile(c *gin.Context) {
 
 	user, err := ac.authUC.GetUserByID(ctx, userID)
 	if err != nil {
-		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
 		return
 	}
 
@@ -364,13 +364,13 @@ func (ac *AuthController) ForgotPassword(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	appErr := ac.authUC.ForgotPassword(ctx, request.Email)
 	if appErr != nil {
-		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
 		return
 	}
 
@@ -385,13 +385,13 @@ func (ac *AuthController) VerifyResetCode(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	appErr := ac.authUC.VerifyResetCode(ctx, request.Email, request.Code)
 	if appErr != nil {
-		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
 		return
 	}
 
@@ -406,13 +406,13 @@ func (ac *AuthController) ResetPassword(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	appErr := ac.authUC.ResetPassword(ctx, request.Email, request.Password)
 	if appErr != nil {
-		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
 		return
 	}
 
@@ -426,18 +426,18 @@ func (ac *AuthController) ResendVerificationEmail(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	if !IsValidEmail(request.Email) {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidEmail})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
 		return
 	}
 
 	appErr := ac.authUC.SendVerificationEmail(ctx, strings.ToLower(request.Email))
 	if appErr != nil {
-		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
 		return
 	}
 
@@ -452,18 +452,18 @@ func (ac *AuthController) VerifyEmail(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidInputFormat})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}
 
 	if !IsValidEmail(request.Email) {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": domain.ErrInvalidEmail})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
 		return
 	}
 
 	appErr := ac.authUC.VerifyEmail(ctx, strings.ToLower(request.Email), request.Code)
 	if appErr != nil {
-		c.IndentedJSON(appErr.HttpStatus, gin.H{"error": appErr.Message})
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
 		return
 	}
 
