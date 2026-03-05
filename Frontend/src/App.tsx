@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
-import { useAppDispatch } from "./store/hooks";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { checkAuth } from "./store/authSlice";
+import { Loader2 } from "lucide-react";
 import LandingPage from "./pages/landing";
 import LoginPage from "./pages/login";
 import SignupPage from "./pages/signup";
@@ -17,10 +18,19 @@ import SettingsPage from "./pages/dashboard/settings";
 
 function App() {
     const dispatch = useAppDispatch();
+    const authLoading = useAppSelector((s) => s.auth.authLoading);
 
     useEffect(() => {
         dispatch(checkAuth());
     }, [dispatch]);
+
+    if (authLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <Routes>

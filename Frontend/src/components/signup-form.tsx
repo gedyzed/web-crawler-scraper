@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { setSignupField, signupUser } from "@/store/authSlice"
-import { Loader2, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2 } from "lucide-react"
+import { GlobalNotification } from "@/components/ui/global-notification"
 import { useEffect, useState } from "react"
 
 interface SignupFormProps extends React.ComponentPropsWithoutRef<"form"> { }
@@ -22,6 +22,8 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const [oauthError, setOauthError] = useState<string | null>(null)
+    const [showDialog, setShowDialog] = useState(false)
+    const [signupSuccess, setSignupSuccess] = useState(false)
 
     const { name, email, password, loading, error } = useAppSelector(
         (s) => s.auth.signup
@@ -33,6 +35,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
 
         if (errorMsg) {
             setOauthError(errorMsg)
+            setShowDialog(true)
             searchParams.delete("error")
             if (provider) searchParams.delete("provider")
             setSearchParams(searchParams, { replace: true })
@@ -41,11 +44,20 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
 
     const displayError = oauthError || error
 
+    useEffect(() => {
+        if (error) {
+            setShowDialog(true)
+        }
+    }, [error])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const result = await dispatch(signupUser({ name, email, password }))
         if (signupUser.fulfilled.match(result)) {
-            navigate("/verify-email")
+            setSignupSuccess(true)
+            setTimeout(() => {
+                navigate("/verify-email")
+            }, 3000)
         }
     }
 
@@ -63,12 +75,24 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                     </p>
                 </div>
 
-                {displayError && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{displayError}</AlertDescription>
-                    </Alert>
-                )}
+                <GlobalNotification
+                    open={showDialog && !!displayError}
+                    onOpenChange={(open) => {
+                        setShowDialog(open)
+                        if (!open && oauthError) setOauthError(null)
+                    }}
+                    message={displayError || "An error occurred"}
+                    type="error"
+                    autoCloseMs={5000}
+                />
+
+                <GlobalNotification
+                    open={signupSuccess}
+                    onOpenChange={setSignupSuccess}
+                    message="Signup successful. Redirecting to verification..."
+                    type="success"
+                    autoCloseMs={3000}
+                />
 
                 <Field>
                     <FieldLabel htmlFor="name">Full Name</FieldLabel>

@@ -11,8 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { setLoginField, loginUser } from "@/store/authSlice"
-import { Loader2, AlertCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2 } from "lucide-react"
+import { GlobalNotification } from "@/components/ui/global-notification"
 import { useEffect, useState } from "react"
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"form"> { }
@@ -22,6 +22,8 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const [oauthError, setOauthError] = useState<string | null>(null)
+    const [showDialog, setShowDialog] = useState(false)
+    const [loginSuccess, setLoginSuccess] = useState(false)
 
     const { email, password, loading, error } = useAppSelector((s) => s.auth.login)
 
@@ -31,6 +33,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
 
         if (errorMsg) {
             setOauthError(errorMsg)
+            setShowDialog(true)
             searchParams.delete("error")
             if (provider) searchParams.delete("provider")
             setSearchParams(searchParams, { replace: true })
@@ -39,11 +42,18 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
 
     const displayError = oauthError || error
 
+    useEffect(() => {
+        if (error) {
+            setShowDialog(true)
+        }
+    }, [error])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const result = await dispatch(loginUser({ email, password }))
         if (loginUser.fulfilled.match(result)) {
-            navigate("/dashboard")
+            setLoginSuccess(true)
+            setTimeout(() => navigate("/dashboard"), 1500)
         }
     }
 
@@ -61,12 +71,23 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                     </p>
                 </div>
 
-                {displayError && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{displayError}</AlertDescription>
-                    </Alert>
-                )}
+                <GlobalNotification
+                    open={showDialog && !!displayError}
+                    onOpenChange={(open) => {
+                        setShowDialog(open)
+                        if (!open && oauthError) setOauthError(null)
+                    }}
+                    message={displayError || "An error occurred"}
+                    type="error"
+                    autoCloseMs={5000}
+                />
+
+                <GlobalNotification
+                    open={loginSuccess}
+                    onOpenChange={setLoginSuccess}
+                    message="Login successful!"
+                    type="success"
+                />
 
                 <Field>
                     <FieldLabel htmlFor="email">Email</FieldLabel>

@@ -12,6 +12,7 @@ interface User {
 
 interface AuthState {
     isAuthenticated: boolean;
+    authLoading: boolean;
     user: User | null;
     login: {
         email: string;
@@ -72,8 +73,10 @@ export const signupUser = createAsyncThunk(
     async ({ name, email, password }: { name: string; email: string; password: string }, { rejectWithValue }) => {
         try {
             const response = await api.post('/auth/register', { name, email, password })
+            console.log(response.data)
             return response.data
         } catch (err: any) {
+            console.log(err.response)
             return rejectWithValue(err.response?.data?.message || err.message || 'Signup failed')
         }
     }
@@ -169,6 +172,7 @@ export const checkAuth = createAsyncThunk(
 // ─── Initial State ────────────────────────────────────────
 const initialState: AuthState = {
     isAuthenticated: false,
+    authLoading: true,
     user: null,
     login: {
         email: '',
@@ -316,6 +320,7 @@ const authSlice = createSlice({
             })
             .addCase(signupUser.rejected, (state, action) => {
                 state.signup.loading = false
+                console.log(action.payload)
                 state.signup.error = (action.payload as string) || 'Signup failed'
             })
 
@@ -396,12 +401,17 @@ const authSlice = createSlice({
 
         // ── Check Auth ──
         builder
+            .addCase(checkAuth.pending, (state) => {
+                state.authLoading = true
+            })
             .addCase(checkAuth.fulfilled, (state, action) => {
+                state.authLoading = false
                 state.isAuthenticated = true
                 const email = action.payload?.Email || action.payload?.email || ''
                 state.user = { name: email.split('@')[0] || 'User', email }
             })
             .addCase(checkAuth.rejected, (state) => {
+                state.authLoading = false
                 state.isAuthenticated = false
                 state.user = null
             })

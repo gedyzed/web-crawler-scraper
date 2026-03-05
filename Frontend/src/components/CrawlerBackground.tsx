@@ -54,7 +54,7 @@ const LIGHT: Palette = {
 
 const CONFIG = {
     cellSize: 64,
-    glyphs: ["[ ]", "{ }", "< >", "( )", "[ ]", "{ }"],
+    glyphs: [""],
     baseFontSize: 13,
     baseOpacity: 0.06,
 
