@@ -23,6 +23,9 @@ func (sc *ScrapeController) Scrape(c *gin.Context) {
 
 	var input domain.URLFrontier
 	if err := c.ShouldBindJSON(&input); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"error": err.Error(),
+		}).Error(domain.LogScrapeFailed)
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
 		return
 	}

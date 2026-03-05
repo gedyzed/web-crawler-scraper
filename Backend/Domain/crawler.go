@@ -1,7 +1,7 @@
 package domain
 
 type URLFrontier struct {
-	URL    string
-	Depth  int
-	UserID string
+	URL    string `json:"url"`
+	Depth  int    `json:"depth"`
+	UserID string `json:"user_id"`
 }

@@ -86,7 +86,7 @@ export const fetchHistory = createAsyncThunk(
             const response = await api.get('/history')
             return response.data as HistoryItem[]
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to fetch history')
+            return rejectWithValue(err.response?.data?.message || err.response?.data?.message || err.message || 'Failed to fetch history')
         }
     }
 )
@@ -100,11 +100,13 @@ export const runJob = createAsyncThunk<CrawlerResult, { url: string; type: 'craw
                 ? { url, maxPages: config.maxPages, depth: config.depth, allowedPatterns: config.allowedPatterns, deniedPatterns: config.deniedPatterns }
                 : { url }
 
+            console.log(body)
             const response = await api.post(endpoint, body)
             // Backend returns { message: CrawlerResult }
             return response.data.message as CrawlerResult
         } catch (err: any) {
-            return rejectWithValue(err.response?.data?.error || err.response?.data?.message || err.message || 'Job failed')
+            console.log(err.response)
+            return rejectWithValue(err.response?.data?.message || err.response?.data?.message || err.message || 'Job failed')
         }
     }
 )
