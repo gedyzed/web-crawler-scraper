@@ -1,4 +1,4 @@
-import { Outlet, useLocation, Link, useNavigate } from "react-router-dom"
+import { Outlet, useLocation, Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Search, Globe, History, LayoutDashboard, User, Settings2, X, type LucideIcon } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
@@ -38,8 +38,18 @@ export default function DashboardLayout() {
     const location = useLocation()
     const navigate = useNavigate()
     const dispatch = useAppDispatch()
+    const [searchParams, setSearchParams] = useSearchParams()
+
     const user = useAppSelector((state) => state.auth.user)
     const { searchQuery, isSearchOpen, history } = useAppSelector((state) => state.dashboard)
+
+    useEffect(() => {
+        const provider = searchParams.get("provider")
+        if (provider) {
+            searchParams.delete("provider")
+            setSearchParams(searchParams, { replace: true })
+        }
+    }, [searchParams, setSearchParams])
 
     useEffect(() => {
         const down = (e: KeyboardEvent) => {

@@ -8,20 +8,38 @@ import {
     FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { setSignupField, signupUser } from "@/store/authSlice"
 import { Loader2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useEffect, useState } from "react"
 
 interface SignupFormProps extends React.ComponentPropsWithoutRef<"form"> { }
 
 export function SignupForm({ className, ...props }: SignupFormProps) {
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
+    const [oauthError, setOauthError] = useState<string | null>(null)
+
     const { name, email, password, loading, error } = useAppSelector(
         (s) => s.auth.signup
     )
+
+    useEffect(() => {
+        const errorMsg = searchParams.get("error")
+        const provider = searchParams.get("provider")
+
+        if (errorMsg) {
+            setOauthError(errorMsg)
+            searchParams.delete("error")
+            if (provider) searchParams.delete("provider")
+            setSearchParams(searchParams, { replace: true })
+        }
+    }, [searchParams, setSearchParams])
+
+    const displayError = oauthError || error
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -45,10 +63,10 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                     </p>
                 </div>
 
-                {error && (
+                {displayError && (
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{error}</AlertDescription>
+                        <AlertDescription>{displayError}</AlertDescription>
                     </Alert>
                 )}
 
