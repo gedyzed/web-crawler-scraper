@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	// "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
 
 	logrus "github.com/sirupsen/logrus"
@@ -23,18 +22,5 @@ func DBConnect(cfg *config.DBConfig) *gorm.DB {
 		logrus.WithError(err).Fatal("Failed to connect to postgres database")
 	}
 
-	// db.AutoMigrate(
-	// 	domain.User{},
-	// 	domain.Profile{},
-	// 	domain.History{},
-	// 	domain.CrawlerResult{},
-	// 	domain.CrawlerSetting{},
-	// 	domain.Session{},
-	// 	domain.RefreshToken{},
-	// 	domain.AuthProvider{},
-	//  	domain.VerificationCode{},
-	// )
-
-	
 	return db
 }

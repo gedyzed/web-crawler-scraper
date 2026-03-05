@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -219,7 +220,9 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 	ctx := c.Request.Context()
 	code := c.Query("code")
 	if code == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Missing authorization code"})
+		errMsg := url.QueryEscape("Missing authorization code")
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/signup?provider=%s&error=%s", ac.cfg.App.Domain, provider, errMsg))
+		c.Abort()
 		return
 	}
 	ipAddress := c.ClientIP()
@@ -233,16 +236,20 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 
 	response, err := ac.authUC.RegisterOrLogin(ctx, provider, code, ipAddress)
 	if err != nil {
-		c.IndentedJSON(err.HttpStatus, gin.H{"error": err.Message})
+		errMsg := url.QueryEscape(err.Message)
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/signup?provider=%s&error=%s", ac.cfg.App.Domain, provider, errMsg))
+		c.Abort()
 		return
 	}
 
 	if response == nil || response.Session == nil || response.RefreshToken == nil {
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Authentication failed"})
+		errMsg := url.QueryEscape("Authentication failed")
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/signup?provider=%s&error=%s", ac.cfg.App.Domain, provider, errMsg))
+		c.Abort()
 		return
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetSameSite(http.SameSiteNoneMode)
 
 	expiryTime := time.Until(response.Session.ExpiresAt).Seconds()
 	c.SetCookie(
@@ -263,7 +270,9 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		tokenName = domain.RefreshTokenGithub
 	default:
 		logrus.WithField("provider", provider).Error("Unknown OAuth provider")
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Invalid provider"})
+		errMsg := url.QueryEscape("Invalid provider")
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/signup?provider=%s&error=%s", ac.cfg.App.Domain, provider, errMsg))
+		c.Abort()
 		return
 	}
 
@@ -277,21 +286,8 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		true,
 	)
 
-	userResponse := gin.H{}
-	if response.User != nil {
-		userResponse = gin.H{
-			"user_id":     response.User.UserID,
-			"first_name":  response.User.FirstName,
-			"last_name":   response.User.LastName,
-			"email":       response.User.Email,
-			"is_verified": response.User.Is_Verified,
-			"avatar_url":  response.User.AvatarURL,
-		}
-	}
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/dashboard?provider=%s", ac.cfg.App.Domain, provider))
 
-	c.IndentedJSON(http.StatusOK, gin.H{
-		"user": userResponse,
-	})
 }
 
 func (ac *AuthController) RefreshToken(c *gin.Context) {

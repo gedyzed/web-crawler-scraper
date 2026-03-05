@@ -234,7 +234,6 @@ func (ac *authUsecase) GetLoginURL(providerName string, state string) (string, *
 }
 
 func (ac *authUsecase) RegisterOrLogin(
-
 	ctx context.Context,
 	providerName string,
 	code string,

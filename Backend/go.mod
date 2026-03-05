@@ -15,6 +15,7 @@ require (
 	github.com/resend/resend-go/v3 v3.1.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.21.0
+	github.com/stretchr/testify v1.11.1
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/oauth2 v0.33.0
 	gorm.io/driver/postgres v1.6.0
@@ -29,6 +30,7 @@ require (
 	github.com/antchfx/xpath v1.3.5 // indirect
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-shiori/dom v0.0.0-20230515143342-73569d674e1c // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -36,9 +38,11 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
@@ -77,7 +81,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
-	go.uber.org/mock v0.5.0 // indirect
+	go.uber.org/mock v0.6.0
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/crypto v0.44.0

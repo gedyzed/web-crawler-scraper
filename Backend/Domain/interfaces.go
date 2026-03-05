@@ -32,7 +32,7 @@ type ISessionRepo interface {
 // AUTH
 type IOAuthServices interface {
 	RefreshToken(ctx context.Context, token *RefreshToken) (*RefreshToken, *AppError)
-	GetAuthURL(string, state string) (string, *AppError)
+	GetAuthURL(providerName string, state string) (string, *AppError)
 	Exchange(context.Context, string, string) (*ExchangeData, *AppError)
 }
 
