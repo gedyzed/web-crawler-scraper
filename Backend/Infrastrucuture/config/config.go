@@ -71,6 +71,7 @@ type CrawlerConfig struct {
 	AllowedDomains []string `mapstructure:"allowed_domains"`
 	MaxDepth       int      `mapstructure:"max_depth" validate:"required"`
 	MaxPages       int      `mapstructure:"max_pages"`
+	MaxConcurrency int      `mapstructure:"max_concurrency"`
 	AllowedPaths   []string `mapstructure:"allowed_paths"`
 	DeniedPatterns []string `mapstructure:"denied_patterns"`
 }

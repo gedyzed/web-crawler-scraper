@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	logrus "github.com/sirupsen/logrus"
+	colly "github.com/gocolly/colly"
 )
 
 type QueueItem struct {
@@ -50,8 +51,19 @@ func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawler
 		CRID:   uuid.New().String(),
 		UserID: userID,
 	}
+
+	collector := colly.NewCollector(
+		colly.Async(false),
+	)
+
+	collector.Limit(&colly.LimitRule{
+		DomainGlob:  "*",
+		Delay:       2 * time.Second,
+		RandomDelay: 1 * time.Second,
+	})
+
 	return &CrawlerServices{
-		Scraper:       NewScraper(&f.config),
+		Scraper:       NewScraper(&f.config, collector),
 		mu:            &sync.Mutex{},
 		Visited:       make(map[string]bool),
 		CrawlerConfig: f.config,
@@ -91,6 +103,12 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 	cr.Visited[seedURL] = true
 	cr.PageCount = 0
 
+	maxConcurrency := cr.CrawlerConfig.MaxConcurrency
+	if maxConcurrency <= 0 {
+		maxConcurrency = 10
+	}
+	sem := make(chan struct{}, maxConcurrency)
+
 	for len(currentLevel) > 0 {
 		// Check if we've already hit the page limit before processing this level
 		if cr.PageCount >= cr.CrawlerConfig.MaxPages {
@@ -113,9 +131,11 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 				continue
 			}
 
+			sem <- struct{}{}
 			wg.Add(1)
 			go func(item QueueItem) {
 				defer wg.Done()
+				defer func() { <-sem }()
 
 				// Each goroutine calls FetchAndParse which creates its own
 				// colly.Collector internally — no shared state.

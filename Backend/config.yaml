@@ -41,6 +41,7 @@ crawler:
     allowed_domains:
     max_depth: 10
     max_pages: 100
+    max_concurrency: 10
     allowed_paths:
     denied_patterns:
      

@@ -27,37 +27,7 @@ func NewScraperServiceFactory(cfg *config.CrawlerConfig) domain.IScraperServiceF
 }
 
 func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
-	return &Scraper{config: s.config}
-}
 
-// Scraper handles fetching and parsing pages.
-// It is stateless — all mutable state lives inside FetchAndParse.
-type Scraper struct {
-	config *config.CrawlerConfig
-}
-
-func NewScraper(cfg *config.CrawlerConfig) domain.IScrapeService {
-	return &Scraper{config: cfg}
-}
-
-// FetchAndParse visits a single URL and returns the parsed Page
-// along with all discovered links found on that page.
-// A fresh colly.Collector is created per call so there is no
-// shared mutable state and no revisit blocking.
-func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string) (*domain.Page, []string, *domain.AppError) {
-
-	// Local state — safe for concurrent use since each goroutine
-	// gets its own FetchAndParse call with its own locals.
-	page := &domain.Page{
-		PageID:    uuid.New().String(),
-		ResultID:  resultID,
-		URL:       targetURL,
-		FetchedAt: time.Now(),
-	}
-	discoveredLinks := make([]string, 0)
-
-	// Fresh collector per call — avoids Colly's internal visited-URL set
-	// blocking subsequent pages, and eliminates all shared-state races.
 	collector := colly.NewCollector(
 		colly.Async(false),
 	)
@@ -67,7 +37,36 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		Delay:       2 * time.Second,
 		RandomDelay: 1 * time.Second,
 	})
+	return NewScraper(s.config, collector)
+}
 
+// Scraper handles fetching and parsing pages.
+// It is stateless — all mutable state lives inside FetchAndParse.
+type Scraper struct {
+	config *config.CrawlerConfig
+	collector *colly.Collector
+}
+
+func NewScraper(cfg *config.CrawlerConfig, collector *colly.Collector) domain.IScrapeService {
+	return &Scraper{config: cfg, collector: collector}
+}
+
+// FetchAndParse visits a single URL and returns the parsed Page
+// along with all discovered links found on that page.
+// A fresh colly.Collector is created per call so there is no
+// shared mutable state and no revisit blocking.
+func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string) (*domain.Page, []string, *domain.AppError) {
+
+	page := &domain.Page{
+		PageID:    uuid.New().String(),
+		ResultID:  resultID,
+		URL:       targetURL,
+		FetchedAt: time.Now(),
+	}
+	discoveredLinks := make([]string, 0)
+
+	collector := s.collector.Clone()
+	
 	collector.OnRequest(func(e *colly.Request) {
 		e.Ctx.Put("start_time", time.Now())
 	})
