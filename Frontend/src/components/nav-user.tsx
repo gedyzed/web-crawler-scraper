@@ -60,7 +60,7 @@ export function NavUser({
                 open={showLogoutSuccess}
                 onOpenChange={setShowLogoutSuccess}
                 message="Logged out successfully!"
-                type="success"
+                type="error"
             />
             <SidebarMenu>
                 <SidebarMenuItem>

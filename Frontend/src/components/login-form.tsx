@@ -79,7 +79,6 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                     }}
                     message={displayError || "An error occurred"}
                     type="error"
-                    autoCloseMs={5000}
                 />
 
                 <GlobalNotification

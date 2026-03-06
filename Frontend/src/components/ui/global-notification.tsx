@@ -14,7 +14,7 @@ export function GlobalNotification({
     onOpenChange,
     message,
     type,
-    autoCloseMs = 1500,
+    autoCloseMs = 500,
 }: GlobalNotificationProps) {
     const [visible, setVisible] = React.useState(false)
 
@@ -27,11 +27,16 @@ export function GlobalNotification({
         }
     }, [open])
 
+    const onOpenChangeRef = React.useRef(onOpenChange)
+    React.useEffect(() => {
+        onOpenChangeRef.current = onOpenChange
+    }, [onOpenChange])
+
     React.useEffect(() => {
         if (!open || autoCloseMs <= 0) return
-        const id = setTimeout(() => onOpenChange(false), autoCloseMs)
+        const id = setTimeout(() => onOpenChangeRef.current(false), autoCloseMs)
         return () => clearTimeout(id)
-    }, [open, autoCloseMs, onOpenChange])
+    }, [open, autoCloseMs])
 
     if (!visible && !open) return null
 

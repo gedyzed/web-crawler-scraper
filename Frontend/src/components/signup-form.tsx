@@ -83,7 +83,6 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                     }}
                     message={displayError || "An error occurred"}
                     type="error"
-                    autoCloseMs={5000}
                 />
 
                 <GlobalNotification
@@ -91,7 +90,6 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                     onOpenChange={setSignupSuccess}
                     message="Signup successful. Redirecting to verification..."
                     type="success"
-                    autoCloseMs={3000}
                 />
 
                 <Field>
