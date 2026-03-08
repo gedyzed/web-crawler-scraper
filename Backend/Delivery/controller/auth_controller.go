@@ -170,7 +170,7 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 	)
 
 	c.SetCookie(
-		domain.RefreshTokenLocal,
+		domain.RefreshTokenCookie,
 		response.RefreshToken.Token,
 		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 		"/auth/refresh",
@@ -195,13 +195,23 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 func (ac *AuthController) OAuthHandler(c *gin.Context) {
 
 	providerName := c.Query("provider")
-	url, err := ac.authUC.GetLoginURL(providerName, "state")
+
+	state, err := usecase.GenerateID(16)
 	if err != nil {
-		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": domain.ErrInternalServer})
 		return
 	}
 
-	url += fmt.Sprintf("&provider=%s", providerName)
+	// Use empty string for cookie domain so it defaults to current host
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("oauth_state", state, 3600, "/", "", ac.cfg.App.SecureCookies, true)
+
+	url, appErr := ac.authUC.GetLoginURL(providerName, state)
+	if appErr != nil {
+		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
+		return
+	}
+
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
@@ -216,6 +226,23 @@ func (ac *AuthController) GithubOAuthCallBack(c *gin.Context) {
 }
 
 func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
+
+	state := c.Query("state")
+	oauthState, err_ := c.Cookie("oauth_state")
+	if err_ != nil || state == "" || state != oauthState {
+		logrus.WithFields(logrus.Fields{
+			"expected": oauthState,
+			"got":      state,
+			"error":    err_,
+		}).Error("Invalid OAuth state")
+		errMsg := url.QueryEscape("Invalid OAuth state")
+		c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/signup?provider=%s&error=%s", ac.cfg.App.Domain, provider, errMsg))
+		c.Abort()
+		return
+	}
+
+	// clear oauth state cookie
+	c.SetCookie("oauth_state", "", -1, "/", "", ac.cfg.App.SecureCookies, true)
 
 	ctx := c.Request.Context()
 	code := c.Query("code")
@@ -262,25 +289,11 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		true,
 	)
 
-	var tokenName string
-	switch provider {
-	case domain.Google:
-		tokenName = domain.RefreshTokenGoogle
-	case domain.Github:
-		tokenName = domain.RefreshTokenGithub
-	default:
-		logrus.WithField("provider", provider).Error("Unknown OAuth provider")
-		errMsg := url.QueryEscape("Invalid provider")
-		c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/signup?provider=%s&error=%s", ac.cfg.App.Domain, provider, errMsg))
-		c.Abort()
-		return
-	}
-
 	c.SetCookie(
-		tokenName,
+		domain.RefreshTokenCookie,
 		response.RefreshToken.Token,
 		int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
-		"/auth/oauth/refresh",
+		"/auth/refresh",
 		ac.cfg.App.Domain,
 		ac.cfg.App.SecureCookies,
 		true,
@@ -294,7 +307,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 
 	ctx := c.Request.Context()
 
-	refreshToken, err := c.Cookie(domain.RefreshTokenLocal)
+	refreshToken, err := c.Cookie(domain.RefreshTokenCookie)
 	if refreshToken == "" || err != nil {
 		c.IndentedJSON(
 			http.StatusBadRequest,
@@ -326,7 +339,7 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 
 	if newRefreshToken != "" {
 		c.SetCookie(
-			domain.RefreshTokenLocal,
+			domain.RefreshTokenCookie,
 			newRefreshToken,
 			int(ac.cfg.JWTConfig.RefreshTTL.Seconds()),
 			"/auth/refresh",

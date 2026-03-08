@@ -20,13 +20,8 @@ type IUserRepo interface {
 type IRefreshTokenRepo interface {
 	Create(ctx context.Context, token *RefreshToken) *AppError
 	FindByID(ctx context.Context, UserID string) (*RefreshToken, *AppError)
+	Update(ctx context.Context, token *RefreshToken) *AppError
 	DeleteToken(ctx context.Context, token string) *AppError
-}
-
-type ISessionRepo interface {
-	Create(ctx context.Context, session *Session) *AppError
-	FindByID(ctx context.Context, id uint) (*Session, *AppError)
-	Delete(ctx context.Context, id uint) *AppError
 }
 
 // AUTH

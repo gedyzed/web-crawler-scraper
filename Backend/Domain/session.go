@@ -6,13 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// Session holds access token and expiry. Not persisted to DB - used as DTO throughout the program.
 type Session struct {
-	gorm.Model
-	UserID 		string
-	Token  		string 		`gorm:"unique;not null"`
-	ExpiresAt 	time.Time
-	IPAddress   string
-} 
+	Token     string
+	ExpiresAt time.Time
+}
 
 type RefreshToken struct {
 	gorm.Model

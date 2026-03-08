@@ -143,11 +143,9 @@ func (js *jwtService) RefreshToken(ctx context.Context, refreshToken string) (*d
 
 	userData := &domain.ExchangeData{
 		Session: &domain.Session{
-			UserID:    UserID,
 			Token:     accessToken,
-			ExpiresAt: time.Now().Add(time.Duration(js.config.AccessTTL)),
+			ExpiresAt: time.Now().Add(js.config.AccessTTL),
 		},
-
 		RefreshToken: refresh,
 	}
 

@@ -98,7 +98,7 @@ func LoadConfig(path string) *Config {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.SetDefault("google_oauth.scopes", []string{"openid", "email", "profile"})
-	viper.SetDefault("github.scopes", []string{"read:user", "users:email"})
+	viper.SetDefault("github_oauth.scopes", []string{"read:user", "user:email"})
 	viper.SetDefault("security.min_entropy_bits", 30)
 
 	var cfg Config

@@ -35,7 +35,6 @@ type IRateLimiter interface {
 type authUsecase struct {
 	repo            domain.IUserRepo
 	tokenRepo       domain.IRefreshTokenRepo
-	sessionRepo     domain.ISessionRepo
 	rateLimiter     IRateLimiter
 	oauthServices   domain.IOAuthServices
 	jwtService      domain.IJwtService
@@ -46,7 +45,6 @@ type authUsecase struct {
 func NewAuthUsecase(
 	repo domain.IUserRepo,
 	tokenRepo domain.IRefreshTokenRepo,
-	sessionRepo domain.ISessionRepo,
 	rateLimiter IRateLimiter,
 	oauthServices domain.IOAuthServices,
 	jwtService domain.IJwtService,
@@ -56,7 +54,6 @@ func NewAuthUsecase(
 	return &authUsecase{
 		repo:            repo,
 		tokenRepo:       tokenRepo,
-		sessionRepo:     sessionRepo,
 		rateLimiter:     rateLimiter,
 		oauthServices:   oauthServices,
 		jwtService:      jwtService,
@@ -213,10 +210,6 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 	}
 
 	exchangeData.User = old_user
-	exchangeData.Session.UserID = old_user.UserID
-	if err := ac.sessionRepo.Create(ctx, exchangeData.Session); err != nil {
-		return nil, err
-	}
 	return exchangeData, nil
 }
 
@@ -286,7 +279,7 @@ func (ac *authUsecase) RegisterOrLogin(
 
 		// Save refresh token for existing user
 		userData.RefreshToken.UserID = old_user.UserID
-		err = ac.tokenRepo.Create(ctx, userData.RefreshToken)
+		err = ac.tokenRepo.Update(ctx, userData.RefreshToken)
 		if err != nil {
 			logger.WithFields(logger.Fields{
 				"refreshToken": userData.RefreshToken,
@@ -296,12 +289,6 @@ func (ac *authUsecase) RegisterOrLogin(
 				Message:    domain.ErrSomethingWentWrong,
 				HttpStatus: 500,
 			}
-		}
-
-		// Set UserID in session
-		userData.Session.UserID = old_user.UserID
-		if err := ac.sessionRepo.Create(ctx, userData.Session); err != nil {
-			return nil, err
 		}
 	} else {
 		// register - new user
@@ -325,11 +312,6 @@ func (ac *authUsecase) RegisterOrLogin(
 		if err != nil {
 			return nil, err
 		}
-
-		userData.Session.UserID = UserID
-		if err := ac.sessionRepo.Create(ctx, userData.Session); err != nil {
-			return nil, err
-		}
 	}
 
 	return userData, nil
@@ -348,16 +330,12 @@ func (ac *authUsecase) RefreshToken(ctx context.Context, refreshToken string) (s
 	session := data.Session
 	if session != nil {
 		newAccessToken = session.Token
-		// save the session
-		if err := ac.sessionRepo.Create(ctx, session); err != nil {
-			return "", "", err
-		}
 	}
 
 	// save the refresh token
 	if data.RefreshToken != nil {
 		newRefreshToken = data.RefreshToken.Token
-		if err := ac.tokenRepo.Create(ctx, data.RefreshToken); err != nil {
+		if err := ac.tokenRepo.Update(ctx, data.RefreshToken); err != nil {
 			return "", "", err
 		}
 	}

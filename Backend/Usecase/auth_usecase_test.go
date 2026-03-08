@@ -21,11 +21,10 @@ func (m *mockRateLimiter) Allow(ctx context.Context, ip string) (bool, *domain.A
 	return m.allow, m.err
 }
 
-func setupAuthUsecaseTest(t *testing.T) (*gomock.Controller, *mocks.MockIUserRepo, *mocks.MockIRefreshTokenRepo, *mocks.MockISessionRepo, *mockRateLimiter, *mocks.MockIOAuthServices, *mocks.MockIJwtService, *mocks.MockIPasswordService, *mocks.MockIEmailService, usecase.IAuthUsecase) {
+func setupAuthUsecaseTest(t *testing.T) (*gomock.Controller, *mocks.MockIUserRepo, *mocks.MockIRefreshTokenRepo, *mockRateLimiter, *mocks.MockIOAuthServices, *mocks.MockIJwtService, *mocks.MockIPasswordService, *mocks.MockIEmailService, usecase.IAuthUsecase) {
 	ctrl := gomock.NewController(t)
 	mockUserRepo := mocks.NewMockIUserRepo(ctrl)
 	mockTokenRepo := mocks.NewMockIRefreshTokenRepo(ctrl)
-	mockSessionRepo := mocks.NewMockISessionRepo(ctrl)
 	mockRateLimiter := &mockRateLimiter{allow: true}
 	mockOAuth := mocks.NewMockIOAuthServices(ctrl)
 	mockJwt := mocks.NewMockIJwtService(ctrl)
@@ -33,15 +32,15 @@ func setupAuthUsecaseTest(t *testing.T) (*gomock.Controller, *mocks.MockIUserRep
 	mockEmail := mocks.NewMockIEmailService(ctrl)
 
 	uc := usecase.NewAuthUsecase(
-		mockUserRepo, mockTokenRepo, mockSessionRepo, mockRateLimiter,
+		mockUserRepo, mockTokenRepo, mockRateLimiter,
 		mockOAuth, mockJwt, mockPassword, mockEmail,
 	)
 
-	return ctrl, mockUserRepo, mockTokenRepo, mockSessionRepo, mockRateLimiter, mockOAuth, mockJwt, mockPassword, mockEmail, uc
+	return ctrl, mockUserRepo, mockTokenRepo, mockRateLimiter, mockOAuth, mockJwt, mockPassword, mockEmail, uc
 }
 
 func TestRegister_Success(t *testing.T) {
-	ctrl, mockUserRepo, _, _, _, _, _, mockPassword, mockEmail, uc := setupAuthUsecaseTest(t)
+	ctrl, mockUserRepo, _, _, _, _, mockPassword, mockEmail, uc := setupAuthUsecaseTest(t)
 	defer ctrl.Finish()
 
 	ctx := context.Background()
@@ -61,7 +60,7 @@ func TestRegister_Success(t *testing.T) {
 }
 
 func TestRegister_DuplicateEmail(t *testing.T) {
-	ctrl, mockUserRepo, _, _, _, _, _, _, _, uc := setupAuthUsecaseTest(t)
+	ctrl, mockUserRepo, _, _, _, _, _, _, uc := setupAuthUsecaseTest(t)
 	defer ctrl.Finish()
 
 	ctx := context.Background()
@@ -78,7 +77,7 @@ func TestRegister_DuplicateEmail(t *testing.T) {
 }
 
 func TestLogin_Success(t *testing.T) {
-	ctrl, mockUserRepo, mockTokenRepo, mockSessionRepo, _, _, mockJwt, mockPassword, _, uc := setupAuthUsecaseTest(t)
+	ctrl, mockUserRepo, mockTokenRepo, _, _, mockJwt, mockPassword, _, uc := setupAuthUsecaseTest(t)
 	defer ctrl.Finish()
 
 	ctx := context.Background()
@@ -95,7 +94,6 @@ func TestLogin_Success(t *testing.T) {
 	mockPassword.EXPECT().ComparePassword("hashed_password", user.Password).Return(true)
 	mockJwt.EXPECT().GenerateTokens(ctx, "user123").Return(exchangeData, nil)
 	mockTokenRepo.EXPECT().Create(ctx, gomock.Any()).Return(nil)
-	mockSessionRepo.EXPECT().Create(ctx, gomock.Any()).Return(nil)
 
 	res, err := uc.Login(ctx, user, "127.0.0.1")
 	assert.Nil(t, err)
@@ -104,7 +102,7 @@ func TestLogin_Success(t *testing.T) {
 }
 
 func TestLogin_InvalidCredentials(t *testing.T) {
-	ctrl, mockUserRepo, _, _, _, _, _, mockPassword, _, uc := setupAuthUsecaseTest(t)
+	ctrl, mockUserRepo, _, _, _, _, mockPassword, _, uc := setupAuthUsecaseTest(t)
 	defer ctrl.Finish()
 
 	ctx := context.Background()

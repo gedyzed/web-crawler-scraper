@@ -6,6 +6,7 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func NewUserRepo(db *gorm.DB) domain.IUserRepo {
@@ -95,7 +96,10 @@ func (r *userRepo) Update(ctx context.Context, user *domain.User) (*domain.User,
 
 func (r *userRepo) SaveProvider(ctx context.Context, provider *domain.AuthProvider) *domain.AppError {
 
-	err := r.db.WithContext(ctx).Create(provider).Error
+	err := r.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "provider"}, {Name: "provider_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"user_id"}),
+	}).Create(provider).Error
 	if err != nil {
 		logger.WithFields(logger.Fields{
 			"provider": provider,

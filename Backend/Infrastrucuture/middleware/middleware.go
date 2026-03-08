@@ -25,7 +25,7 @@ func NewMiddleware(jwt domain.IJwtService) IMiddleware {
 func (m *Middlewares) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		token, err := c.Cookie("access_token")
+		token, err := c.Cookie(domain.AccessToken)
 		if err != nil || token == "" {
 			logrus.WithFields(logrus.Fields{
 				"ip":   c.ClientIP(),

@@ -131,7 +131,7 @@ func (os *OAuthServices) Exchange(
 		Provider:   providerName,
 		ProviderID: fmt.Sprintf("%d", userInfo.ID),
 	}
-
+	
 	newUser := &domain.User{
 		Email:       userInfo.Email,
 		FirstName:   userInfo.GivenName,

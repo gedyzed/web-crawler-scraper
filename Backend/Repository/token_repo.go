@@ -43,6 +43,22 @@ func (r *tokenRepo) Create(ctx context.Context, token *domain.RefreshToken) *dom
 
 }
 
+func (r *tokenRepo) Update(ctx context.Context, token *domain.RefreshToken) *domain.AppError {
+	err := r.db.WithContext(ctx).Model(&domain.RefreshToken{}).Where("user_id = ?", token.UserID).Updates(token).Error
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"refresh_token": token,
+			"error":         err,
+		}).Error(domain.LogFailedUpdateUser)
+
+		return &domain.AppError{
+			Message:    domain.ErrInternalServer,
+			HttpStatus: 500,
+		}
+	}
+	return nil
+}
+
 func (r *tokenRepo) FindByID(ctx context.Context, UserID string) (*domain.RefreshToken, *domain.AppError) {
 
 	logger.SetFormatter(&logger.JSONFormatter{})

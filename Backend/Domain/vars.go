@@ -97,7 +97,7 @@ var (
 )
 
 var (
-	RefreshTokenLocal  = "refresh_token_local"
+	RefreshTokenCookie = "refresh_token" // cookie name for JWT refresh token (avoids conflict with RefreshToken struct)
 	RefreshTokenGoogle = "refresh_token_google"
 	RefreshTokenGithub = "refresh_token_github"
 	AccessToken        = "access_token"

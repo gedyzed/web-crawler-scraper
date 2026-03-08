@@ -24,7 +24,6 @@ type User struct {
 	History      []*History       `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 	Jobs         []*Jobs          `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 	Result       []*CrawlerResult `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
-	Session      []*Session       `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 	RefreshToken []*RefreshToken  `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 	Provider     []*AuthProvider  `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:UserID;references:UserID"`
 }

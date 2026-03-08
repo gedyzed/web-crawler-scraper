@@ -224,6 +224,20 @@ func (mr *MockIRefreshTokenRepoMockRecorder) FindByID(ctx, UserID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockIRefreshTokenRepo)(nil).FindByID), ctx, UserID)
 }
 
+// Update mocks base method.
+func (m *MockIRefreshTokenRepo) Update(ctx context.Context, token *domain.RefreshToken) *domain.AppError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", ctx, token)
+	ret0, _ := ret[0].(*domain.AppError)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockIRefreshTokenRepoMockRecorder) Update(ctx, token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIRefreshTokenRepo)(nil).Update), ctx, token)
+}
+
 // MockISessionRepo is a mock of ISessionRepo interface.
 type MockISessionRepo struct {
 	ctrl     *gomock.Controller

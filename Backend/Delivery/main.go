@@ -53,7 +53,6 @@ func main() {
 	// repos
 	userRepo := repository.NewUserRepo(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
-	sessionRepo := repository.NewSessionRepo(db)
 	resultRepo := repository.NewResultRepo(db)
 
 	// services
@@ -67,7 +66,6 @@ func main() {
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,
 		refreshTokenRepo,
-		sessionRepo,
 		rateLimiter,
 		oauthServices,
 		jwtService,
