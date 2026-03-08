@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-	"time"
 	domain "web_crawler_scraper/Domain"
 	usecase "web_crawler_scraper/Usecase"
 
@@ -278,11 +277,11 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 
 	c.SetSameSite(http.SameSiteNoneMode)
 
-	expiryTime := time.Until(response.Session.ExpiresAt).Seconds()
+
 	c.SetCookie(
 		domain.AccessToken,
 		response.Session.Token,
-		int(expiryTime),
+		int(ac.cfg.JWTConfig.AccessTTL.Seconds()),
 		"/",
 		ac.cfg.App.Domain,
 		ac.cfg.App.SecureCookies,

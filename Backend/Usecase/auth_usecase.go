@@ -265,8 +265,11 @@ func (ac *authUsecase) RegisterOrLogin(
 		return nil, err
 	}
 
+	var targetUserID string
+
 	// login - existing user
 	if old_user != nil {
+		targetUserID = old_user.UserID
 		userData.User = old_user
 		userData.Provider.UserID = old_user.UserID
 		err := ac.repo.SaveProvider(ctx, userData.Provider)
@@ -275,20 +278,6 @@ func (ac *authUsecase) RegisterOrLogin(
 				"provider": userData.Provider,
 				"error":    err,
 			}).Error(domain.LogFailedSaveProvider)
-		}
-
-		// Save refresh token for existing user
-		userData.RefreshToken.UserID = old_user.UserID
-		err = ac.tokenRepo.Update(ctx, userData.RefreshToken)
-		if err != nil {
-			logger.WithFields(logger.Fields{
-				"refreshToken": userData.RefreshToken,
-				"error":        err,
-			}).Error(domain.LogFailedCreateRefreshToken)
-			return nil, &domain.AppError{
-				Message:    domain.ErrSomethingWentWrong,
-				HttpStatus: 500,
-			}
 		}
 	} else {
 		// register - new user
@@ -300,17 +289,55 @@ func (ac *authUsecase) RegisterOrLogin(
 			}
 		}
 
+		targetUserID = UserID
 		user.UserID = UserID
 		err = ac.repo.Create(ctx, user)
 		if err != nil {
 			return nil, err
 		}
 
-		refreshToken := userData.RefreshToken
-		refreshToken.UserID = UserID
-		err = ac.tokenRepo.Create(ctx, refreshToken)
+		userData.Provider.UserID = UserID
+		err = ac.repo.SaveProvider(ctx, userData.Provider)
 		if err != nil {
-			return nil, err
+			logger.WithFields(logger.Fields{
+				"provider": userData.Provider,
+				"error":    err,
+			}).Error(domain.LogFailedSaveProvider)
+		}
+	}
+
+	// generate JWT tokens
+	exchangeData, err_ := ac.jwtService.GenerateTokens(ctx, targetUserID)
+	if err_ != nil {
+		logger.WithFields(logger.Fields{
+			"user":  userData.User,
+			"error": err_,
+		}).Error(domain.LogFailedCreateTokens)
+		return nil, &domain.AppError{
+			Message:    domain.ErrSomethingWentWrong,
+			HttpStatus: 500,
+		}
+	}
+
+	userData.Session = exchangeData.Session
+	userData.RefreshToken = exchangeData.RefreshToken
+
+	// Save refresh token
+	userData.RefreshToken.UserID = targetUserID
+	if old_user != nil {
+		err = ac.tokenRepo.Update(ctx, userData.RefreshToken)
+	} else {
+		err = ac.tokenRepo.Create(ctx, userData.RefreshToken)
+	}
+
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"refreshToken": userData.RefreshToken,
+			"error":        err,
+		}).Error(domain.LogFailedCreateRefreshToken)
+		return nil, &domain.AppError{
+			Message:    domain.ErrSomethingWentWrong,
+			HttpStatus: 500,
 		}
 	}
 
