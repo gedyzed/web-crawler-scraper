@@ -43,7 +43,7 @@ func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
 // Scraper handles fetching and parsing pages.
 // It is stateless — all mutable state lives inside FetchAndParse.
 type Scraper struct {
-	config *config.CrawlerConfig
+	config    *config.CrawlerConfig
 	collector *colly.Collector
 }
 
@@ -62,11 +62,13 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		ResultID:  resultID,
 		URL:       targetURL,
 		FetchedAt: time.Now(),
+		Links:     make([]domain.Link, 0),
+		Products:  make([]domain.Product, 0),
 	}
 	discoveredLinks := make([]string, 0)
 
 	collector := s.collector.Clone()
-	
+
 	collector.OnRequest(func(e *colly.Request) {
 		e.Ctx.Put("start_time", time.Now())
 	})
@@ -106,6 +108,19 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 
 		// E-commerce Product Extraction
 		page.Products = extractProducts(e, targetURL)
+
+		// Populate page.Links with discoveredLinks uniquely
+		seenLinks := make(map[string]bool)
+		for _, link := range discoveredLinks {
+			if !seenLinks[link] {
+				seenLinks[link] = true
+				page.Links = append(page.Links, domain.Link{
+					PageID: page.PageID,
+					URL:    link,
+					Type:   "Internal", // Could be enhanced to differentiate External/Internal
+				})
+			}
+		}
 	})
 
 	collector.OnError(func(e *colly.Response, err error) {
@@ -476,7 +491,7 @@ func firstNonEmpty(vals ...string) string {
 
 func deduplicateProducts(products []domain.Product) []domain.Product {
 	if len(products) == 0 {
-		return nil
+		return make([]domain.Product, 0)
 	}
 	seen := make(map[string]bool)
 	var result []domain.Product

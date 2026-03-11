@@ -14,8 +14,8 @@ type CrawlerResult struct {
 }
 
 type Product struct {
-	gorm.Model `json:"-"`
-	PageID 		uint `gorm:"index"`
+	gorm.Model  `json:"-"`
+	PageID      string `gorm:"index" json:"-"`
 	Name        string `json:"name"`
 	Price       string `json:"price"`
 	ImageURL    string `json:"image_url"`
@@ -26,18 +26,17 @@ type Product struct {
 
 type Link struct {
 	gorm.Model `json:"-"`
-	PageID  uint   `gorm:"index"` 
-	URL     string `gorm:"type:text"`
-	Type    string `gorm:"size:20"` 
-	
+	PageID     string `gorm:"index" json:"-"`
+	URL        string `gorm:"type:text"`
+	Type       string `gorm:"size:20"`
 }
 
 type Page struct {
-	PageID 		string
-	ResultID 	string
-	URL       	string
-	ParentURL 	string
-	Depth     	int
+	PageID    string
+	ResultID  string
+	URL       string
+	ParentURL string
+	Depth     int
 
 	StatusCode     int
 	ContentType    string
@@ -48,7 +47,7 @@ type Page struct {
 	MetaDescription string
 	TextContent     string
 
-	Links 	 []Link `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`	
+	Links    []Link    `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`
 	Products []Product `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`
-	gorm.Model	
+	gorm.Model
 }
