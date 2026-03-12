@@ -6,8 +6,11 @@ const CODE_LENGTH = 6
 const RESEND_COOLDOWN = 60
 
 interface User {
-    name: string;
+    firstname: string;
+    lastname: string;
     email: string;
+    username: string;
+
 }
 
 interface AuthState {
@@ -61,8 +64,10 @@ export const loginUser = createAsyncThunk(
             // Tokens are set as HttpOnly cookies by the backend.
             // Fetch user profile using the session cookie.
             const profileRes = await api.get('/auth/me')
+
             return profileRes.data
         } catch (err: any) {
+            console.log(err.response)
             return rejectWithValue(err.response?.data?.message || err.message || 'Login failed')
         }
     }
@@ -161,9 +166,19 @@ export const checkAuth = createAsyncThunk(
     'auth/checkAuth',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get('/auth/me')
+            let response = await api.get('/auth/me')
             return response.data
         } catch (err: any) {
+            if (err.response?.status === 401) {
+                console.log(err.response.data)
+                try {
+                    await api.get('/auth/refresh', { withCredentials: true })
+                    const retryRes = await api.get('/auth/me')
+                    return retryRes.data
+                } catch (refreshErr: any) {
+                    return rejectWithValue(refreshErr.response?.data?.message || 'Session expired')
+                }
+            }
             return rejectWithValue(err.response?.data?.message || err.message || 'Session expired')
         }
     }
@@ -301,7 +316,9 @@ const authSlice = createSlice({
                 state.login.loading = false
                 state.isAuthenticated = true
                 const email = action.payload?.Email || action.payload?.email || ''
-                state.user = { name: email.split('@')[0] || 'User', email }
+                state.user = { firstname: action.payload.firstname, 
+                    lastname: action.payload.lastname, 
+                    username: email.split('@')[0] || 'User', email }
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.login.loading = false
@@ -408,7 +425,9 @@ const authSlice = createSlice({
                 state.authLoading = false
                 state.isAuthenticated = true
                 const email = action.payload?.Email || action.payload?.email || ''
-                state.user = { name: email.split('@')[0] || 'User', email }
+                state.user = { firstname: action.payload.firstname, 
+                    lastname: action.payload.lastname, 
+                    username: email.split('@')[0] || 'User', email }
             })
             .addCase(checkAuth.rejected, (state) => {
                 state.authLoading = false

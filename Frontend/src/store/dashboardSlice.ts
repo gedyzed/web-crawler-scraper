@@ -68,6 +68,8 @@ interface DashboardState {
     jobError: string;
     history: HistoryItem[];
     lastResult: CrawlerResult | null;
+    crawlResult: CrawlerResult | null;
+    scrapeResult: CrawlerResult | null;
     sampleScrapeResult: CrawlerResult;
     sampleCrawlResult: CrawlerResult;
     searchQuery: string;
@@ -100,10 +102,11 @@ export const runJob = createAsyncThunk<CrawlerResult, { url: string; type: 'craw
                 ? { url, maxPages: config.maxPages, depth: config.depth, allowedPatterns: config.allowedPatterns, deniedPatterns: config.deniedPatterns }
                 : { url }
 
-            console.log(body)
             const response = await api.post(endpoint, body)
-            // Backend returns { message: CrawlerResult }
+            // Backend returns { message: CrawlerResult 
+            console.log(response.data)
             return response.data.message as CrawlerResult
+
         } catch (err: any) {
             console.log(err.response)
             return rejectWithValue(err.response?.data?.message || err.response?.data?.message || err.message || 'Job failed')
@@ -128,6 +131,8 @@ const initialState: DashboardState = {
     // History
     history: [],
     lastResult: null,
+    crawlResult: null,
+    scrapeResult: null,
     // Sample data matching real API response shape for landing page demo
     sampleScrapeResult: {
         CRID: 'demo-scrape-001',
@@ -280,6 +285,15 @@ const dashboardSlice = createSlice({
         setIsSearchOpen: (state, action: PayloadAction<boolean>) => {
             state.isSearchOpen = action.payload
         },
+        setLastResult: (state, action: PayloadAction<CrawlerResult | null>) => {
+            state.lastResult = action.payload
+        },
+        setCrawlResult: (state, action: PayloadAction<CrawlerResult | null>) => {
+            state.crawlResult = action.payload
+        },
+        setScrapeResult: (state, action: PayloadAction<CrawlerResult | null>) => {
+            state.scrapeResult = action.payload
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -298,10 +312,18 @@ const dashboardSlice = createSlice({
             .addCase(runJob.pending, (state) => {
                 state.jobLoading = true
                 state.jobError = ''
+                state.lastResult = null
+                state.crawlResult = null
+                state.scrapeResult = null
             })
             .addCase(runJob.fulfilled, (state, action) => {
                 state.jobLoading = false
                 state.lastResult = action.payload
+                if (action.meta.arg.type === 'crawl') {
+                    state.crawlResult = action.payload
+                } else if (action.meta.arg.type === 'scrape') {
+                    state.scrapeResult = action.payload
+                }
                 state.jobUrl = ''
             })
             .addCase(runJob.rejected, (state, action) => {
@@ -326,6 +348,9 @@ export const {
     clearHistory,
     setSearchQuery,
     setIsSearchOpen,
+    setLastResult,
+    setCrawlResult,
+    setScrapeResult,
 } = dashboardSlice.actions
 
 export default dashboardSlice.reducer

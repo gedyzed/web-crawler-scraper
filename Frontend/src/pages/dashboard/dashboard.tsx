@@ -8,21 +8,30 @@ import {
     Loader2,
     Zap,
     ArrowRight,
+    Code2,
+    FileText,
+    XCircle,
 } from "lucide-react"
 import {
     setJobUrl,
     setJobType,
     runJob,
+    fetchHistory,
 } from "@/store/dashboardSlice"
 import { Link } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { useEffect } from "react"
 
 export default function DashboardPage() {
     const dispatch = useAppDispatch()
-    const { config, jobUrl, jobType, jobLoading, jobError, history } = useAppSelector(
+    const { config, jobUrl, jobType, jobLoading, jobError, history, lastResult } = useAppSelector(
         (state) => state.dashboard
     )
     const user = useAppSelector((state) => state.auth.user)
+
+    useEffect(() => {
+        dispatch(fetchHistory())
+    }, [dispatch])
 
     const handleRun = () => {
         if (!jobUrl.trim()) return
@@ -36,12 +45,16 @@ export default function DashboardPage() {
             {/* Welcome */}
             <div>
                 <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
-                    Welcome back, <span className="text-cyan-600">{user?.name || "User"}</span>
+                    Welcome back, <span className="text-cyan-600">
+                        {user?.firstname || user?.lastname
+                            ? `${user?.firstname || ''} ${user?.lastname || ''}`.trim()
+                            : user?.email ? user?.email.split('@')[0] : "User"}
+                    </span>
                 </h2>
                 <p className="text-neutral-500 mt-1">Start a new crawl or scrape job below.</p>
             </div>
 
-            {/*  Run a Job  */}
+            {/*  Run a Job  */}`
             <Card className="border-neutral-200 dark:border-white/10 shadow-sm overflow-hidden bg-white dark:bg-white/[0.03]">
                 <CardContent className="p-0">
                     <div className="px-5 pt-4 pb-1">
@@ -96,9 +109,63 @@ export default function DashboardPage() {
                         </Button>
                     </div>
 
-                    {jobError && <p className="text-sm text-red-500 px-5 pb-4">{jobError}</p>}
+
                 </CardContent>
             </Card>
+
+            {/*  Result Display / Error Display */}
+            {jobError && (
+                <Card className="border-red-200 dark:border-red-900/40 shadow-sm overflow-hidden bg-red-50/50 dark:bg-red-950/10">
+                    <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center shrink-0">
+                                <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                            </div>
+                            <div className="space-y-1">
+                                <h3 className="text-base font-semibold text-red-900 dark:text-red-400">Job Failed</h3>
+                                <p className="text-sm text-red-700 dark:text-red-300 leading-relaxed">
+                                    {jobError}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {lastResult && (
+                <Card className="border-neutral-200 dark:border-white/10 shadow-sm overflow-hidden bg-white dark:bg-white/[0.03]">
+                    <CardContent className="p-0">
+                        <div className="px-5 pt-4 pb-3 flex items-center justify-between border-b border-neutral-200 dark:border-white/10">
+                            <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                                <Code2 className="h-4 w-4 text-cyan-600" />
+                                Job Result
+                            </h3>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 border-neutral-200 dark:border-white/10 text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+                                onClick={() => {
+                                    const blob = new Blob([JSON.stringify(lastResult, null, 2)], { type: "application/json" })
+                                    const url = URL.createObjectURL(blob)
+                                    const a = document.createElement("a")
+                                    a.href = url
+                                    a.download = `result-${lastResult.CRID || 'data'}.json`
+                                    a.click()
+                                    URL.revokeObjectURL(url)
+                                }}
+                            >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Export JSON
+                            </Button>
+                        </div>
+                        <div className="bg-neutral-950 p-5 overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+                            <pre className="text-[13px] leading-relaxed font-mono text-neutral-300 whitespace-pre-wrap">
+                                {JSON.stringify(lastResult, null, 2)}
+                            </pre>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
 
             {/*  Recent Activity (quick preview) */}
             {recentJobs.length > 0 && (

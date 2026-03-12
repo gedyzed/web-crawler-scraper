@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 import { clearHistory } from "@/store/dashboardSlice"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { type HistoryItem } from "@/store/dashboardSlice"
+import { type HistoryItem, fetchHistory } from "@/store/dashboardSlice"
 
 function formatDate(dateStr: string) {
     if (!dateStr) return "N/A"
@@ -178,6 +178,10 @@ function HistoryCard({ job }: HistoryCardProps) {
 export default function HistoryPage() {
     const dispatch = useAppDispatch()
     const history = useAppSelector((state) => state.dashboard.history)
+
+    useEffect(() => {
+        dispatch(fetchHistory())
+    }, [dispatch])
 
     return (
         <div className="space-y-6 max-w-5xl">
