@@ -1,59 +1,39 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
     Globe,
     Clock,
-    CheckCircle2,
-    XCircle,
     ExternalLink,
     Trash2,
     History as HistoryIcon,
-    ChevronDown,
-    ChevronUp,
     FileText,
-    Code2,
+    Download,
 } from "lucide-react"
 import { clearHistory } from "@/store/dashboardSlice"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { type HistoryItem, fetchHistory } from "@/store/dashboardSlice"
 
-function formatDate(dateStr: string) {
+function formatShortDate(dateStr: string) {
     if (!dateStr) return "N/A"
     const date = new Date(dateStr)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return "Just now"
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    return date.toLocaleDateString("en-US", { month: "numeric", day: "numeric", year: "numeric" })
 }
 
-interface JsonBlockProps {
-    data: any
-    label: string
+function getStatusColor(status: string, code?: number) {
+    if (code === 200 || status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
+        return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30"
+    }
+    if (status.toLowerCase() === 'failed' || status.toLowerCase() === 'error' || (code && code >= 400)) {
+        return "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/30"
+    }
+    return "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/30"
 }
 
-function JsonBlock({ data, label }: JsonBlockProps) {
-    return (
-        <div className="rounded-xl border border-neutral-200 dark:border-white/10 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-neutral-50 dark:bg-white/5 border-b border-neutral-200 dark:border-white/10">
-                <Code2 className="h-3.5 w-3.5 text-neutral-500" />
-                <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">{label}</span>
-            </div>
-            <div className="bg-neutral-950 p-4 overflow-x-auto custom-scrollbar">
-                <pre className="text-[13px] leading-relaxed font-mono text-neutral-300 whitespace-pre-wrap">
-                    {JSON.stringify(data, null, 2)}
-                </pre>
-            </div>
-        </div>
-    )
+function getStatusText(status: string, code?: number) {
+    if (code === 200 || status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') return 'Success'
+    if (status.toLowerCase() === 'failed' || status.toLowerCase() === 'error' || (code && code >= 400)) return 'Failed'
+    return 'Pending'
 }
 
 interface HistoryCardProps {
@@ -61,135 +41,115 @@ interface HistoryCardProps {
 }
 
 function HistoryCard({ job }: HistoryCardProps) {
-    const [expanded, setExpanded] = useState(false)
-
     return (
-        <Card className={`border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.03] transition-all duration-200 ${expanded ? "shadow-lg ring-1 ring-neutral-200 dark:ring-white/10" : "hover:shadow-md"}`}>
-            {/* Card Header — always visible */}
-            <button
-                onClick={() => setExpanded(!expanded)}
-                className="w-full text-left cursor-pointer"
-            >
-                <CardContent className="p-5">
-                    <div className="flex items-center gap-4">
-                        {/* Icon */}
-                        <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 bg-neutral-100 dark:bg-white/5 border border-neutral-200 dark:border-white/10`}>
-                            <Globe className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
-                        </div>
-
-                        {/* Main info */}
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">{job.url}</p>
-                                <a
-                                    href={job.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-neutral-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors"
-                                >
-                                    <ExternalLink className="h-3.5 w-3.5" />
-                                </a>
-                            </div>
-                            <div className="flex items-center gap-2.5 text-xs text-neutral-400">
-                                <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {formatDate(job.fetched_at)}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Right side */}
-                        <div className="flex items-center gap-3 shrink-0">
-                            <Badge
-                                variant="outline"
-                                className="text-xs bg-neutral-100 dark:bg-white/10 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-white/10"
-                            >
-                                {job.status}
-                            </Badge>
-                            {job.response_code === 200 ? (
-                                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                                    <CheckCircle2 className="h-4.5 w-4.5" />
-                                    <span className="text-xs font-medium hidden sm:inline">Success</span>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-1.5 text-red-500 dark:text-red-400">
-                                    <XCircle className="h-4.5 w-4.5" />
-                                    <span className="text-xs font-medium hidden sm:inline">Error</span>
-                                </div>
-                            )}
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-2 border-neutral-200 dark:border-white/10 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 text-[10px] sm:text-xs font-semibold uppercase tracking-wider gap-1.5 transition-colors"
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    const blob = new Blob([JSON.stringify(job, null, 2)], { type: "application/json" })
-                                    const url = URL.createObjectURL(blob)
-                                    const a = document.createElement("a")
-                                    a.href = url
-                                    a.download = `job-${job.hid}.json`
-                                    a.click()
-                                    URL.revokeObjectURL(url)
-                                }}
-                                title="Export to JSON"
-                            >
-                                <Code2 className="h-3.5 w-3.5" />
-                                <span>Export</span>
-                            </Button>
-                            <div className={`h-7 w-7 rounded-lg flex items-center justify-center transition-colors ${expanded ? "bg-neutral-100 dark:bg-white/10" : "bg-neutral-50 dark:bg-white/5"}`}>
-                                {expanded ? (
-                                    <ChevronUp className="h-4 w-4 text-neutral-500" />
-                                ) : (
-                                    <ChevronDown className="h-4 w-4 text-neutral-400" />
-                                )}
-                            </div>
-                        </div>
+        <Card className="border-neutral-200 dark:border-white/10 bg-white dark:bg-[#131920] hover:border-cyan-500/30 transition-all duration-200 group">
+            <CardContent className="p-5 flex flex-col h-full">
+                {/* Top: Icon + Status Badge */}
+                <div className="flex items-start justify-between mb-4">
+                    <div className="h-9 w-9 rounded-full bg-neutral-100 dark:bg-white/5 flex items-center justify-center">
+                        <Globe className="h-4 w-4 text-neutral-500" />
                     </div>
-                </CardContent>
-            </button>
+                    <span className={`px-2.5 py-1 rounded border text-[10px] font-bold uppercase tracking-wider ${getStatusColor(job.status, job.response_code)}`}>
+                        {getStatusText(job.status, job.response_code)}
+                    </span>
+                </div>
 
-            {/* Expanded Detail Panel */}
-            {expanded && (
-                <div className="border-t border-neutral-200 dark:border-white/10 bg-neutral-50/50 dark:bg-black/20">
-                    <div className="p-5 space-y-4">
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                                Status Details
-                                <Badge
-                                    variant="outline"
-                                    className={`text-xs font-mono ml-1 ${job.response_code >= 200 && job.response_code < 300
-                                        ? "text-emerald-700 bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800"
-                                        : "text-red-700 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800"
-                                        }`}
-                                >
-                                    {job.response_code}
-                                </Badge>
-                            </div>
-                            <JsonBlock data={job} label="Full Result Data" />
-                        </div>
+                {/* URL + Type */}
+                <div className="flex-1 min-w-0 mb-4">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate mb-2 group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                        {job.url}
+                    </p>
+                    <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded bg-neutral-100 dark:bg-white/5 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-white/10 capitalize">
+                        {job.type || 'Scrape'}
+                    </span>
+                </div>
+
+                {/* Stats Row */}
+                <div className="grid grid-cols-3 gap-2 py-3 px-3 rounded-lg bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5 mb-4 text-center">
+                    <div>
+                        <div className="text-[10px] text-neutral-400 uppercase font-semibold tracking-wider mb-0.5">Pages</div>
+                        <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100">{job.pages_crawled ?? 1}</div>
+                    </div>
+                    <div>
+                        <div className="text-[10px] text-neutral-400 uppercase font-semibold tracking-wider mb-0.5">Duration</div>
+                        <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100">{job.duration || 'N/A'}</div>
+                    </div>
+                    <div>
+                        <div className="text-[10px] text-neutral-400 uppercase font-semibold tracking-wider mb-0.5">Size</div>
+                        <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100">{job.size || 'N/A'}</div>
                     </div>
                 </div>
-            )}
+
+                {/* Footer: Date + Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-neutral-100 dark:border-white/5">
+                    <div className="flex items-center gap-1.5 text-xs text-neutral-400">
+                        <Clock className="h-3 w-3" />
+                        {formatShortDate(job.fetched_at)}
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-md text-neutral-400 hover:text-cyan-600 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
+                            title="Open URL"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                            onClick={() => {
+                                const blob = new Blob([JSON.stringify(job, null, 2)], { type: "application/json" })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement("a")
+                                a.href = url
+                                a.download = `job-${job.hid}.json`
+                                a.click()
+                                URL.revokeObjectURL(url)
+                            }}
+                            className="p-1.5 rounded-md text-neutral-400 hover:text-cyan-600 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
+                            title="Download JSON"
+                        >
+                            <Download className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </div>
+            </CardContent>
         </Card>
     )
 }
 
+type FilterTab = 'all' | 'success' | 'failed' | 'pending'
+
 export default function HistoryPage() {
     const dispatch = useAppDispatch()
-    const history = useAppSelector((state) => state.dashboard.history)
+    const { history, searchQuery } = useAppSelector((state) => state.dashboard)
+    const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
 
     useEffect(() => {
         dispatch(fetchHistory())
     }, [dispatch])
 
+    const filteredHistory = history.filter(job => {
+        const matchesStatus = activeFilter === 'all' || getStatusText(job.status, job.response_code).toLowerCase() === activeFilter
+        const matchesSearch = !searchQuery || job.url?.toLowerCase().includes(searchQuery.toLowerCase())
+        return matchesStatus && matchesSearch
+    })
+
+    const filters: { label: string, value: FilterTab }[] = [
+        { label: 'All', value: 'all' },
+        { label: 'Success', value: 'success' },
+        { label: 'Failed', value: 'failed' },
+        { label: 'Pending', value: 'pending' },
+    ]
+
     return (
-        <div className="space-y-6 max-w-5xl">
+        <div className="space-y-6 max-w-5xl mx-auto">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">History</h2>
-                    <p className="text-neutral-500 mt-1">Your recent crawl & scrape activity. Click a card to view details.</p>
+                    <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Job History</h2>
+                    <p className="text-neutral-500 mt-1">View and manage all your scrape and crawl jobs.</p>
                 </div>
                 {history.length > 0 && (
                     <div className="flex items-center gap-2">
@@ -223,18 +183,38 @@ export default function HistoryPage() {
                 )}
             </div>
 
-            {/* History List */}
-            {history.length === 0 ? (
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1">
+                {filters.map(f => (
+                    <button
+                        key={f.value}
+                        onClick={() => setActiveFilter(f.value)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeFilter === f.value
+                            ? 'bg-neutral-900 dark:bg-white/10 text-white dark:text-neutral-100'
+                            : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5'
+                            }`}
+                    >
+                        {f.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* History Grid */}
+            {filteredHistory.length === 0 ? (
                 <Card className="border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.03]">
                     <CardContent className="flex flex-col items-center justify-center py-16 text-neutral-400">
                         <HistoryIcon className="h-12 w-12 mb-3 text-neutral-300 dark:text-neutral-600" />
-                        <p className="text-base font-medium text-neutral-500">No history yet</p>
-                        <p className="text-sm text-neutral-400 mt-1">Run a crawl or scrape job to see it here</p>
+                        <p className="text-base font-medium text-neutral-500">
+                            {activeFilter === 'all' ? 'No history yet' : `No ${activeFilter} jobs`}
+                        </p>
+                        <p className="text-sm text-neutral-400 mt-1">
+                            {activeFilter === 'all' ? 'Run a crawl or scrape job to see it here' : 'Try a different filter'}
+                        </p>
                     </CardContent>
                 </Card>
             ) : (
-                <div className="space-y-3">
-                    {history.map((job) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredHistory.map((job) => (
                         <HistoryCard key={job.hid} job={job} />
                     ))}
                 </div>

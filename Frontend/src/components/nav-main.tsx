@@ -29,17 +29,19 @@ interface NavItem {
 }
 
 interface NavMainProps {
+    title?: string;
     items: NavItem[]
 }
 
 export function NavMain({
+    title = "Platform",
     items
 }: NavMainProps) {
     const location = useLocation()
 
     return (
         <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            {title && <SidebarGroupLabel className="text-xs uppercase tracking-wider text-neutral-500 font-semibold">{title}</SidebarGroupLabel>}
             <SidebarMenu>
                 {items.map((item) => {
                     const hasSubItems = item.items && item.items.length > 0

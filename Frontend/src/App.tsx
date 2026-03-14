@@ -15,6 +15,7 @@ import DashboardPage from "./pages/dashboard/dashboard";
 import HistoryPage from "./pages/dashboard/history";
 import ProfilePage from "./pages/dashboard/profile";
 import SettingsPage from "./pages/dashboard/settings";
+import ApiKeysPage from "./pages/dashboard/api-keys";
 
 function App() {
     const dispatch = useAppDispatch();
@@ -48,6 +49,7 @@ function App() {
                 <Route path="history" element={<HistoryPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="api-keys" element={<ApiKeysPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

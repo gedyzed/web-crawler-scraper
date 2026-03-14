@@ -1,5 +1,5 @@
 import { Outlet, useLocation, Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Search, Globe, History, LayoutDashboard, User, Settings2, X, type LucideIcon } from "lucide-react"
+import { Search, Globe, History, LayoutDashboard, User, Settings2, Key, X, type LucideIcon } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
     SidebarInset,
@@ -28,10 +28,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    { label: "Homepage", path: "/dashboard", icon: LayoutDashboard },
     { label: "History", path: "/dashboard/history", icon: History },
     { label: "Profile", path: "/dashboard/profile", icon: User },
     { label: "Settings", path: "/dashboard/settings", icon: Settings2 },
+    { label: "API Keys", path: "/dashboard/api-keys", icon: Key },
 ]
 
 export default function DashboardLayout() {
@@ -93,7 +94,7 @@ export default function DashboardLayout() {
                                     </BreadcrumbItem>
                                     <BreadcrumbSeparator className="hidden md:block" />
                                     <BreadcrumbItem>
-                                        <BreadcrumbPage>{activeItem?.label || "Dashboard"}</BreadcrumbPage>
+                                        <BreadcrumbPage>{activeItem?.label || "Homepage"}</BreadcrumbPage>
                                     </BreadcrumbItem>
                                 </BreadcrumbList>
                             </Breadcrumb>
@@ -197,7 +198,7 @@ export default function DashboardLayout() {
                             </div>
                             {user && (
                                 <Link to="/dashboard/profile" className="h-8 w-8 rounded-full bg-cyan-600 flex items-center justify-center text-xs font-bold text-white uppercase">
-                                    {user.name?.[0] || "U"}
+                                    {(user.name || user.firstname || user.username || "U")[0]}
                                 </Link>
                             )}
                         </div>

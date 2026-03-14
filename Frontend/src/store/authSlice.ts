@@ -6,11 +6,11 @@ const CODE_LENGTH = 6
 const RESEND_COOLDOWN = 60
 
 interface User {
-    firstname: string;
-    lastname: string;
+    firstname?: string;
+    lastname?: string;
+    name?: string;
     email: string;
     username: string;
-
 }
 
 interface AuthState {
@@ -52,6 +52,11 @@ interface AuthState {
         success: boolean;
         error: string;
     };
+    apiKeys: {
+        keys: any[];
+        loading: boolean;
+        error: string;
+    }
 }
 
 // ─── Async Thunks ─────────────────────────────────────────
@@ -184,11 +189,28 @@ export const checkAuth = createAsyncThunk(
     }
 )
 
+export const generateApiKey = createAsyncThunk(
+    'auth/generateApiKey',
+    async ({ name }: { name: string }, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/auth/api-key', { name })
+            return response.data
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to generate API Key')
+        }
+    }
+)
+
 // ─── Initial State ────────────────────────────────────────
 const initialState: AuthState = {
     isAuthenticated: false,
     authLoading: true,
     user: null,
+    apiKeys: {
+        keys: [],
+        loading: false,
+        error: '',
+    },
     login: {
         email: '',
         password: '',
@@ -231,6 +253,13 @@ const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
+        // ── API Keys ──
+        addApiKeyLocally: (state, action: PayloadAction<any>) => {
+            state.apiKeys.keys.push(action.payload)
+        },
+        removeApiKeyLocally: (state, action: PayloadAction<string>) => {
+            state.apiKeys.keys = state.apiKeys.keys.filter((k: any) => k.id !== action.payload)
+        },
         // ── Login ──
         setLoginField: (state, action: PayloadAction<{ field: keyof AuthState['login']; value: any }>) => {
             const { field, value } = action.payload
@@ -243,6 +272,7 @@ const authSlice = createSlice({
             state.isAuthenticated = false
             state.user = null
             state.login = { ...initialState.login }
+            state.apiKeys = { ...initialState.apiKeys }
             Cookies.remove('accessToken')
         },
 
@@ -306,6 +336,30 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
+        // ── Generate API Key ──
+        builder
+            .addCase(generateApiKey.pending, (state) => {
+                state.apiKeys.loading = true
+                state.apiKeys.error = ''
+            })
+            .addCase(generateApiKey.fulfilled, (state, action) => {
+                state.apiKeys.loading = false
+                // Assuming backend returns the generated key string directly or within an object
+                // The frontend component can handle displaying it or we can store it here.
+                // We will add it to the state locally too for now so it shows up
+                state.apiKeys.keys.push({
+                    id: String(Date.now()),
+                    name: action.meta.arg.name,
+                    token: action.payload.message || action.payload,
+                    created: new Date().toLocaleDateString(),
+                    visible: false
+                })
+            })
+            .addCase(generateApiKey.rejected, (state, action) => {
+                state.apiKeys.loading = false
+                state.apiKeys.error = (action.payload as string) || 'Failed to generate API Key'
+            })
+
         // ── Login ──
         builder
             .addCase(loginUser.pending, (state) => {
@@ -316,9 +370,12 @@ const authSlice = createSlice({
                 state.login.loading = false
                 state.isAuthenticated = true
                 const email = action.payload?.Email || action.payload?.email || ''
-                state.user = { firstname: action.payload.firstname, 
-                    lastname: action.payload.lastname, 
-                    username: email.split('@')[0] || 'User', email }
+                state.user = {
+                    firstname: action.payload.firstname,
+                    lastname: action.payload.lastname,
+                    name: action.payload.name || action.payload.Name,
+                    username: action.payload.username || email.split('@')[0] || 'User', email
+                }
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.login.loading = false
@@ -425,9 +482,12 @@ const authSlice = createSlice({
                 state.authLoading = false
                 state.isAuthenticated = true
                 const email = action.payload?.Email || action.payload?.email || ''
-                state.user = { firstname: action.payload.firstname, 
-                    lastname: action.payload.lastname, 
-                    username: email.split('@')[0] || 'User', email }
+                state.user = {
+                    firstname: action.payload.firstname,
+                    lastname: action.payload.lastname,
+                    name: action.payload.name || action.payload.Name,
+                    username: action.payload.username || email.split('@')[0] || 'User', email
+                }
             })
             .addCase(checkAuth.rejected, (state) => {
                 state.authLoading = false
@@ -453,6 +513,8 @@ const authSlice = createSlice({
 })
 
 export const {
+    addApiKeyLocally,
+    removeApiKeyLocally,
     setLoginField,
     resetLogin,
     logout,

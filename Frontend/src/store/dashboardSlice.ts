@@ -56,6 +56,10 @@ export interface HistoryItem {
     response_code: number;
     error_message: string;
     fetched_at: string;
+    type?: string;
+    pages_crawled?: number;
+    duration?: string;
+    size?: string;
     ID?: number;
     CreatedAt?: string;
 }
@@ -70,8 +74,6 @@ interface DashboardState {
     lastResult: CrawlerResult | null;
     crawlResult: CrawlerResult | null;
     scrapeResult: CrawlerResult | null;
-    sampleScrapeResult: CrawlerResult;
-    sampleCrawlResult: CrawlerResult;
     searchQuery: string;
     isSearchOpen: boolean;
     newAllowedPattern: string;
@@ -133,93 +135,6 @@ const initialState: DashboardState = {
     lastResult: null,
     crawlResult: null,
     scrapeResult: null,
-    // Sample data matching real API response shape for landing page demo
-    sampleScrapeResult: {
-        CRID: 'demo-scrape-001',
-        UserID: 'demo-user',
-        Pages: [
-            {
-                PageID: 'page-001',
-                ResultID: 'demo-scrape-001',
-                URL: 'https://woocommerce.com',
-                ParentURL: '',
-                Depth: 0,
-                StatusCode: 200,
-                ContentType: 'text/html; charset=UTF-8',
-                ResponseTimeMS: 4949,
-                FetchedAt: new Date().toISOString(),
-                Title: 'WooCommerce - Open Source ecommerce Platform',
-                MetaDescription: 'WooCommerce is a customizable, open-source ecommerce platform built on WordPress.',
-                TextContent: 'Forget cookie-cutter ecommerce. Every business is unique, and every store should be too. WooCommerce empowers you to build, sell, and grow on your terms.',
-                Links: [
-                    { URL: 'https://woocommerce.com/features', Type: 'internal' },
-                    { URL: 'https://woocommerce.com/pricing', Type: 'internal' },
-                ],
-                Products: null,
-                ID: 1,
-            },
-        ],
-    },
-    sampleCrawlResult: {
-        CRID: 'demo-crawl-001',
-        UserID: 'demo-user',
-        Pages: [
-            {
-                PageID: 'page-001',
-                ResultID: 'demo-crawl-001',
-                URL: 'https://example.com',
-                ParentURL: '',
-                Depth: 0,
-                StatusCode: 200,
-                ContentType: 'text/html; charset=UTF-8',
-                ResponseTimeMS: 320,
-                FetchedAt: new Date().toISOString(),
-                Title: 'Example Domain',
-                MetaDescription: 'Example domain for documentation.',
-                TextContent: 'This domain is for use in illustrative examples in documents.',
-                Links: [
-                    { URL: 'https://example.com/about', Type: 'internal' },
-                    { URL: 'https://example.com/contact', Type: 'internal' },
-                ],
-                Products: null,
-                ID: 1,
-            },
-            {
-                PageID: 'page-002',
-                ResultID: 'demo-crawl-001',
-                URL: 'https://example.com/about',
-                ParentURL: 'https://example.com',
-                Depth: 1,
-                StatusCode: 200,
-                ContentType: 'text/html; charset=UTF-8',
-                ResponseTimeMS: 210,
-                FetchedAt: new Date().toISOString(),
-                Title: 'About Us - Example',
-                MetaDescription: 'Learn more about Example.',
-                TextContent: 'We are a sample company used for demonstrations.',
-                Links: null,
-                Products: null,
-                ID: 2,
-            },
-            {
-                PageID: 'page-003',
-                ResultID: 'demo-crawl-001',
-                URL: 'https://example.com/contact',
-                ParentURL: 'https://example.com',
-                Depth: 1,
-                StatusCode: 404,
-                ContentType: 'text/html',
-                ResponseTimeMS: 85,
-                FetchedAt: new Date().toISOString(),
-                Title: 'Not Found',
-                MetaDescription: '',
-                TextContent: 'Page not found.',
-                Links: null,
-                Products: null,
-                ID: 3,
-            },
-        ],
-    },
     // Search
     searchQuery: '',
     isSearchOpen: false,

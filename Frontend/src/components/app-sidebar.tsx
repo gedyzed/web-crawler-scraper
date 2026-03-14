@@ -1,6 +1,7 @@
 import * as React from "react"
 import {
     History,
+    Key,
     LayoutDashboard,
     Settings2,
     User,
@@ -14,13 +15,12 @@ import {
     SidebarFooter,
     SidebarHeader,
     SidebarRail,
-    SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { useAppSelector } from "@/store/hooks"
 
-const navItems = [
+const platformItems = [
     {
-        title: "Dashboard",
+        title: "Homepage",
         url: "/dashboard",
         icon: LayoutDashboard,
         isActive: true,
@@ -42,28 +42,39 @@ const navItems = [
     },
 ]
 
+const developerItems = [
+    {
+        title: "API Keys",
+        url: "/dashboard/api-keys",
+        icon: Key,
+    }
+]
+
 export function AppSidebar({
     ...props
 }: React.ComponentProps<typeof Sidebar>) {
     const user = useAppSelector((state) => state.auth.user)
+    const mappedUser = user ? {
+        name: user.name || `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.username || 'User',
+        email: user.email,
+    } : null;
 
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <div className="flex items-center gap-2 px-4 h-12 shrink-0">
-                    <SidebarTrigger className="h-7 w-7 p-0 hover:bg-transparent [&_svg]:size-5">
-                        <img src="/spidergo-logo.png" alt="SpiderGo" className="h-6 w-6" />
-                    </SidebarTrigger>
-                    <span className="text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden">
+                <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0 h-12 shrink-0">
+                    <img src="/spidergo-logo.png" alt="SpiderGo" className="h-6 w-6 shrink-0" />
+                    <span className="text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden truncate">
                         Spider<span className="text-primary">Go</span>
                     </span>
                 </div>
             </SidebarHeader>
             <SidebarContent>
-                <NavMain items={navItems} />
+                <NavMain title="PLATFORM" items={platformItems} />
+                <NavMain title="DEVELOPER" items={developerItems} />
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={user} />
+                <NavUser user={mappedUser} />
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

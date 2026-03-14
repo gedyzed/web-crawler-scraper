@@ -136,7 +136,7 @@
   h5,
   h6,
   .font-display {
-    font-family: 'Clash Display', 'Satoshi', system-ui, sans-serif;
+    font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
   }
 
   code,

@@ -15,7 +15,7 @@ export default function ProfilePage() {
     const initial = email.charAt(0).toUpperCase()
 
     return (
-        <div className="space-y-6 max-w-4xl">
+        <div className="space-y-6 max-w-4xl mx-auto">
             <div>
                 <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Profile</h2>
                 <p className="text-neutral-500 mt-1">Your account information</p>

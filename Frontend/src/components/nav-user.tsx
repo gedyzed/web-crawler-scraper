@@ -1,5 +1,4 @@
 import {
-    ChevronsUpDown,
     LogOut,
     Loader2,
 } from "lucide-react"
@@ -10,18 +9,8 @@ import {
     AvatarImage,
 } from "@/components/ui/avatar"
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
     SidebarMenu,
-    SidebarMenuButton,
     SidebarMenuItem,
-    useSidebar,
 } from "@/components/ui/sidebar"
 
 import { useAppDispatch } from "@/store/hooks"
@@ -41,7 +30,6 @@ interface NavUserProps {
 export function NavUser({
     user
 }: NavUserProps) {
-    const { isMobile } = useSidebar()
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
     const [loggingOut, setLoggingOut] = useState(false)
@@ -54,6 +42,20 @@ export function NavUser({
         setTimeout(() => navigate("/"), 1500)
     }
 
+    // Get initials for avatar fallback (up to 2 characters)
+    const getInitials = (name: string, email: string) => {
+        if (name) {
+            const parts = name.split(' ');
+            if (parts.length >= 2) {
+                return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+        return email ? email[0].toUpperCase() : "U";
+    };
+
+    const initials = user ? getInitials(user.name, user.email) : "U";
+
     return (
         <>
             <GlobalNotification
@@ -64,51 +66,34 @@ export function NavUser({
             />
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <SidebarMenuButton
-                                size="lg"
-                                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                                <Avatar className="h-8 w-8 rounded-lg">
-                                    <AvatarImage src={user?.avatar} alt={user?.name} />
-                                    <AvatarFallback className="rounded-lg bg-cyan-600 text-white font-bold uppercase">{user?.email?.[0] || "U"}</AvatarFallback>
-                                </Avatar>
-                                <div className="grid flex-1 text-left text-sm leading-tight">
-                                    <span className="truncate font-medium">{user?.name}</span>
-                                    <span className="truncate text-xs">{user?.email}</span>
-                                </div>
-                                <ChevronsUpDown className="ml-auto size-4" />
-                            </SidebarMenuButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                            side={isMobile ? "bottom" : "right"}
-                            align="end"
-                            sideOffset={4}>
-                            <DropdownMenuLabel className="p-0 font-normal">
-                                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                    <Avatar className="h-8 w-8 rounded-lg">
-                                        <AvatarImage src={user?.avatar} alt={user?.name} />
-                                        <AvatarFallback className="rounded-lg bg-cyan-600 text-white font-bold uppercase">{user?.email?.[0] || "U"}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="grid flex-1 text-left text-sm leading-tight">
-                                        <span className="truncate font-medium">{user?.name}</span>
-                                        <span className="truncate text-xs">{user?.email}</span>
-                                    </div>
-                                </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleLogout} disabled={loggingOut} className="text-red-500 focus:text-red-500">
-                                {loggingOut ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <LogOut className="mr-2 h-4 w-4" />
-                                )}
-                                {loggingOut ? "Logging out…" : "Log out"}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-3 px-2 py-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+                        <Avatar className="h-9 w-9 rounded-full shrink-0">
+                            <AvatarImage src={user?.avatar} alt={user?.name} />
+                            <AvatarFallback className="rounded-full bg-cyan-600 text-white font-bold tracking-wider text-xs">
+                                {initials}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                            <span className="truncate font-semibold text-sidebar-foreground">{user?.name}</span>
+                            <span className="truncate text-xs text-sidebar-foreground/70">{user?.email}</span>
+                        </div>
+                    </div>
+                </SidebarMenuItem>
+                <SidebarMenuItem className="px-1 mt-2 mb-1 group-data-[collapsible=icon]:px-0">
+                    <button
+                        onClick={handleLogout}
+                        disabled={loggingOut}
+                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-sidebar-border py-2 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:border-sidebar-accent disabled:opacity-50 transition-all duration-200 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:p-0"
+                    >
+                        {loggingOut ? (
+                            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                        ) : (
+                            <LogOut className="h-4 w-4 shrink-0" />
+                        )}
+                        <span className="group-data-[collapsible=icon]:hidden">
+                            {loggingOut ? "Signing out…" : "Sign out"}
+                        </span>
+                    </button>
                 </SidebarMenuItem>
             </SidebarMenu>
         </>

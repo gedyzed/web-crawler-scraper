@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAppSelector } from "@/store/hooks";
+import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -48,15 +48,15 @@ function JsonHighlight({ data }: JsonHighlightProps) {
                                 )
                                 .replace(
                                     /: "([^"]+)"/g,
-                                    ': <span class="text-amber-600">\"$1\"</span>'
+                                    ': <span class="text-emerald-600 dark:text-emerald-400">\"$1\"</span>'
                                 )
                                 .replace(
                                     /: (\d+)/g,
-                                    ': <span class="text-blue-600">$1</span>'
+                                    ': <span class="text-cyan-600 dark:text-cyan-400">$1</span>'
                                 )
                                 .replace(
                                     /: (true|false)/g,
-                                    ': <span class="text-purple-600">$1</span>'
+                                    ': <span class="text-cyan-600 dark:text-cyan-400">$1</span>'
                                 ),
                         }}
                     />
@@ -115,16 +115,28 @@ function HeroSection() {
     const [result, setResult] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
-    const { sampleScrapeResult, sampleCrawlResult } = useAppSelector((state) => state.dashboard);
-
-    const handleRun = () => {
+    const handleRun = async () => {
         if (!url.trim()) return;
         setLoading(true);
         setResult(null);
-        setTimeout(() => {
-            setResult(activeTab === "scrape" ? sampleScrapeResult : sampleCrawlResult);
+
+        try {
+            const endpoint = activeTab === 'crawl' ? '/crawl' : '/scrape';
+            const body = activeTab === 'crawl'
+                ? { url, maxPages: 10, depth: 1, allowedPatterns: [], deniedPatterns: [] }
+                : { url };
+
+            const response = await api.post(endpoint, body);
+            setResult(response.data.message || response.data);
+        } catch (err: any) {
+            setResult({
+                error: true,
+                message: err.response?.data?.message || err.message || 'An error occurred during the job execution.',
+                status: err.response?.status
+            });
+        } finally {
             setLoading(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -253,42 +265,42 @@ const features: Feature[] = [
         title: "Lightning-Fast Crawling",
         description:
             "Built in Go with concurrent goroutines for blazing-fast, parallel page crawling across entire websites.",
-        color: "text-amber-500",
+        color: "text-cyan-600 dark:text-cyan-400",
     },
     {
         icon: Search,
         title: "Smart Scraping",
         description:
             "Extract structured data from any page — titles, metadata, links, and content delivered as clean JSON.",
-        color: "text-cyan-600",
+        color: "text-cyan-600 dark:text-cyan-400",
     },
     {
         icon: Layers,
         title: "Depth-Controlled Crawling",
         description:
             "Control how deep SpiderGo crawls with configurable depth limits, page caps, and domain restrictions.",
-        color: "text-blue-600",
+        color: "text-cyan-600 dark:text-cyan-400",
     },
     {
         icon: Bug,
         title: "E-Commerce Extraction",
         description:
             "Automatically detect and extract product names, prices, and images from e-commerce pages.",
-        color: "text-purple-600",
+        color: "text-cyan-600 dark:text-cyan-400",
     },
     {
         icon: Globe,
         title: "Full Site Discovery",
         description:
             "Map entire websites by discovering all internal and external links, building a complete site graph.",
-        color: "text-sky-600",
+        color: "text-cyan-600 dark:text-cyan-400",
     },
     {
         icon: Code2,
         title: "JSON API Output",
         description:
             "Every response is clean, structured JSON — ready to pipe into your apps, databases, or AI pipelines.",
-        color: "text-rose-600",
+        color: "text-cyan-600 dark:text-cyan-400",
     },
 ];
 
