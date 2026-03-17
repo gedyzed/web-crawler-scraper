@@ -15,6 +15,7 @@ type Config struct {
 	App       AppConfig      `mapstructure:"app"`
 	DB        DBConfig       `mapstructure:"db"`
 	Redis     RedisConfig    `mapstructure:"redis"`
+	RateLimit RateLimitConfig `mapstructure:"rate_limiter"`
 	GoogleCfg OAuthConfig    `mapstructure:"google_oauth"`
 	GithubCfg OAuthConfig    `mapstructure:"github_oauth"`
 	JWTConfig JWTConfig      `mapstructure:"jwt_config"`
@@ -41,9 +42,31 @@ type AppConfig struct {
 }
 
 type RedisConfig struct {
-	Address  string `mapstructure:"address"`
-	Password string `mapstructure:"password"`
-	DB       int    `mapstructure:"db"`
+	Address      string        `mapstructure:"address"`
+	Password     string        `mapstructure:"password"`
+	DB           int           `mapstructure:"db"`
+	PoolSize     int           `mapstructure:"pool_size"`
+	MinIdleConns int           `mapstructure:"min_idle_conns"`
+	DialTimeout  time.Duration `mapstructure:"dial_timeout"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	PoolTimeout  time.Duration `mapstructure:"pool_timeout"`
+	MaxRetries   int           `mapstructure:"max_retries"`
+}
+
+type RateLimitConfig struct {
+	Auth   AuthRateLimiterConfig   `mapstructure:"auth"`
+	APIKey APIKeyRateLimiterConfig `mapstructure:"api_key"`
+}
+
+type AuthRateLimiterConfig struct {
+	Limit  int64         `mapstructure:"limit"`
+	Window time.Duration `mapstructure:"window"`
+}
+
+type APIKeyRateLimiterConfig struct {
+	MaxKeysPerUser int64 `mapstructure:"max_keys_per_user"`
+	DailyLimit     int64 `mapstructure:"daily_limit"`
 }
 
 type OAuthConfig struct {
@@ -100,6 +123,17 @@ func LoadConfig(path string) *Config {
 	viper.SetDefault("google_oauth.scopes", []string{"openid", "email", "profile"})
 	viper.SetDefault("github_oauth.scopes", []string{"read:user", "user:email"})
 	viper.SetDefault("security.min_entropy_bits", 30)
+	viper.SetDefault("redis.pool_size", 10)
+	viper.SetDefault("redis.min_idle_conns", 2)
+	viper.SetDefault("redis.dial_timeout", "5s")
+	viper.SetDefault("redis.read_timeout", "3s")
+	viper.SetDefault("redis.write_timeout", "3s")
+	viper.SetDefault("redis.pool_timeout", "4s")
+	viper.SetDefault("redis.max_retries", 2)
+	viper.SetDefault("rate_limiter.auth.limit", 5)
+	viper.SetDefault("rate_limiter.auth.window", "1m")
+	viper.SetDefault("rate_limiter.api_key.max_keys_per_user", 3)
+	viper.SetDefault("rate_limiter.api_key.daily_limit", 1000)
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {

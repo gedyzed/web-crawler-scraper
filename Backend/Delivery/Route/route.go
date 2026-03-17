@@ -9,6 +9,7 @@ import (
 
 func AuthRoutes(router *gin.Engine,
 	authHandler *controller.AuthController,
+	apiKeyHandler *controller.APIKeyController,
 	middlewares middleware.IMiddleware,
 ) {
 
@@ -32,6 +33,9 @@ func AuthRoutes(router *gin.Engine,
 	profile.Use(middlewares.AuthMiddleware())
 	{
 		profile.GET("", authHandler.GetProfile)
+		profile.POST("/api-keys", apiKeyHandler.CreateAPIKey)
+		profile.GET("/api-keys", apiKeyHandler.ListAPIKeys)
+		profile.DELETE("/api-keys/:id", apiKeyHandler.RevokeAPIKey)
 	}
 }
 
@@ -44,12 +48,12 @@ func CrawlerAndScraperRoutes(
 
 	// crawler routes
 	crawl := router.Group("crawl")
-	// crawl.Use(middlewares.AuthMiddleware())
+	crawl.Use(middlewares.APIKeyMiddleware())
 	crawl.POST("", crawlerHandler.Crawler)
 
 	// scraper routes
 	scrape := router.Group("scrape")
-	// scrape.Use(middlewares.AuthMiddleware())
+	scrape.Use(middlewares.APIKeyMiddleware())
 	scrape.POST("", scraperHandler.Scrape)
 
 	// history routes
