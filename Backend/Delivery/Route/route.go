@@ -33,10 +33,18 @@ func AuthRoutes(router *gin.Engine,
 	profile.Use(middlewares.AuthMiddleware())
 	{
 		profile.GET("", authHandler.GetProfile)
-		profile.POST("/api-keys", apiKeyHandler.CreateAPIKey)
-		profile.GET("/api-keys", apiKeyHandler.ListAPIKeys)
-		profile.DELETE("/api-keys/:id", apiKeyHandler.RevokeAPIKey)
+		
 	}
+
+	apiKey := router.Group("auth/api-keys")
+	apiKey.Use(middlewares.AuthMiddleware())
+	{
+		apiKey.POST("", apiKeyHandler.CreateAPIKey)
+		apiKey.GET("", apiKeyHandler.ListAPIKeys)
+		apiKey.DELETE("/:id", apiKeyHandler.RevokeAPIKey)
+
+	}
+	
 }
 
 func CrawlerAndScraperRoutes(

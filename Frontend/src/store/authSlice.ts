@@ -193,13 +193,40 @@ export const generateApiKey = createAsyncThunk(
     'auth/generateApiKey',
     async ({ name }: { name: string }, { rejectWithValue }) => {
         try {
-            const response = await api.post('/auth/api-key', { name })
+            const response = await api.post('/auth/api-keys', { name })
             return response.data
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message || 'Failed to generate API Key')
         }
     }
 )
+
+export const getApiKeys = createAsyncThunk(
+    'auth/getApiKeys',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/auth/api-keys')
+            return response.data
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch API Keys')
+        }
+    }
+)
+
+export const deleteApiKey = createAsyncThunk(
+    'auth/deleteApiKey',
+    async (id: string, { rejectWithValue }) => {
+        try {
+            const response = await api.delete(`/auth/api-keys/${id}`)
+            return response.data
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || err.message || 'Failed to delete API Key')
+        }
+    }
+)
+
+// ─── Types ────────────────────────────────────────────────            
+
 
 // ─── Initial State ────────────────────────────────────────
 const initialState: AuthState = {
@@ -336,6 +363,38 @@ const authSlice = createSlice({
         },
     },
     extraReducers: (builder) => {
+
+        // ─── Get API Keys ──
+        builder
+            .addCase(deleteApiKey.pending, (state) => {
+                state.apiKeys.loading = true
+                state.apiKeys.error = ''
+            })
+            .addCase(deleteApiKey.fulfilled, (state, action) => {
+                state.apiKeys.loading = false
+                // action.meta.arg is the keyId string passed to deleteApiKey(id)
+                state.apiKeys.keys = state.apiKeys.keys.filter((k: any) => k.key_id !== action.meta.arg)
+            })
+
+            .addCase(deleteApiKey.rejected, (state, action) => {
+                state.apiKeys.loading = false
+                state.apiKeys.error = (action.payload as string) || 'Failed to delete API Key'
+            })
+
+        // ─── Get API Keys ──
+        builder
+            .addCase(getApiKeys.pending, (state) => {
+                state.apiKeys.loading = true
+                state.apiKeys.error = ''
+            })
+            .addCase(getApiKeys.fulfilled, (state, action) => {
+                state.apiKeys.loading = false
+                state.apiKeys.keys = action.payload.keys || []
+            })
+            .addCase(getApiKeys.rejected, (state, action) => {
+                state.apiKeys.loading = false
+                state.apiKeys.error = (action.payload as string) || 'Failed to fetch API Keys';
+            })
         // ── Generate API Key ──
         builder
             .addCase(generateApiKey.pending, (state) => {
@@ -344,21 +403,24 @@ const authSlice = createSlice({
             })
             .addCase(generateApiKey.fulfilled, (state, action) => {
                 state.apiKeys.loading = false
-                // Assuming backend returns the generated key string directly or within an object
-                // The frontend component can handle displaying it or we can store it here.
-                // We will add it to the state locally too for now so it shows up
+                const meta = action.payload.meta
                 state.apiKeys.keys.push({
-                    id: String(Date.now()),
-                    name: action.meta.arg.name,
-                    token: action.payload.message || action.payload,
-                    created: new Date().toLocaleDateString(),
-                    visible: false
+                    key_id: meta.key_id,
+                    name: meta.name,
+                    key_prefix: meta.prefix,
+                    last4: meta.last4,
+                    daily_limit: meta.daily_limit,
+                    is_active: meta.is_active,
+                    created_at: meta.created_at,
+                    // raw key only available once after creation
+                    rawKey: action.payload.api_key,
                 })
             })
             .addCase(generateApiKey.rejected, (state, action) => {
                 state.apiKeys.loading = false
                 state.apiKeys.error = (action.payload as string) || 'Failed to generate API Key'
             })
+
 
         // ── Login ──
         builder

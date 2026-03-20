@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Copy, Eye, EyeOff, Plus, Trash2, Key } from "lucide-react"
+import { Copy, Eye, EyeOff, Plus, Trash2, Key, Loader2, AlertTriangle } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -11,18 +11,60 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { GlobalNotification } from "@/components/ui/global-notification"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { generateApiKey, removeApiKeyLocally } from "@/store/authSlice"
+import { generateApiKey, getApiKeys, deleteApiKey } from "@/store/authSlice"
 import { ApiKeysListSkeleton } from "@/components/loading-skeletons"
 
 export default function ApiKeysPage() {
     const dispatch = useAppDispatch()
-    const { keys, loading } = useAppSelector(state => state.auth.apiKeys)
+    const { keys, loading, error } = useAppSelector(state => state.auth.apiKeys)
+
     const [localVisibility, setLocalVisibility] = useState<Record<string, boolean>>({})
     const [copied, setCopied] = useState<string | null>(null)
+
+    // Create key dialog
     const [createOpen, setCreateOpen] = useState(false)
     const [newKeyName, setNewKeyName] = useState("")
+    const [creating, setCreating] = useState(false)
+
+    // Raw key display dialog (shown once after creation)
+    const [rawKeyDialog, setRawKeyDialog] = useState<{ open: boolean; key: string; name: string }>({
+        open: false, key: "", name: ""
+    })
+
+    // Delete confirmation
+    const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; keyId: string; name: string }>({
+        open: false, keyId: "", name: ""
+    })
+    const [deleting, setDeleting] = useState(false)
+
+    // Notifications
+    const [notification, setNotification] = useState<{ open: boolean; message: string; type: "success" | "error" | "info" }>({
+        open: false, message: "", type: "info"
+    })
+
+    // Fetch keys on mount
+    useEffect(() => {
+        dispatch(getApiKeys())
+    }, [dispatch])
+
+    // Show error from store
+    useEffect(() => {
+        if (error) {
+            setNotification({ open: true, message: error, type: "error" })
+        }
+    }, [error])
 
     const toggleVisibility = (id: string) => {
         setLocalVisibility(prev => ({ ...prev, [id]: !prev[id] }))
@@ -35,24 +77,73 @@ export default function ApiKeysPage() {
     }
 
     const handleCreateKey = async () => {
-        if (!newKeyName.trim() || loading) return
-        await dispatch(generateApiKey({ name: newKeyName.trim() })).unwrap()
-        setNewKeyName("")
-        setCreateOpen(false)
+        if (!newKeyName.trim() || creating) return
+        setCreating(true)
+        try {
+            const result = await dispatch(generateApiKey({ name: newKeyName.trim() })).unwrap()
+            setNewKeyName("")
+            setCreateOpen(false)
+            // Show the raw key in a special one-time dialog
+            setRawKeyDialog({
+                open: true,
+                key: result.api_key,
+                name: result.meta?.name || newKeyName.trim()
+            })
+        } catch (err: any) {
+            setNotification({
+                open: true,
+                message: typeof err === 'string' ? err : err?.message || "Failed to create API key",
+                type: "error"
+            })
+        } finally {
+            setCreating(false)
+        }
     }
 
-    const handleDeleteKey = (id: string) => {
-        dispatch(removeApiKeyLocally(id))
+    const handleDeleteKey = async () => {
+        if (!deleteConfirm.keyId || deleting) return
+        setDeleting(true)
+        try {
+            await dispatch(deleteApiKey(deleteConfirm.keyId)).unwrap()
+            setNotification({ open: true, message: "API key revoked successfully", type: "success" })
+            setDeleteConfirm({ open: false, keyId: "", name: "" })
+        } catch (err: any) {
+            setNotification({
+                open: true,
+                message: typeof err === 'string' ? err : err?.message || "Failed to revoke API key",
+                type: "error"
+            })
+        } finally {
+            setDeleting(false)
+        }
     }
 
-    const maskToken = (token: string) => {
-        if (!token) return '••••••••••••••••'
-        if (token.length <= 12) return '•'.repeat(token.length)
-        return token.substring(0, 12) + '•'.repeat(token.length - 12)
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return "—"
+        try {
+            return new Date(dateStr).toLocaleDateString("en-US", {
+                year: "numeric", month: "short", day: "numeric"
+            })
+        } catch {
+            return dateStr
+        }
+    }
+
+    const maskKey = (prefix: string, last4: string) => {
+        return `${prefix}••••••••${last4}`
     }
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto">
+            {/* Notification */}
+            <GlobalNotification
+                open={notification.open}
+                onOpenChange={(open) => setNotification(prev => ({ ...prev, open }))}
+                message={notification.message}
+                type={notification.type}
+                autoCloseMs={4000}
+            />
+
             {/* Header */}
             <div>
                 <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">API Keys</h2>
@@ -85,47 +176,70 @@ export default function ApiKeysPage() {
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            {keys.map((key) => (
-                                <div key={key.id} className="pb-6 border-b border-neutral-100 dark:border-white/5 last:border-0 last:pb-0">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">{key.name}</h4>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex items-center bg-neutral-100 dark:bg-black/30 rounded-lg px-3 py-2 border border-neutral-200 dark:border-white/5 font-mono text-sm text-neutral-600 dark:text-neutral-300 select-all">
-                                                {localVisibility[key.id] ? key.token : maskToken(key.token)}
-                                            </div>
-                                            <button
-                                                onClick={() => toggleVisibility(key.id)}
-                                                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5"
-                                                title={localVisibility[key.id] ? "Hide Key" : "Show Key"}
-                                            >
-                                                {localVisibility[key.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                            </button>
-                                            <button
-                                                onClick={() => copyToClipboard(key.id, key.token)}
-                                                className="text-neutral-400 hover:text-cyan-600 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5"
-                                                title="Copy to Clipboard"
-                                            >
-                                                <Copy className="h-4 w-4" />
-                                            </button>
-                                            {copied === key.id && (
-                                                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-in fade-in">Copied!</span>
+                            {keys.map((key: any) => {
+                                const keyId = key.key_id
+                                const displayToken = key.rawKey
+                                    ? key.rawKey
+                                    : maskKey(key.key_prefix || "", key.last4 || "")
+                                const isVisible = localVisibility[keyId]
+
+                                return (
+                                    <div key={keyId} className="pb-6 border-b border-neutral-100 dark:border-white/5 last:border-0 last:pb-0">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">{key.name}</h4>
+                                            {key.is_active === false && (
+                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400">
+                                                    Revoked
+                                                </span>
                                             )}
                                         </div>
-                                        <button
-                                            onClick={() => handleDeleteKey(key.id)}
-                                            className="text-neutral-400 hover:text-red-500 transition-colors p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20"
-                                            title="Delete Key"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex items-center bg-neutral-100 dark:bg-black/30 rounded-lg px-3 py-2 border border-neutral-200 dark:border-white/5 font-mono text-sm text-neutral-600 dark:text-neutral-300 select-all">
+                                                    {key.rawKey
+                                                        ? (isVisible ? displayToken : maskKey(key.key_prefix || displayToken.substring(0, 8), key.last4 || displayToken.slice(-4)))
+                                                        : displayToken
+                                                    }
+                                                </div>
+                                                {key.rawKey && (
+                                                    <button
+                                                        onClick={() => toggleVisibility(keyId)}
+                                                        className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5"
+                                                        title={isVisible ? "Hide Key" : "Show Key"}
+                                                    >
+                                                        {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                    </button>
+                                                )}
+                                                {key.rawKey && (
+                                                    <button
+                                                        onClick={() => copyToClipboard(keyId, key.rawKey)}
+                                                        className="text-neutral-400 hover:text-cyan-600 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5"
+                                                        title="Copy to Clipboard"
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                                {copied === keyId && (
+                                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-in fade-in">Copied!</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => setDeleteConfirm({ open: true, keyId, name: key.name })}
+                                                className="text-neutral-400 hover:text-red-500 transition-colors p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20"
+                                                title="Revoke Key"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                        <div className="mt-2 flex items-center gap-3 text-[11px] text-neutral-400">
+                                            <span>Created {formatDate(key.created_at)}</span>
+                                            {key.daily_limit && (
+                                                <span>• {key.daily_limit.toLocaleString()} req/day</span>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className="mt-2 text-[11px] text-neutral-400">
-                                        Created {key.created}
-                                    </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     )}
                 </CardContent>
@@ -147,7 +261,7 @@ export default function ApiKeysPage() {
             </Card>
 
             {/* Create Key Dialog */}
-            <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <Dialog open={createOpen} onOpenChange={(open) => { setCreateOpen(open); if (!open) setNewKeyName(""); }}>
                 <DialogContent className="sm:max-w-md bg-white dark:bg-[#131920] border-neutral-200 dark:border-white/10">
                     <DialogHeader>
                         <DialogTitle className="text-neutral-900 dark:text-neutral-100">Create API Key</DialogTitle>
@@ -168,6 +282,7 @@ export default function ApiKeysPage() {
                                 }}
                                 placeholder="e.g., Production Key"
                                 className="bg-neutral-50 dark:bg-white/5 border-neutral-200 dark:border-white/10 focus-visible:ring-cyan-500"
+                                disabled={creating}
                             />
                             <p className="text-xs text-neutral-400">
                                 Give your key a memorable name to identify its purpose.
@@ -179,19 +294,102 @@ export default function ApiKeysPage() {
                             variant="outline"
                             onClick={() => { setCreateOpen(false); setNewKeyName("") }}
                             className="border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 cursor-pointer"
+                            disabled={creating}
                         >
                             Cancel
                         </Button>
                         <Button
                             onClick={handleCreateKey}
-                            disabled={!newKeyName.trim()}
+                            disabled={!newKeyName.trim() || creating}
                             className="bg-cyan-600 hover:bg-cyan-700 text-white cursor-pointer"
                         >
-                            Create Key
+                            {creating ? (
+                                <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Creating...</>
+                            ) : (
+                                "Create Key"
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Raw Key Display Dialog (one-time) */}
+            <Dialog open={rawKeyDialog.open} onOpenChange={(open) => setRawKeyDialog(prev => ({ ...prev, open }))}>
+                <DialogContent className="sm:max-w-lg bg-white dark:bg-[#131920] border-neutral-200 dark:border-white/10">
+                    <DialogHeader>
+                        <DialogTitle className="text-neutral-900 dark:text-neutral-100 flex items-center gap-2">
+                            <Key className="h-5 w-5 text-cyan-600" />
+                            API Key Created
+                        </DialogTitle>
+                        <DialogDescription className="text-neutral-500">
+                            Your API key <span className="font-semibold text-neutral-700 dark:text-neutral-300">"{rawKeyDialog.name}"</span> has been created.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-700/30 rounded-lg">
+                            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                            <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                                Copy this key now. It will not be shown again!
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-neutral-100 dark:bg-black/30 rounded-lg px-3 py-2.5 border border-neutral-200 dark:border-white/5 font-mono text-sm text-neutral-800 dark:text-neutral-200 break-all select-all">
+                                {rawKeyDialog.key}
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(rawKeyDialog.key)
+                                    setNotification({ open: true, message: "API key copied to clipboard", type: "success" })
+                                }}
+                                className="shrink-0 border-neutral-200 dark:border-white/10 cursor-pointer"
+                            >
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            onClick={() => setRawKeyDialog(prev => ({ ...prev, open: false }))}
+                            className="bg-cyan-600 hover:bg-cyan-700 text-white cursor-pointer"
+                        >
+                            Done
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm(prev => ({ ...prev, open }))}>
+                <AlertDialogContent className="bg-white dark:bg-[#131920] border-neutral-200 dark:border-white/10">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-neutral-900 dark:text-neutral-100">Revoke API Key</AlertDialogTitle>
+                        <AlertDialogDescription className="text-neutral-500">
+                            Are you sure you want to revoke <span className="font-semibold text-neutral-700 dark:text-neutral-300">"{deleteConfirm.name}"</span>? This action cannot be undone and any applications using this key will lose access.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            className="border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 cursor-pointer"
+                            disabled={deleting}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteKey}
+                            disabled={deleting}
+                            className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                        >
+                            {deleting ? (
+                                <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Revoking...</>
+                            ) : (
+                                "Revoke Key"
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }
