@@ -17,6 +17,7 @@ import {
     SidebarRail,
 } from "@/components/ui/sidebar"
 import { useAppSelector } from "@/store/hooks"
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
 
 const platformItems = [
     {
@@ -63,7 +64,12 @@ export function AppSidebar({
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
                 <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0 h-12 shrink-0">
-                    <img src="/spidergo-logo.png" alt="SpiderGo" className="h-6 w-6 shrink-0" />
+                    <ImageWithSkeleton
+                        src="/spidergo-logo.png"
+                        alt="SpiderGo"
+                        className="h-6 w-6 shrink-0"
+                        containerClassName="h-6 w-6 shrink-0"
+                    />
                     <span className="text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden truncate">
                         Spider<span className="text-primary">Go</span>
                     </span>

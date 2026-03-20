@@ -21,10 +21,14 @@ import {
 import { Link } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { useEffect } from "react"
+import {
+    DashboardResultSkeleton,
+    RecentJobsSkeletonGrid,
+} from "@/components/loading-skeletons"
 
 export default function DashboardPage() {
     const dispatch = useAppDispatch()
-    const { config, jobUrl, jobType, jobLoading, jobError, history, lastResult, searchQuery } = useAppSelector(
+    const { config, jobUrl, jobType, jobLoading, historyLoading, jobError, history, lastResult, searchQuery } = useAppSelector(
         (state) => state.dashboard
     )
     const user = useAppSelector((state) => state.auth.user)
@@ -193,8 +197,12 @@ export default function DashboardPage() {
                 </Card>
             )}
 
+            {historyLoading && !lastResult && !jobError && <DashboardResultSkeleton />}
+
             {/*  Recent Activity (Grid) */}
-            {recentJobs.length > 0 && (
+            {historyLoading ? (
+                <RecentJobsSkeletonGrid />
+            ) : recentJobs.length > 0 && (
                 <div>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Recent Activity</h3>

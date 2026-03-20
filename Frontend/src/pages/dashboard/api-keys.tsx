@@ -14,6 +14,7 @@ import {
 
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { generateApiKey, removeApiKeyLocally } from "@/store/authSlice"
+import { ApiKeysListSkeleton } from "@/components/loading-skeletons"
 
 export default function ApiKeysPage() {
     const dispatch = useAppDispatch()
@@ -74,7 +75,9 @@ export default function ApiKeysPage() {
                         </Button>
                     </div>
 
-                    {keys.length === 0 ? (
+                    {loading && keys.length === 0 ? (
+                        <ApiKeysListSkeleton />
+                    ) : keys.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-neutral-400">
                             <Key className="h-10 w-10 mb-3 text-neutral-300 dark:text-neutral-600" />
                             <p className="text-sm font-medium text-neutral-500">No API keys yet</p>

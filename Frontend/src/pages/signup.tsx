@@ -1,5 +1,6 @@
 import { SignupForm } from "@/components/signup-form"
 import { Link } from "react-router-dom"
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
 
 export default function SignupPage() {
     return (
@@ -8,7 +9,12 @@ export default function SignupPage() {
             <div className="flex flex-col gap-6 p-6 md:p-10">
                 <div className="flex justify-center gap-2 md:justify-start">
                     <Link to="/" className="flex items-center gap-2 font-medium">
-                        <img src="/spidergo-logo.png" alt="SpiderGo" className="h-7 w-7" />
+                        <ImageWithSkeleton
+                            src="/spidergo-logo.png"
+                            alt="SpiderGo"
+                            className="h-7 w-7"
+                            containerClassName="h-7 w-7"
+                        />
                         <span className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                             Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>
                         </span>
@@ -23,10 +29,11 @@ export default function SignupPage() {
 
             {/* Right — Side Image */}
             <div className="bg-muted relative hidden lg:block">
-                <img
+                <ImageWithSkeleton
                     src="/scraping.png"
                     alt="SpiderGo web crawler illustration"
                     className="absolute inset-0 h-full w-full object-cover"
+                    containerClassName="absolute inset-0"
                 />
             </div>
         </div>
