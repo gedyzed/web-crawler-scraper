@@ -20,6 +20,7 @@ import ApiKeysPage from "./pages/dashboard/api-keys";
 function App() {
     const dispatch = useAppDispatch();
     const authLoading = useAppSelector((s) => s.auth.authLoading);
+    const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
 
     useEffect(() => {
         dispatch(checkAuth());
@@ -32,21 +33,24 @@ function App() {
     return (
         <Routes>
             {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/update-password" element={<UpdatePasswordPage />} />
             <Route path="/verify-email" element={<VerifyEmailPage />} />
 
-            {/* Dashboard routes */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardPage />} />
-                <Route path="history" element={<HistoryPage />} />
-                <Route path="profile" element={<ProfilePage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="api-keys" element={<ApiKeysPage />} />
-            </Route>
+            {/* Root: Landing page if not authenticated, Dashboard if authenticated */}
+            {isAuthenticated ? (
+                <Route path="/" element={<DashboardLayout />}>
+                    <Route index element={<DashboardPage />} />
+                    <Route path="history" element={<HistoryPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route path="api-keys" element={<ApiKeysPage />} />
+                </Route>
+            ) : (
+                <Route path="/" element={<LandingPage />} />
+            )}
 
             <Route path="*" element={<NotFoundPage />} />
         </Routes>

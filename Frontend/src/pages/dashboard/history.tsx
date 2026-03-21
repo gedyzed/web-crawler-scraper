@@ -147,7 +147,7 @@ export default function HistoryPage() {
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
             {/* Header */}
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                     <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Job History</h2>
                     <p className="text-neutral-500 mt-1">View and manage all your scrape and crawl jobs.</p>
@@ -185,7 +185,7 @@ export default function HistoryPage() {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 overflow-x-auto pb-1">
                 {filters.map(f => (
                     <button
                         key={f.value}

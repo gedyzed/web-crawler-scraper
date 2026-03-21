@@ -277,7 +277,6 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 
 	c.SetSameSite(http.SameSiteNoneMode)
 
-
 	c.SetCookie(
 		domain.AccessToken,
 		response.Session.Token,
@@ -298,7 +297,7 @@ func (ac *AuthController) OAuthCallback(c *gin.Context, provider string) {
 		true,
 	)
 
-	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/dashboard?provider=%s", ac.cfg.App.Domain, provider))
+	c.Redirect(http.StatusSeeOther, fmt.Sprintf("%s/?provider=%s", ac.cfg.App.Domain, provider))
 
 }
 

@@ -12,16 +12,16 @@ import (
 )
 
 type Config struct {
-	App       AppConfig      `mapstructure:"app"`
-	DB        DBConfig       `mapstructure:"db"`
-	Redis     RedisConfig    `mapstructure:"redis"`
+	App       AppConfig       `mapstructure:"app"`
+	DB        DBConfig        `mapstructure:"db"`
+	Redis     RedisConfig     `mapstructure:"redis"`
 	RateLimit RateLimitConfig `mapstructure:"rate_limiter"`
-	GoogleCfg OAuthConfig    `mapstructure:"google_oauth"`
-	GithubCfg OAuthConfig    `mapstructure:"github_oauth"`
-	JWTConfig JWTConfig      `mapstructure:"jwt_config"`
-	Security  SecurityConfig `mapstructure:"security"`
-	Email     EmailConfig    `mapstructure:"email"`
-	Crawler   CrawlerConfig  `mapstructure:"crawler"`
+	GoogleCfg OAuthConfig     `mapstructure:"google_oauth"`
+	GithubCfg OAuthConfig     `mapstructure:"github_oauth"`
+	JWTConfig JWTConfig       `mapstructure:"jwt_config"`
+	Security  SecurityConfig  `mapstructure:"security"`
+	Email     EmailConfig     `mapstructure:"email"`
+	Crawler   CrawlerConfig   `mapstructure:"crawler"`
 }
 
 type SecurityConfig struct {
