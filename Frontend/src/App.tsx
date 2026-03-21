@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { checkAuth } from "./store/authSlice";
-import { Loader2 } from "lucide-react";
+import { AppShellSkeleton } from "./components/loading-skeletons";
 import LandingPage from "./pages/landing";
 import LoginPage from "./pages/login";
 import SignupPage from "./pages/signup";
@@ -26,11 +26,7 @@ function App() {
     }, [dispatch]);
 
     if (authLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-background">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
+        return <AppShellSkeleton />;
     }
 
     return (

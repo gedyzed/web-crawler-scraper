@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Link, useLocation } from "react-router-dom"
 import { ArrowLeft, LockKeyhole, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
 import {
     setUpdatePasswordField,
     resetUpdatePassword,
@@ -56,8 +57,13 @@ export default function UpdatePasswordPage() {
 
             {/* Content */}
             <div className="relative flex w-full max-w-sm flex-col gap-6">
-                <Link to="/" className="flex items-center gap-2 self-center font-medium">
-                    <img src="/spidergo-logo.png" alt="SpiderGo" className="h-7 w-7" />
+                <Link to="/" className="flex items-center gap-1.5 self-center font-medium">
+                    <ImageWithSkeleton
+                        src="/spidergo-logo.png"
+                        alt="SpiderGo"
+                        className="h-7 w-7"
+                        containerClassName="h-7 w-7"
+                    />
                     <span className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                         Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>
                     </span>

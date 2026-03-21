@@ -1,5 +1,6 @@
-import { useState } from "react";
 import api from "@/lib/api";
+import { getGitHubStars } from "@/lib/github";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import CrawlerBackground from "@/components/CrawlerBackground";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ConsolePreviewSkeleton } from "@/components/loading-skeletons";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import {
     Globe,
     Zap,
@@ -68,14 +71,21 @@ function JsonHighlight({ data }: JsonHighlightProps) {
 
 // ─── Navbar ───────────────────────────────────────────────
 function Navbar() {
+    const [stars, setStars] = useState<number | null>(null);
+
+    useEffect(() => {
+        getGitHubStars().then(count => setStars(count));
+    }, []);
+
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 border-b border-neutral-200 dark:border-white/[0.06] bg-white/80 dark:bg-[#0a0e14]/70 backdrop-blur-xl">
             <div className="mx-auto max-w-6xl flex items-center justify-between px-6 h-16">
-                <Link to="/" className="flex items-center gap-2.5 group">
-                    <img
+                <Link to="/" className="flex items-center gap-1.5 group">
+                    <ImageWithSkeleton
                         src="/spidergo-logo.png"
                         alt="SpiderGo"
                         className="h-12 w-12 transition-transform group-hover:scale-110"
+                        containerClassName="h-12 w-12"
                     />
                     <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                         Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>
@@ -92,7 +102,7 @@ function Navbar() {
                     >
                         <Github className="h-4 w-4" />
                         <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 dark:text-amber-400 dark:fill-amber-400" />
-                        <span className="font-semibold">2</span>
+                        <span className="font-semibold">{stars ?? "..."}</span>
                     </a>
                     <Button
                         className="bg-cyan-600 text-white hover:bg-cyan-500 rounded-lg text-sm px-5"
@@ -227,7 +237,9 @@ function HeroSection() {
                         </div>
 
                         <div className="p-5 text-left overflow-x-auto max-h-[380px] overflow-y-auto custom-scrollbar">
-                            {result ? (
+                            {loading ? (
+                                <ConsolePreviewSkeleton />
+                            ) : result ? (
                                 <div className="animate-in fade-in duration-500">
                                     <JsonHighlight data={result} />
                                 </div>
@@ -406,8 +418,13 @@ function Footer() {
         <footer className="relative border-t border-neutral-200 dark:border-white/[0.06]">
             <div className="mx-auto max-w-6xl px-6 py-12">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div className="flex items-center gap-2.5">
-                        <img src="/spidergo-logo.png" alt="SpiderGo" className="h-7 w-7" />
+                    <div className="flex items-center gap-1.5">
+                        <ImageWithSkeleton
+                            src="/spidergo-logo.png"
+                            alt="SpiderGo"
+                            className="h-7 w-7"
+                            containerClassName="h-7 w-7"
+                        />
                         <span className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                             Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>
                         </span>

@@ -69,9 +69,14 @@ var (
 	ErrTooManyRequests         = "Too Many Request. Try again Later!"
 	ErrUserAlreadyRegistered   = "User Already Registered"
 	ErrInvalidCredentials      = "Invalid Email or Password"
+	ErrUnauthorizedRequest     = "Unauthorized request"
 	ErrInvalidVerificationCode = "Invalid Verification Code"
 	ErrVerificationCodeExpired = "Verification Code Has Expired"
 	MsgEmailVerifiedSuccess    = "Email Verified Successfully"
+	ErrAPIKeyLimitReached      = "You already have the maximum number of active API keys"
+	ErrInvalidAPIKey           = "Invalid API key"
+	ErrAPIKeyRevoked           = "API key is revoked or inactive"
+	ErrAPIKeyQuotaExceeded     = "Daily API key quota exceeded"
 )
 
 // Usecase - Log Messages
@@ -80,6 +85,7 @@ var (
 	LogFailedCreateUserID = "Failed to Create UserID"
 	LogFailedCreateTokens = "Failed to Create Tokens"
 	LogFailedSaveProvider = "Failed to Save OAuth Provider"
+	LogFailedCreateAPIKey = "Failed to create API key"
 )
 
 // OAuth Service - Error Messages
@@ -101,9 +107,15 @@ var (
 	RefreshTokenGoogle = "refresh_token_google"
 	RefreshTokenGithub = "refresh_token_github"
 	AccessToken        = "access_token"
+	APIKeyPrefixLive   = "sk_live_"
 
 	Google = "google"
 	Github = "github"
+)
+
+const (
+	MaxAPIKeysPerUser = 3
+	DefaultDailyLimit = 1000
 )
 
 // For Crawler

@@ -13,6 +13,7 @@ import {
 import { clearHistory } from "@/store/dashboardSlice"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { type HistoryItem, fetchHistory } from "@/store/dashboardSlice"
+import { HistoryGridSkeleton } from "@/components/loading-skeletons"
 
 function formatShortDate(dateStr: string) {
     if (!dateStr) return "N/A"
@@ -123,7 +124,7 @@ type FilterTab = 'all' | 'success' | 'failed' | 'pending'
 
 export default function HistoryPage() {
     const dispatch = useAppDispatch()
-    const { history, searchQuery } = useAppSelector((state) => state.dashboard)
+    const { history, historyLoading, searchQuery } = useAppSelector((state) => state.dashboard)
     const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
 
     useEffect(() => {
@@ -200,7 +201,9 @@ export default function HistoryPage() {
             </div>
 
             {/* History Grid */}
-            {filteredHistory.length === 0 ? (
+            {historyLoading ? (
+                <HistoryGridSkeleton />
+            ) : filteredHistory.length === 0 ? (
                 <Card className="border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.03]">
                     <CardContent className="flex flex-col items-center justify-center py-16 text-neutral-400">
                         <HistoryIcon className="h-12 w-12 mb-3 text-neutral-300 dark:text-neutral-600" />

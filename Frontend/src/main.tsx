@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client'
+import { Suspense } from 'react'
 import './index.css'
 import App from './App'
 import { BrowserRouter } from 'react-router-dom'
@@ -7,6 +8,7 @@ import { store } from './store/store'
 import { ThemeProvider } from './components/ThemeProvider'
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { Analytics } from "@vercel/analytics/react"
+import { AppShellSkeleton } from './components/loading-skeletons'
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
@@ -16,7 +18,9 @@ createRoot(rootElement).render(
     <Provider store={store}>
         <ThemeProvider defaultTheme="system" storageKey="spidergo-theme">
             <BrowserRouter>
-                <App />
+                <Suspense fallback={<AppShellSkeleton />}>
+                    <App />
+                </Suspense>
                 <SpeedInsights />
                 <Analytics />
             </BrowserRouter>

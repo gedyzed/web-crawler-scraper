@@ -35,7 +35,12 @@ func main() {
 
 	db := infrastructure.DBConnect(&cfg.DB)
 	redis := infrastructure.NewRedisClient(&cfg.Redis)
-	rateLimiter := infrastructure.NewRedisRateLimiter(redis, 5, time.Minute)
+	rateLimiter := infrastructure.NewRedisRateLimiter(redis, cfg.RateLimit.Auth.Limit, cfg.RateLimit.Auth.Window)
+	apiKeyRateLimiter := infrastructure.NewAPIKeyRedisRateLimiter(redis)
+
+	if err := db.AutoMigrate(&domain.ApiKey{}); err != nil {
+		logrus.WithError(err).Fatal("failed to migrate api_keys table")
+	}
 
 	// OAuth Initialization
 	googleOAuth := oauth.NewGoogleOAuthConfig(&cfg.GoogleCfg)
@@ -54,6 +59,7 @@ func main() {
 	userRepo := repository.NewUserRepo(db)
 	refreshTokenRepo := repository.NewRefreshTokenRepo(db)
 	resultRepo := repository.NewResultRepo(db)
+	apiKeyRepo := repository.NewApiKeyRepo(db)
 
 	// services
 	oauthServices := oauth.NewOAuthServices(oauthProviders, oauthUserURL)
@@ -74,14 +80,20 @@ func main() {
 	)
 	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory)
 	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory)
+	apiKeyUsecase := usecase.NewApiKeyUsecase(
+		apiKeyRepo,
+		cfg.RateLimit.APIKey.MaxKeysPerUser,
+		cfg.RateLimit.APIKey.DailyLimit,
+	)
 
 	// controllers
 	authController := controller.NewAuthController(authUsecase, cfg)
+	apiKeyController := controller.NewAPIKeyController(apiKeyUsecase)
 	crawlController := controller.NewCrawlerController(&cfg.Crawler, crawlUsecase)
 	scraperController := controller.NewScraperController(scraperUsecase)
 
 	// Middlewares
-	middlewares := middleware.NewMiddleware(jwtService)
+	middlewares := middleware.NewMiddleware(jwtService, apiKeyUsecase, apiKeyRateLimiter)
 
 	if cfg.App.Debug {
 		gin.SetMode(gin.DebugMode)
@@ -104,7 +116,7 @@ func main() {
 
 	router.Use(middlewares.RequestLogger())
 
-	route.AuthRoutes(router, authController, middlewares)
+	route.AuthRoutes(router, authController, apiKeyController, middlewares)
 	route.CrawlerAndScraperRoutes(router, crawlController, scraperController, middlewares)
 
 	router.Run(":" + cfg.App.Port)

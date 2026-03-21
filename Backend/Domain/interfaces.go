@@ -53,6 +53,26 @@ type IResultRepo interface {
 	SaveHistory(ctx context.Context, history *History) *AppError
 	FindAllHistory(ctx context.Context, userID string) ([]History, *AppError)
 }
+
+type IApiKeyRepo interface {
+	Create(ctx context.Context, key *ApiKey) *AppError
+	CountActiveByUserID(ctx context.Context, userID string) (int64, *AppError)
+	FindAllByUserID(ctx context.Context, userID string) ([]ApiKey, *AppError)
+	FindByHash(ctx context.Context, hash string) (*ApiKey, *AppError)
+	FindByIDAndUserID(ctx context.Context, keyID string, userID string) (*ApiKey, *AppError)
+	Revoke(ctx context.Context, keyID string, userID string) *AppError
+	TouchLastUsed(ctx context.Context, keyID string) *AppError
+}
+
+type IApiKeyAuthService interface {
+	ValidateAPIKey(ctx context.Context, rawKey string) (*ApiKey, *AppError)
+	TouchLastUsed(ctx context.Context, keyID string) *AppError
+}
+
+type IApiKeyRateLimiter interface {
+	AllowByKey(ctx context.Context, keyID string, limit int64) (bool, *AppError)
+}
+
 type ICrawlerService interface {
 	Crawl(ctx context.Context, seedURL string) (*CrawlerResult, *AppError)
 }

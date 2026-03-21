@@ -69,6 +69,7 @@ interface DashboardState {
     jobUrl: string;
     jobType: 'scrape' | 'crawl';
     jobLoading: boolean;
+    historyLoading: boolean;
     jobError: string;
     history: HistoryItem[];
     lastResult: CrawlerResult | null;
@@ -129,6 +130,7 @@ const initialState: DashboardState = {
     jobUrl: '',
     jobType: 'scrape',
     jobLoading: false,
+    historyLoading: false,
     jobError: '',
     // History
     history: [],
@@ -213,15 +215,15 @@ const dashboardSlice = createSlice({
     extraReducers: (builder) => {
         builder
             .addCase(fetchHistory.pending, (state) => {
-                state.jobLoading = true
+                state.historyLoading = true
                 state.jobError = ''
             })
             .addCase(fetchHistory.fulfilled, (state, action) => {
-                state.jobLoading = false
+                state.historyLoading = false
                 state.history = action.payload
             })
             .addCase(fetchHistory.rejected, (state, action) => {
-                state.jobLoading = false
+                state.historyLoading = false
                 state.jobError = (action.payload as string) || 'Failed to fetch history'
             })
             .addCase(runJob.pending, (state) => {
