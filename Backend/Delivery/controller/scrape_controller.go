@@ -36,11 +36,17 @@ func (sc *ScrapeController) Scrape(c *gin.Context) {
 	}
 
 	input.Depth = 1
-	userID := c.GetString("userID")
+    
+	userID := ""
+	if _, exists := c.Get("userID"); exists {
+	userID = c.GetString("userID")
 	input.UserID = userID
+	} else {
+		input.Trail = true
+	}
 
 	response, err := sc.scrapeUC.Scrape(ctx, &input)
-	if err != nil {
+	if err != nil  {
 		logrus.WithFields(logrus.Fields{
 			"url":         input.URL,
 			"userID":      userID,

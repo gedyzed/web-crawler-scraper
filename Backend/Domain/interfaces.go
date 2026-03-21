@@ -89,3 +89,8 @@ type ICrawlerServiceFactory interface {
 type IScraperServiceFactory interface {
 	NewScraperService() IScrapeService
 }
+
+// Rate Limiter
+type IRateLimiter interface {
+	Allow(ctx context.Context, ip string) (bool, *AppError)
+}

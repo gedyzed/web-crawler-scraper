@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"net/http"
 	domain "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	logrus "github.com/sirupsen/logrus"
 	colly "github.com/gocolly/colly"
+	
 )
 
 type QueueItem struct {
@@ -77,26 +79,26 @@ func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawler
 func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.CrawlerResult, *domain.AppError) {
 
 	// ── Check Redis cache ──
-	// if cr.redisClient.Exists(ctx, seedURL).Val() > 0 {
-	// 	data, err := cr.redisClient.Get(ctx, seedURL).Result()
-	// 	if err != nil {
-	// 		return nil, &domain.AppError{
-	// 			Message:    domain.ErrInternalServer,
-	// 			Err:        err.Error(),
-	// 			HttpStatus: http.StatusInternalServerError,
-	// 		}
-	// 	}
+	if cr.redisClient.Exists(ctx, seedURL).Val() > 0 {
+		data, err := cr.redisClient.Get(ctx, seedURL).Result()
+		if err != nil {
+			return nil, &domain.AppError{
+				Message:    domain.ErrInternalServer,
+				Err:        err.Error(),
+				HttpStatus: http.StatusInternalServerError,
+			}
+		}
 
-	// 	var result domain.CrawlerResult
-	// 	if err := json.Unmarshal([]byte(data), &result); err != nil {
-	// 		return nil, &domain.AppError{
-	// 			Message:    domain.ErrInternalServer,
-	// 			Err:        err.Error(),
-	// 			HttpStatus: http.StatusInternalServerError,
-	// 		}
-	// 	}
-	// 	return &result, nil
-	// }
+		var result domain.CrawlerResult
+		if err := json.Unmarshal([]byte(data), &result); err != nil {
+			return nil, &domain.AppError{
+				Message:    domain.ErrInternalServer,
+				Err:        err.Error(),
+				HttpStatus: http.StatusInternalServerError,
+			}
+		}
+		return &result, nil
+	}
 
 	// ── BFS crawl ──
 	currentLevel := []QueueItem{{URL: seedURL, Depth: 0}}

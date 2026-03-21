@@ -136,7 +136,7 @@ function HeroSection() {
                 ? { url, maxPages: 10, depth: 1, allowedPatterns: [], deniedPatterns: [] }
                 : { url };
 
-            const response = await api.post(endpoint, body);
+            const response = await api.post(`/trial${endpoint}`, body);
             setResult(response.data.message || response.data);
         } catch (err: any) {
             setResult({

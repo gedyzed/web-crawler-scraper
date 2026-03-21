@@ -144,6 +144,11 @@ var (
 	LogFailedDeleteVerificationCode = "Failed to Delete Verification Code"
 )
 
+// For Free Trail 
+var ( 
+	UserFreeTrialExpired = "Your free trial has expired. Please sign up to continue using the service."
+)
+
 // Crawler - Log Messages
 var (
 	LogCrawlStarted     = "Crawl started"
