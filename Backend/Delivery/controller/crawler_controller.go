@@ -22,6 +22,8 @@ func NewCrawlerController(cfg *config.CrawlerConfig, cu usecase.ICrawlerUsecase)
 func (cl *CrawlerController) Crawler(c *gin.Context) {
 
 	ctx := c.Request.Context()
+	c.Request.URL.Path = c.FullPath() // Ensure the full path is set for logging
+
 
 	var input domain.URLFrontier
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -33,11 +35,17 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrSeedURLNeeded})
 		return
 	}
-
-	// Get user ID from context passdown form middelware
-	userID := c.GetString("userID")
+	
 	input.Depth = cl.config.MaxDepth
-	input.UserID = userID
+	userID := ""
+	// Get user ID from context passdown form middelware
+	if _, exists := c.Get("userID"); exists {
+		userID = c.GetString("userID")
+		input.UserID = userID
+		input.Trail = false
+	} else {
+		input.Trail = true
+	}
 
 	response, err := cl.CralwerUC.Crawl(ctx, &input)
 	if err != nil {
@@ -70,3 +78,5 @@ func (cl *CrawlerController) GetHistory(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, history)
 }
+
+

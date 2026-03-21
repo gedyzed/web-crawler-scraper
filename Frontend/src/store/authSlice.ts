@@ -301,6 +301,7 @@ const authSlice = createSlice({
             state.login = { ...initialState.login }
             state.apiKeys = { ...initialState.apiKeys }
             Cookies.remove('accessToken')
+            Cookies.remove('refreshToken')
         },
 
         // ── Signup ──

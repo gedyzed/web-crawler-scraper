@@ -6,13 +6,12 @@ import (
 	"time"
 	domain "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
-	usecase "web_crawler_scraper/Usecase"
 
 	"github.com/redis/go-redis/v9"
 	logrus "github.com/sirupsen/logrus"
 )
 
-func NewRedisRateLimiter(cl *redis.Client, limit int64, window time.Duration) usecase.IRateLimiter {
+func NewRedisRateLimiter(cl *redis.Client, limit int64, window time.Duration) domain.IRateLimiter {
 	return &RedisRateLimiter{
 		client: cl,
 		limit:  limit,

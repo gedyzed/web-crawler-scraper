@@ -78,8 +78,8 @@ func main() {
 		passwordService,
 		emailService,
 	)
-	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory)
-	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory)
+	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory, rateLimiter)
+	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory, rateLimiter)
 	apiKeyUsecase := usecase.NewApiKeyUsecase(
 		apiKeyRepo,
 		cfg.RateLimit.APIKey.MaxKeysPerUser,

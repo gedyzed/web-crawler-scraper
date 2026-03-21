@@ -17,8 +17,9 @@ func setupScraperUsecaseTest(t *testing.T) (*gomock.Controller, *mocks.MockIResu
 	mockRepo := mocks.NewMockIResultRepo(ctrl)
 	mockFactory := mocks.NewMockIScraperServiceFactory(ctrl)
 	mockService := mocks.NewMockIScrapeService(ctrl)
+	mockkRateLimiter := mocks.NewMockIRateLimiter(ctrl)
 
-	uc := usecase.NewScraperUsecase(mockRepo, mockFactory)
+	uc := usecase.NewScraperUsecase(mockRepo, mockFactory,mockkRateLimiter)
 
 	return ctrl, mockRepo, mockFactory, mockService, uc
 }

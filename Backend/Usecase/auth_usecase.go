@@ -28,14 +28,12 @@ type IAuthUsecase interface {
 	GetUserByID(ctx context.Context, id string) (*domain.User, *domain.AppError)
 }
 
-type IRateLimiter interface {
-	Allow(ctx context.Context, ip string) (bool, *domain.AppError)
-}
+
 
 type authUsecase struct {
 	repo            domain.IUserRepo
 	tokenRepo       domain.IRefreshTokenRepo
-	rateLimiter     IRateLimiter
+	rateLimiter     domain.IRateLimiter
 	oauthServices   domain.IOAuthServices
 	jwtService      domain.IJwtService
 	passwordService domain.IPasswordService
@@ -45,7 +43,7 @@ type authUsecase struct {
 func NewAuthUsecase(
 	repo domain.IUserRepo,
 	tokenRepo domain.IRefreshTokenRepo,
-	rateLimiter IRateLimiter,
+	rateLimiter domain.IRateLimiter,
 	oauthServices domain.IOAuthServices,
 	jwtService domain.IJwtService,
 	passwordService domain.IPasswordService,

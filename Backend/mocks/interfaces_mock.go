@@ -238,73 +238,6 @@ func (mr *MockIRefreshTokenRepoMockRecorder) Update(ctx, token any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIRefreshTokenRepo)(nil).Update), ctx, token)
 }
 
-// MockISessionRepo is a mock of ISessionRepo interface.
-type MockISessionRepo struct {
-	ctrl     *gomock.Controller
-	recorder *MockISessionRepoMockRecorder
-	isgomock struct{}
-}
-
-// MockISessionRepoMockRecorder is the mock recorder for MockISessionRepo.
-type MockISessionRepoMockRecorder struct {
-	mock *MockISessionRepo
-}
-
-// NewMockISessionRepo creates a new mock instance.
-func NewMockISessionRepo(ctrl *gomock.Controller) *MockISessionRepo {
-	mock := &MockISessionRepo{ctrl: ctrl}
-	mock.recorder = &MockISessionRepoMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockISessionRepo) EXPECT() *MockISessionRepoMockRecorder {
-	return m.recorder
-}
-
-// Create mocks base method.
-func (m *MockISessionRepo) Create(ctx context.Context, session *domain.Session) *domain.AppError {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, session)
-	ret0, _ := ret[0].(*domain.AppError)
-	return ret0
-}
-
-// Create indicates an expected call of Create.
-func (mr *MockISessionRepoMockRecorder) Create(ctx, session any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockISessionRepo)(nil).Create), ctx, session)
-}
-
-// Delete mocks base method.
-func (m *MockISessionRepo) Delete(ctx context.Context, id uint) *domain.AppError {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", ctx, id)
-	ret0, _ := ret[0].(*domain.AppError)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockISessionRepoMockRecorder) Delete(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockISessionRepo)(nil).Delete), ctx, id)
-}
-
-// FindByID mocks base method.
-func (m *MockISessionRepo) FindByID(ctx context.Context, id uint) (*domain.Session, *domain.AppError) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByID", ctx, id)
-	ret0, _ := ret[0].(*domain.Session)
-	ret1, _ := ret[1].(*domain.AppError)
-	return ret0, ret1
-}
-
-// FindByID indicates an expected call of FindByID.
-func (mr *MockISessionRepoMockRecorder) FindByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockISessionRepo)(nil).FindByID), ctx, id)
-}
-
 // MockIOAuthServices is a mock of IOAuthServices interface.
 type MockIOAuthServices struct {
 	ctrl     *gomock.Controller
@@ -601,6 +534,224 @@ func (mr *MockIResultRepoMockRecorder) SaveResult(ctx, result any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveResult", reflect.TypeOf((*MockIResultRepo)(nil).SaveResult), ctx, result)
 }
 
+// MockIApiKeyRepo is a mock of IApiKeyRepo interface.
+type MockIApiKeyRepo struct {
+	ctrl     *gomock.Controller
+	recorder *MockIApiKeyRepoMockRecorder
+	isgomock struct{}
+}
+
+// MockIApiKeyRepoMockRecorder is the mock recorder for MockIApiKeyRepo.
+type MockIApiKeyRepoMockRecorder struct {
+	mock *MockIApiKeyRepo
+}
+
+// NewMockIApiKeyRepo creates a new mock instance.
+func NewMockIApiKeyRepo(ctrl *gomock.Controller) *MockIApiKeyRepo {
+	mock := &MockIApiKeyRepo{ctrl: ctrl}
+	mock.recorder = &MockIApiKeyRepoMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIApiKeyRepo) EXPECT() *MockIApiKeyRepoMockRecorder {
+	return m.recorder
+}
+
+// CountActiveByUserID mocks base method.
+func (m *MockIApiKeyRepo) CountActiveByUserID(ctx context.Context, userID string) (int64, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountActiveByUserID", ctx, userID)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// CountActiveByUserID indicates an expected call of CountActiveByUserID.
+func (mr *MockIApiKeyRepoMockRecorder) CountActiveByUserID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountActiveByUserID", reflect.TypeOf((*MockIApiKeyRepo)(nil).CountActiveByUserID), ctx, userID)
+}
+
+// Create mocks base method.
+func (m *MockIApiKeyRepo) Create(ctx context.Context, key *domain.ApiKey) *domain.AppError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", ctx, key)
+	ret0, _ := ret[0].(*domain.AppError)
+	return ret0
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockIApiKeyRepoMockRecorder) Create(ctx, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIApiKeyRepo)(nil).Create), ctx, key)
+}
+
+// FindAllByUserID mocks base method.
+func (m *MockIApiKeyRepo) FindAllByUserID(ctx context.Context, userID string) ([]domain.ApiKey, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindAllByUserID", ctx, userID)
+	ret0, _ := ret[0].([]domain.ApiKey)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// FindAllByUserID indicates an expected call of FindAllByUserID.
+func (mr *MockIApiKeyRepoMockRecorder) FindAllByUserID(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllByUserID", reflect.TypeOf((*MockIApiKeyRepo)(nil).FindAllByUserID), ctx, userID)
+}
+
+// FindByHash mocks base method.
+func (m *MockIApiKeyRepo) FindByHash(ctx context.Context, hash string) (*domain.ApiKey, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByHash", ctx, hash)
+	ret0, _ := ret[0].(*domain.ApiKey)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// FindByHash indicates an expected call of FindByHash.
+func (mr *MockIApiKeyRepoMockRecorder) FindByHash(ctx, hash any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByHash", reflect.TypeOf((*MockIApiKeyRepo)(nil).FindByHash), ctx, hash)
+}
+
+// FindByIDAndUserID mocks base method.
+func (m *MockIApiKeyRepo) FindByIDAndUserID(ctx context.Context, keyID, userID string) (*domain.ApiKey, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByIDAndUserID", ctx, keyID, userID)
+	ret0, _ := ret[0].(*domain.ApiKey)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// FindByIDAndUserID indicates an expected call of FindByIDAndUserID.
+func (mr *MockIApiKeyRepoMockRecorder) FindByIDAndUserID(ctx, keyID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByIDAndUserID", reflect.TypeOf((*MockIApiKeyRepo)(nil).FindByIDAndUserID), ctx, keyID, userID)
+}
+
+// Revoke mocks base method.
+func (m *MockIApiKeyRepo) Revoke(ctx context.Context, keyID, userID string) *domain.AppError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Revoke", ctx, keyID, userID)
+	ret0, _ := ret[0].(*domain.AppError)
+	return ret0
+}
+
+// Revoke indicates an expected call of Revoke.
+func (mr *MockIApiKeyRepoMockRecorder) Revoke(ctx, keyID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Revoke", reflect.TypeOf((*MockIApiKeyRepo)(nil).Revoke), ctx, keyID, userID)
+}
+
+// TouchLastUsed mocks base method.
+func (m *MockIApiKeyRepo) TouchLastUsed(ctx context.Context, keyID string) *domain.AppError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TouchLastUsed", ctx, keyID)
+	ret0, _ := ret[0].(*domain.AppError)
+	return ret0
+}
+
+// TouchLastUsed indicates an expected call of TouchLastUsed.
+func (mr *MockIApiKeyRepoMockRecorder) TouchLastUsed(ctx, keyID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TouchLastUsed", reflect.TypeOf((*MockIApiKeyRepo)(nil).TouchLastUsed), ctx, keyID)
+}
+
+// MockIApiKeyAuthService is a mock of IApiKeyAuthService interface.
+type MockIApiKeyAuthService struct {
+	ctrl     *gomock.Controller
+	recorder *MockIApiKeyAuthServiceMockRecorder
+	isgomock struct{}
+}
+
+// MockIApiKeyAuthServiceMockRecorder is the mock recorder for MockIApiKeyAuthService.
+type MockIApiKeyAuthServiceMockRecorder struct {
+	mock *MockIApiKeyAuthService
+}
+
+// NewMockIApiKeyAuthService creates a new mock instance.
+func NewMockIApiKeyAuthService(ctrl *gomock.Controller) *MockIApiKeyAuthService {
+	mock := &MockIApiKeyAuthService{ctrl: ctrl}
+	mock.recorder = &MockIApiKeyAuthServiceMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIApiKeyAuthService) EXPECT() *MockIApiKeyAuthServiceMockRecorder {
+	return m.recorder
+}
+
+// TouchLastUsed mocks base method.
+func (m *MockIApiKeyAuthService) TouchLastUsed(ctx context.Context, keyID string) *domain.AppError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TouchLastUsed", ctx, keyID)
+	ret0, _ := ret[0].(*domain.AppError)
+	return ret0
+}
+
+// TouchLastUsed indicates an expected call of TouchLastUsed.
+func (mr *MockIApiKeyAuthServiceMockRecorder) TouchLastUsed(ctx, keyID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TouchLastUsed", reflect.TypeOf((*MockIApiKeyAuthService)(nil).TouchLastUsed), ctx, keyID)
+}
+
+// ValidateAPIKey mocks base method.
+func (m *MockIApiKeyAuthService) ValidateAPIKey(ctx context.Context, rawKey string) (*domain.ApiKey, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateAPIKey", ctx, rawKey)
+	ret0, _ := ret[0].(*domain.ApiKey)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// ValidateAPIKey indicates an expected call of ValidateAPIKey.
+func (mr *MockIApiKeyAuthServiceMockRecorder) ValidateAPIKey(ctx, rawKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAPIKey", reflect.TypeOf((*MockIApiKeyAuthService)(nil).ValidateAPIKey), ctx, rawKey)
+}
+
+// MockIApiKeyRateLimiter is a mock of IApiKeyRateLimiter interface.
+type MockIApiKeyRateLimiter struct {
+	ctrl     *gomock.Controller
+	recorder *MockIApiKeyRateLimiterMockRecorder
+	isgomock struct{}
+}
+
+// MockIApiKeyRateLimiterMockRecorder is the mock recorder for MockIApiKeyRateLimiter.
+type MockIApiKeyRateLimiterMockRecorder struct {
+	mock *MockIApiKeyRateLimiter
+}
+
+// NewMockIApiKeyRateLimiter creates a new mock instance.
+func NewMockIApiKeyRateLimiter(ctrl *gomock.Controller) *MockIApiKeyRateLimiter {
+	mock := &MockIApiKeyRateLimiter{ctrl: ctrl}
+	mock.recorder = &MockIApiKeyRateLimiterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIApiKeyRateLimiter) EXPECT() *MockIApiKeyRateLimiterMockRecorder {
+	return m.recorder
+}
+
+// AllowByKey mocks base method.
+func (m *MockIApiKeyRateLimiter) AllowByKey(ctx context.Context, keyID string, limit int64) (bool, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AllowByKey", ctx, keyID, limit)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// AllowByKey indicates an expected call of AllowByKey.
+func (mr *MockIApiKeyRateLimiterMockRecorder) AllowByKey(ctx, keyID, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllowByKey", reflect.TypeOf((*MockIApiKeyRateLimiter)(nil).AllowByKey), ctx, keyID, limit)
+}
+
 // MockICrawlerService is a mock of ICrawlerService interface.
 type MockICrawlerService struct {
 	ctrl     *gomock.Controller
@@ -754,4 +905,43 @@ func (m *MockIScraperServiceFactory) NewScraperService() domain.IScrapeService {
 func (mr *MockIScraperServiceFactoryMockRecorder) NewScraperService() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewScraperService", reflect.TypeOf((*MockIScraperServiceFactory)(nil).NewScraperService))
+}
+
+// MockIRateLimiter is a mock of IRateLimiter interface.
+type MockIRateLimiter struct {
+	ctrl     *gomock.Controller
+	recorder *MockIRateLimiterMockRecorder
+	isgomock struct{}
+}
+
+// MockIRateLimiterMockRecorder is the mock recorder for MockIRateLimiter.
+type MockIRateLimiterMockRecorder struct {
+	mock *MockIRateLimiter
+}
+
+// NewMockIRateLimiter creates a new mock instance.
+func NewMockIRateLimiter(ctrl *gomock.Controller) *MockIRateLimiter {
+	mock := &MockIRateLimiter{ctrl: ctrl}
+	mock.recorder = &MockIRateLimiterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIRateLimiter) EXPECT() *MockIRateLimiterMockRecorder {
+	return m.recorder
+}
+
+// Allow mocks base method.
+func (m *MockIRateLimiter) Allow(ctx context.Context, ip string) (bool, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Allow", ctx, ip)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// Allow indicates an expected call of Allow.
+func (mr *MockIRateLimiterMockRecorder) Allow(ctx, ip any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Allow", reflect.TypeOf((*MockIRateLimiter)(nil).Allow), ctx, ip)
 }
