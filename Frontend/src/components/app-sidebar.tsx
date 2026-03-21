@@ -22,23 +22,23 @@ import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
 const platformItems = [
     {
         title: "Homepage",
-        url: "/dashboard",
+        url: "/",
         icon: LayoutDashboard,
         isActive: true,
     },
     {
         title: "History",
-        url: "/dashboard/history",
+        url: "/history",
         icon: History,
     },
     {
         title: "Profile",
-        url: "/dashboard/profile",
+        url: "/profile",
         icon: User,
     },
     {
         title: "Settings",
-        url: "/dashboard/settings",
+        url: "/settings",
         icon: Settings2,
     },
 ]
@@ -46,7 +46,7 @@ const platformItems = [
 const developerItems = [
     {
         title: "API Keys",
-        url: "/dashboard/api-keys",
+        url: "/api-keys",
         icon: Key,
     }
 ]

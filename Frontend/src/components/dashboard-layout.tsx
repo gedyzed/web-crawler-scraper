@@ -28,11 +28,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { label: "Homepage", path: "/dashboard", icon: LayoutDashboard },
-    { label: "History", path: "/dashboard/history", icon: History },
-    { label: "Profile", path: "/dashboard/profile", icon: User },
-    { label: "Settings", path: "/dashboard/settings", icon: Settings2 },
-    { label: "API Keys", path: "/dashboard/api-keys", icon: Key },
+    { label: "Homepage", path: "/", icon: LayoutDashboard },
+    { label: "History", path: "/history", icon: History },
+    { label: "Profile", path: "/profile", icon: User },
+    { label: "Settings", path: "/settings", icon: Settings2 },
+    { label: "API Keys", path: "/api-keys", icon: Key },
 ]
 
 export default function DashboardLayout() {
@@ -64,7 +64,7 @@ export default function DashboardLayout() {
     }, [dispatch, isSearchOpen])
 
     const activeItem = navItems.find((item) => {
-        if (item.path === "/dashboard") return location.pathname === "/dashboard"
+        if (item.path === "/") return location.pathname === "/"
         return location.pathname.startsWith(item.path)
     })
 
@@ -81,7 +81,7 @@ export default function DashboardLayout() {
             <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
-                    <header className="flex h-16 shrink-0 items-center justify-between gap-2 px-6 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b border-neutral-200 dark:border-white/[0.06] bg-white/80 dark:bg-[#0a0e14]/80 backdrop-blur-xl sticky top-0 z-10">
+                    <header className="flex h-16 shrink-0 items-center justify-between gap-2 px-3 sm:px-6 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b border-neutral-200 dark:border-white/[0.06] bg-white/80 dark:bg-[#0a0e14]/80 backdrop-blur-xl sticky top-0 z-10">
                         <div className="flex items-center gap-2">
                             <SidebarTrigger className="-ml-1" />
                             <Separator orientation="vertical" className="mr-2 h-4" />
@@ -89,7 +89,7 @@ export default function DashboardLayout() {
                                 <BreadcrumbList>
                                     <BreadcrumbItem className="hidden md:block">
                                         <BreadcrumbLink asChild>
-                                            <Link to="/dashboard">SpiderGo</Link>
+                                            <Link to="/">SpiderGo</Link>
                                         </BreadcrumbLink>
                                     </BreadcrumbItem>
                                     <BreadcrumbSeparator className="hidden md:block" />
@@ -101,7 +101,7 @@ export default function DashboardLayout() {
                         </div>
                         <div className="flex items-center gap-3">
                             <ThemeToggle />
-                            <div className="flex items-center gap-3 relative mr-4">
+                            <div className="flex items-center gap-3 relative mr-1 sm:mr-4">
                                 <div
                                     onClick={() => dispatch(setIsSearchOpen(true))}
                                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/5 text-sm text-neutral-500 cursor-pointer hover:border-neutral-300 dark:hover:border-white/20 transition-colors"
@@ -162,7 +162,7 @@ export default function DashboardLayout() {
                                                                     <button
                                                                         key={job.hid}
                                                                         onClick={() => {
-                                                                            navigate("/dashboard/history")
+                                                                            navigate("/history")
                                                                             dispatch(setIsSearchOpen(false))
                                                                         }}
                                                                         className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 text-left transition-colors group"
@@ -197,14 +197,14 @@ export default function DashboardLayout() {
                                 )}
                             </div>
                             {user && (
-                                <Link to="/dashboard/profile" className="h-8 w-8 rounded-full bg-cyan-600 flex items-center justify-center text-xs font-bold text-white uppercase">
+                                <Link to="/profile" className="h-8 w-8 rounded-full bg-cyan-600 flex items-center justify-center text-xs font-bold text-white uppercase">
                                     {(user.name || user.firstname || user.username || "U")[0]}
                                 </Link>
                             )}
                         </div>
                     </header>
-                    <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                        <div className="p-6">
+                    <div className="flex flex-1 flex-col gap-4 p-4 pt-0 min-w-0 w-full">
+                        <div className="p-3 sm:p-6 min-w-0 w-full">
                             <Outlet />
                         </div>
                     </div>

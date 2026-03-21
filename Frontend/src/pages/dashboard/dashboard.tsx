@@ -104,7 +104,7 @@ export default function DashboardPage() {
                         </div>
 
                         {/* Actions Row */}
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                             <Tabs value={jobType} onValueChange={(v) => dispatch(setJobType(v as 'crawl' | 'scrape'))}>
                                 <TabsList className="bg-transparent p-0 h-auto gap-1">
                                     <TabsTrigger
@@ -206,7 +206,7 @@ export default function DashboardPage() {
                 <div>
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Recent Activity</h3>
-                        <Link to="/dashboard/history" className="text-sm text-cyan-600 hover:text-cyan-700 font-medium inline-flex items-center gap-1">
+                        <Link to="/history" className="text-sm text-cyan-600 hover:text-cyan-700 font-medium inline-flex items-center gap-1">
                             View all <ArrowRight className="h-3.5 w-3.5" />
                         </Link>
                     </div>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
                         {recentJobs.map((job) => (
                             <Link
                                 key={job.hid}
-                                to="/dashboard/history"
+                                to="/history"
                                 className="flex flex-col p-5 rounded-2xl border border-neutral-200 dark:border-white/10 bg-white dark:bg-[#131920] hover:border-cyan-500/30 transition-colors group"
                             >
                                 <div className="flex items-start justify-between mb-4">

@@ -23,13 +23,13 @@ export default function ProfilePage() {
 
             <Card className="border-neutral-200 dark:border-white/10 bg-white dark:bg-white/[0.03]">
                 <CardContent className="p-6">
-                    <div className="flex items-center gap-5">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
                         <div className="h-16 w-16 rounded-full bg-cyan-100 dark:bg-cyan-950/40 border-2 border-cyan-200 dark:border-cyan-800 flex items-center justify-center">
                             <span className="text-2xl font-bold text-cyan-700 dark:text-cyan-400">{initial}</span>
                         </div>
                         <div className="space-y-1">
                             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{email}</h3>
-                            <div className="flex items-center gap-4 text-sm text-neutral-500">
+                            <div className="flex items-center gap-4 text-sm text-neutral-500 flex-wrap justify-center sm:justify-start">
                                 <span className="flex items-center gap-1.5">
                                     <Mail className="h-3.5 w-3.5" />
                                     {email}

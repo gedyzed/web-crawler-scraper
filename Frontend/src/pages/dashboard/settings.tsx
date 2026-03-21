@@ -71,7 +71,7 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-6 max-w-4xl mx-auto">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
                     <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Settings</h2>
                     <p className="text-neutral-500 mt-1">Configure your crawler and scraper settings</p>
@@ -216,7 +216,7 @@ export default function SettingsPage() {
                     <Trash2 className="h-4 w-4 text-red-500" />
                     Danger Zone
                 </h4>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <p className="text-xs text-neutral-500">Delete all your account data permanently. This action cannot be undone.</p>
                     <Button variant="outline" size="sm" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/40 h-8 text-xs hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
                         Delete Account

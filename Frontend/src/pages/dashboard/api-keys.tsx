@@ -131,11 +131,11 @@ export default function ApiKeysPage() {
     }
 
     const maskKey = (prefix: string, last4: string) => {
-        return `${prefix}••••••••${last4}`
+        return `${prefix}••••••••••••••••${last4}`
     }
 
     return (
-        <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="space-y-6 max-w-2xl mx-auto w-full min-w-0 flex flex-col">
             {/* Notification */}
             <GlobalNotification
                 open={notification.open}
@@ -154,7 +154,7 @@ export default function ApiKeysPage() {
             {/* API Keys Section */}
             <Card className="border-neutral-200 dark:border-white/10 shadow-sm bg-white dark:bg-[#131920]">
                 <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-8">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-8">
                         <div>
                             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-1">API Keys</h3>
                             <p className="text-sm text-neutral-500">Manage API keys for programmatic access</p>
@@ -186,17 +186,26 @@ export default function ApiKeysPage() {
 
                                 return (
                                     <div key={keyId} className="pb-6 border-b border-neutral-100 dark:border-white/5 last:border-0 last:pb-0">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">{key.name}</h4>
-                                            {key.is_active === false && (
-                                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400">
-                                                    Revoked
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center justify-between">
+                                        <div className="flex items-center justify-between mb-2 w-full gap-2">
                                             <div className="flex items-center gap-2">
-                                                <div className="flex items-center bg-neutral-100 dark:bg-black/30 rounded-lg px-3 py-2 border border-neutral-200 dark:border-white/5 font-mono text-sm text-neutral-600 dark:text-neutral-300 select-all">
+                                                <h4 className="font-semibold text-sm text-neutral-900 dark:text-neutral-100">{key.name}</h4>
+                                                {key.is_active === false && (
+                                                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400">
+                                                        Revoked
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => setDeleteConfirm({ open: true, keyId, name: key.name })}
+                                                className="text-neutral-400 hover:text-red-500 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-red-950/20 shrink-0"
+                                                title="Revoke Key"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full min-w-0">
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 min-w-0 w-full flex-1">
+                                                <div className="flex items-center bg-neutral-100 dark:bg-black/30 rounded-lg px-3 py-2 border border-neutral-200 dark:border-white/5 font-mono text-sm text-neutral-600 dark:text-neutral-300 select-all min-w-0 break-all w-full flex-1">
                                                     {key.rawKey
                                                         ? (isVisible ? displayToken : maskKey(key.key_prefix || displayToken.substring(0, 8), key.last4 || displayToken.slice(-4)))
                                                         : displayToken
@@ -205,7 +214,7 @@ export default function ApiKeysPage() {
                                                 {key.rawKey && (
                                                     <button
                                                         onClick={() => toggleVisibility(keyId)}
-                                                        className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5"
+                                                        className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5 shrink-0"
                                                         title={isVisible ? "Hide Key" : "Show Key"}
                                                     >
                                                         {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -214,23 +223,16 @@ export default function ApiKeysPage() {
                                                 {key.rawKey && (
                                                     <button
                                                         onClick={() => copyToClipboard(keyId, key.rawKey)}
-                                                        className="text-neutral-400 hover:text-cyan-600 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5"
+                                                        className="text-neutral-400 hover:text-cyan-600 transition-colors p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-white/5 shrink-0"
                                                         title="Copy to Clipboard"
                                                     >
                                                         <Copy className="h-4 w-4" />
                                                     </button>
                                                 )}
                                                 {copied === keyId && (
-                                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-in fade-in">Copied!</span>
+                                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium animate-in fade-in mr-2 shrink-0">Copied!</span>
                                                 )}
                                             </div>
-                                            <button
-                                                onClick={() => setDeleteConfirm({ open: true, keyId, name: key.name })}
-                                                className="text-neutral-400 hover:text-red-500 transition-colors p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20"
-                                                title="Revoke Key"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
                                         </div>
                                         <div className="mt-2 flex items-center gap-3 text-[11px] text-neutral-400">
                                             <span>Created {formatDate(key.created_at)}</span>
@@ -333,8 +335,8 @@ export default function ApiKeysPage() {
                                 Copy this key now. It will not be shown again!
                             </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-neutral-100 dark:bg-black/30 rounded-lg px-3 py-2.5 border border-neutral-200 dark:border-white/5 font-mono text-sm text-neutral-800 dark:text-neutral-200 break-all select-all">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex-1 min-w-0 bg-neutral-100 dark:bg-black/30 rounded-lg px-3 py-2.5 border border-neutral-200 dark:border-white/5 font-mono text-sm text-neutral-800 dark:text-neutral-200 break-all select-all">
                                 {rawKeyDialog.key}
                             </div>
                             <Button

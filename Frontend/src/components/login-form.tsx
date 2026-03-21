@@ -53,7 +53,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
         const result = await dispatch(loginUser({ email, password }))
         if (loginUser.fulfilled.match(result)) {
             setLoginSuccess(true)
-            setTimeout(() => navigate("/dashboard"), 1500)
+            setTimeout(() => navigate("/"), 1500)
         }
     }
 
