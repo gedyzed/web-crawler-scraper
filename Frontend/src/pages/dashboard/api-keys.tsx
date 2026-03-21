@@ -29,6 +29,7 @@ import { ApiKeysListSkeleton } from "@/components/loading-skeletons"
 export default function ApiKeysPage() {
     const dispatch = useAppDispatch()
     const { keys, loading, error } = useAppSelector(state => state.auth.apiKeys)
+    const activeKeys = keys.filter((key: any) => key?.is_active !== false)
 
     const [localVisibility, setLocalVisibility] = useState<Record<string, boolean>>({})
     const [copied, setCopied] = useState<string | null>(null)
@@ -166,9 +167,9 @@ export default function ApiKeysPage() {
                         </Button>
                     </div>
 
-                    {loading && keys.length === 0 ? (
+                    {loading && activeKeys.length === 0 ? (
                         <ApiKeysListSkeleton />
-                    ) : keys.length === 0 ? (
+                    ) : activeKeys.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-neutral-400">
                             <Key className="h-10 w-10 mb-3 text-neutral-300 dark:text-neutral-600" />
                             <p className="text-sm font-medium text-neutral-500">No API keys yet</p>
@@ -176,7 +177,7 @@ export default function ApiKeysPage() {
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            {keys.map((key: any) => {
+                            {activeKeys.map((key: any) => {
                                 const keyId = key.key_id
                                 const displayToken = key.rawKey
                                     ? key.rawKey
