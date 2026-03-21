@@ -8,7 +8,7 @@ export default function SignupPage() {
             {/* Left — Form */}
             <div className="flex flex-col gap-6 p-6 md:p-10">
                 <div className="flex justify-center gap-2 md:justify-start">
-                    <Link to="/" className="flex items-center gap-2 font-medium">
+                    <Link to="/" className="flex items-center gap-1.5 font-medium">
                         <ImageWithSkeleton
                             src="/spidergo-logo.png"
                             alt="SpiderGo"

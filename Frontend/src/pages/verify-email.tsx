@@ -119,7 +119,7 @@ export default function VerifyEmailPage() {
 
             {/* Content */}
             <div className="relative flex w-full max-w-sm flex-col gap-6">
-                <Link to="/" className="flex items-center gap-2 self-center font-medium">
+                <Link to="/" className="flex items-center gap-1.5 self-center font-medium">
                     <ImageWithSkeleton
                         src="/spidergo-logo.png"
                         alt="SpiderGo"

@@ -63,7 +63,7 @@ export function AppSidebar({
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0 h-12 shrink-0">
+                <div className="flex items-center gap-1.5 group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0 h-12 shrink-0">
                     <ImageWithSkeleton
                         src="/spidergo-logo.png"
                         alt="SpiderGo"
