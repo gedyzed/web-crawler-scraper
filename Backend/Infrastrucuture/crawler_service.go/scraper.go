@@ -34,8 +34,8 @@ func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
 
 	collector.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
-		Delay:       2 * time.Second,
-		RandomDelay: 1 * time.Second,
+		Delay:       100 * time.Second,
+		RandomDelay: 100 * time.Second,
 	})
 	return NewScraper(s.config, collector)
 }
@@ -66,6 +66,7 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		Products:  make([]domain.Product, 0),
 	}
 	discoveredLinks := make([]string, 0)
+	seenDiscovered := make(map[string]bool)
 
 	collector := s.collector.Clone()
 
@@ -85,6 +86,11 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		if link == "" {
 			return
 		}
+
+		if seenDiscovered[link] {
+			return
+		}
+		seenDiscovered[link] = true
 
 		discoveredLinks = append(discoveredLinks, link)
 	})
@@ -107,19 +113,32 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		page.TextContent = article.TextContent
 
 		// E-commerce Product Extraction
-		page.Products = extractProducts(e, targetURL)
+		// page.Products = extractProducts(e, targetURL)
 
-		// Populate page.Links with discoveredLinks uniquely
+		// Populate page.Links with unique links and correct grouping.
 		seenLinks := make(map[string]bool)
 		for _, link := range discoveredLinks {
-			if !seenLinks[link] {
-				seenLinks[link] = true
-				page.Links = append(page.Links, domain.Link{
-					PageID: page.PageID,
-					URL:    link,
-					Type:   "Internal", // Could be enhanced to differentiate External/Internal
-				})
+			if seenLinks[link] {
+				continue
 			}
+			seenLinks[link] = true
+			page.Links = append(page.Links, domain.Link{
+				PageID: page.PageID,
+				URL:    link,
+				Type:   linkType(link, targetURL),
+			})
+		}
+
+		for _, imageLink := range extractImageLinks(e.DOM, targetURL) {
+			if seenLinks[imageLink] {
+				continue
+			}
+			seenLinks[imageLink] = true
+			page.Links = append(page.Links, domain.Link{
+				PageID: page.PageID,
+				URL:    imageLink,
+				Type:   "Image",
+			})
 		}
 	})
 
@@ -466,6 +485,16 @@ func extractFromOpenGraph(e *colly.HTMLElement, pageURL string) *domain.Product 
 // ── Helpers ──
 
 func resolveURL(rawURL string, baseURL string) string {
+	rawURL = strings.TrimSpace(rawURL)
+	if rawURL == "" {
+		return ""
+	}
+
+	lower := strings.ToLower(rawURL)
+	if strings.HasPrefix(lower, "javascript:") || strings.HasPrefix(lower, "mailto:") || strings.HasPrefix(lower, "tel:") {
+		return ""
+	}
+
 	if strings.HasPrefix(rawURL, "http://") || strings.HasPrefix(rawURL, "https://") {
 		return rawURL
 	}
@@ -512,9 +541,111 @@ func normalizeURL(rawURL string) string {
 		return ""
 	}
 
+	if u.Scheme != "" && u.Scheme != "http" && u.Scheme != "https" {
+		return ""
+	}
+
 	u.Fragment = ""
 	u.RawQuery = ""
 	return u.String()
+}
+
+func linkType(link string, baseURL string) string {
+	linkURL, err := url.Parse(link)
+	if err != nil {
+		return "Internal"
+	}
+
+	baseParsed, err := url.Parse(baseURL)
+	if err != nil {
+		return "Internal"
+	}
+
+	linkHost := normalizeHost(linkURL.Hostname())
+	baseHost := normalizeHost(baseParsed.Hostname())
+	if linkHost == "" || baseHost == "" {
+		return "Internal"
+	}
+
+	if linkHost == baseHost || strings.HasSuffix(linkHost, "."+baseHost) || strings.HasSuffix(baseHost, "."+linkHost) {
+		return "Internal"
+	}
+
+	return "External"
+}
+
+func normalizeHost(host string) string {
+	host = strings.ToLower(strings.TrimSpace(host))
+	host = strings.TrimPrefix(host, "www.")
+	return host
+}
+
+func extractImageLinks(doc *goquery.Selection, baseURL string) []string {
+	seen := make(map[string]bool)
+	var links []string
+
+	add := func(raw string) {
+		resolved := resolveURL(raw, baseURL)
+		if resolved == "" || seen[resolved] {
+			return
+		}
+		seen[resolved] = true
+		links = append(links, resolved)
+	}
+
+	doc.Find("img").Each(func(_ int, s *goquery.Selection) {
+		if src, ok := s.Attr("src"); ok {
+			add(src)
+		}
+		if src, ok := s.Attr("data-src"); ok {
+			add(src)
+		}
+		if src, ok := s.Attr("data-original"); ok {
+			add(src)
+		}
+		if srcset, ok := s.Attr("srcset"); ok {
+			for _, candidate := range splitSrcSet(srcset) {
+				add(candidate)
+			}
+		}
+		if srcset, ok := s.Attr("data-srcset"); ok {
+			for _, candidate := range splitSrcSet(srcset) {
+				add(candidate)
+			}
+		}
+	})
+
+	doc.Find("source").Each(func(_ int, s *goquery.Selection) {
+		if srcset, ok := s.Attr("srcset"); ok {
+			for _, candidate := range splitSrcSet(srcset) {
+				add(candidate)
+			}
+		}
+	})
+
+	doc.Find(`meta[property="og:image"], meta[name="twitter:image"], link[rel="image_src"]`).Each(func(_ int, s *goquery.Selection) {
+		if content, ok := s.Attr("content"); ok {
+			add(content)
+		}
+		if href, ok := s.Attr("href"); ok {
+			add(href)
+		}
+	})
+
+	return links
+}
+
+func splitSrcSet(srcset string) []string {
+	parts := strings.Split(srcset, ",")
+	urls := make([]string, 0, len(parts))
+	for _, part := range parts {
+		fields := strings.Fields(strings.TrimSpace(part))
+		if len(fields) == 0 {
+			continue
+		}
+		urls = append(urls, fields[0])
+	}
+	return urls
 }
 
 func ParseRawHTML(htmlContent string, baseURL *url.URL) (*readability.Article, *domain.AppError) {

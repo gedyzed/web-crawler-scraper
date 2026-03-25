@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@farming-labs/docs": "^0.0.61",
+    "@farming-labs/next": "^0.0.61",
+    "@farming-labs/theme": "^0.0.61",
     "@reduxjs/toolkit": "^2.11.2",
     "@tailwindcss/vite": "^4.1.18",
     "@vercel/analytics": "^1.6.1",

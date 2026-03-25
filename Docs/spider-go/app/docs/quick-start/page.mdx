@@ -1,0 +1,105 @@
+---
+order: 2
+title: Quick Start
+description: Run SpiderGo backend, frontend, and docs locally.
+icon: rocket
+---
+
+# Quick Start
+
+## Prerequisites
+
+- Go 1.24+
+- Node.js 20+
+- PostgreSQL
+- Redis
+
+## 1. Backend Setup
+
+Location: ../Backend
+
+Create your configuration file based on the existing template values in Backend/config.yaml.
+
+Required sections:
+
+- app
+- db
+- redis
+- rate_limiter
+- jwt_config
+- google_oauth
+- github_oauth
+- email
+- crawler
+
+Run the backend:
+
+```bash title="Backend"
+cd Backend
+go mod tidy
+go run Delivery/main.go
+```
+
+Backend default listen address from config: :8080
+
+## 2. Frontend Setup
+
+Location: ../Frontend
+
+Set environment variable:
+
+```bash title="Frontend .env"
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+Run frontend:
+
+```bash title="Frontend"
+cd Frontend
+npm install
+npm run dev
+```
+
+## 3. Docs Setup
+
+Location: docs/spider-go
+
+```bash title="Docs"
+cd docs/spider-go
+npm install
+npm run dev
+```
+
+Docs default URL: http://localhost:3000/docs
+
+## 4. First End-to-End Check
+
+1. Open frontend and create an account.
+2. Verify email if verification is enabled.
+3. Login and run a scrape job from dashboard.
+4. Confirm job appears in history.
+5. Create an API key and call a v1 endpoint.
+
+## 5. Programmatic Smoke Test
+
+Use a generated API key:
+
+```bash title="Scrape"
+curl -X POST http://localhost:8080/v1/scrape \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
+
+```bash title="Crawl"
+curl -X POST http://localhost:8080/v1/crawl \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
+
+## Notes
+
+- Dashboard endpoints rely on HttpOnly cookies and withCredentials=true in the frontend Axios client.
+- Public trial endpoints are available under /trial for landing-page demos.
+- API key endpoints are under /v1 and require Authorization: Bearer sk_live_...

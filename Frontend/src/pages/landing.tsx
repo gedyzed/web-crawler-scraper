@@ -16,6 +16,8 @@ import {
     Zap,
     Search,
     ArrowRight,
+    Menu,
+    X,
     Github,
     Star,
     BookOpen,
@@ -72,6 +74,7 @@ function JsonHighlight({ data }: JsonHighlightProps) {
 // ─── Navbar ───────────────────────────────────────────────
 function Navbar() {
     const [stars, setStars] = useState<number | null>(null);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         getGitHubStars().then(count => setStars(count));
@@ -92,7 +95,27 @@ function Navbar() {
                     </span>
                 </Link>
 
-                <div className="flex items-center gap-3">
+                     <div className="hidden sm:flex items-center gap-3">
+                     <a
+                        href="https://docs.spidergo.app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300"
+                    >
+                        Docs
+                    </a>
+                    <a
+                        href="https://docs.spidergo.app/cli"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300"
+                    >
+                        CLI
+                    </a>
+                </div>
+
+                <div className="hidden sm:flex items-center gap-3">
+                   
                     <ThemeToggle />
                     <a
                         href="https://github.com/gedyzed/web-crawler-scraper"
@@ -113,7 +136,69 @@ function Navbar() {
                         </Link>
                     </Button>
                 </div>
+
+                <div className="sm:hidden flex items-center gap-2">
+                    <Button
+                        className="bg-cyan-600 text-white hover:bg-cyan-500 rounded-lg text-sm px-4"
+                        asChild
+                    >
+                        <Link to="/signup">Get Started</Link>
+                    </Button>
+                    <button
+                        type="button"
+                        aria-label="Toggle menu"
+                        onClick={() => setMobileMenuOpen((prev) => !prev)}
+                        className="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 text-neutral-700 dark:text-neutral-200"
+                    >
+                        {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                    </button>
+                </div>
             </div>
+
+            {mobileMenuOpen && (
+                <div className="sm:hidden border-t border-neutral-200 dark:border-white/10 px-6 py-3 space-y-2">
+                    <div className="h-10 flex items-center gap-2 px-1 text-sm text-neutral-700 dark:text-neutral-300">
+                        <Layers className="h-4 w-4" />
+                        <span>Theme</span>
+                        <div className="ml-auto">
+                            <ThemeToggle />
+                        </div>
+                    </div>
+                    <a
+                        href="https://github.com/gedyzed/web-crawler-scraper"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-11 rounded-xl border border-amber-200/70 dark:border-amber-400/20 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20 flex items-center justify-start gap-2 px-3 text-sm text-amber-800 dark:text-amber-200"
+                    >
+                        <Github className="h-4 w-4" />
+                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 dark:text-amber-400 dark:fill-amber-400" />
+                        <span className="font-medium">Community Stars</span>
+                        <span className="ml-auto rounded-full bg-white/80 dark:bg-black/30 px-2 py-0.5 text-xs font-semibold">
+                            {stars ?? "..."}
+                        </span>
+                    </a>
+                    <a
+                        href="https://docs.spidergo.app"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-10 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 flex items-center justify-start gap-2 px-3 text-sm text-neutral-700 dark:text-neutral-300"
+                        onClick={() => setMobileMenuOpen(false)}
+                    >
+                        <BookOpen className="h-4 w-4" />
+                        Docs
+                    </a>
+                    <a
+                        href="https://docs.spidergo.app/cli"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-10 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 flex items-center justify-start gap-2 px-3 text-sm text-neutral-700 dark:text-neutral-300"
+                        onClick={() => setMobileMenuOpen(false)}
+                    >
+                        <Code2 className="h-4 w-4" />
+                        CLI
+                    </a>
+                </div>
+            )}
         </nav>
     );
 }
@@ -440,7 +525,9 @@ function Footer() {
                             <Github className="h-4 w-4" /> GitHub
                         </a>
                         <a
-                            href="#"
+                            href="https://docs.spidergo.app"
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors flex items-center gap-1.5"
                         >
                             <BookOpen className="h-4 w-4" /> Docs

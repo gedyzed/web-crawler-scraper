@@ -1,0 +1,230 @@
+---
+order: 4
+title: Backend API
+description: Authentication, crawl/scrape, history, and API key endpoints.
+icon: terminal
+---
+
+# Backend API
+
+## Base URL
+
+| Environment | Base URL |
+| --- | --- |
+| Local | `http://localhost:8080` |
+| Production | Your deployed API domain |
+
+## API Conventions
+
+| Item | Convention |
+| --- | --- |
+| Content Type | `application/json` |
+| Cookie Auth | Access/refresh via HttpOnly cookies |
+| API Key Auth | `Authorization: Bearer sk_live_...` |
+| Error Body | `{ "message": "..." }` |
+
+## Authentication
+
+### Cookie Session Auth (Dashboard)
+
+Login sets access and refresh cookies. Protected dashboard endpoints enforce cookie validation via auth middleware.
+
+### API Key Auth (Programmatic)
+
+Used by `/v1/*` endpoints.
+
+```http
+Authorization: Bearer sk_live_your_key
+```
+
+## Endpoint Reference
+
+### Auth and Session Endpoints
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| POST | `/auth/register` | Public | Create account |
+| POST | `/auth/login` | Public | Login and set auth cookies |
+| GET | `/auth/me` | Cookie | Get current profile |
+| GET | `/auth/refresh` | Cookie | Refresh/rotate session tokens |
+| GET | `/auth/oauth` | Public | OAuth provider redirect |
+| GET | `/auth/oauth/google` | Public | Google OAuth callback flow |
+| GET | `/auth/oauth/github` | Public | GitHub OAuth callback flow |
+| POST | `/auth/resend-email` | Cookie/Public flow | Resend verification code |
+| POST | `/auth/verify-email` | Public | Verify email with code |
+| POST | `/auth/forgot-password` | Public | Start password reset |
+| POST | `/auth/verify-reset-code` | Public | Verify reset code |
+| POST | `/auth/reset-password` | Public | Complete password reset |
+
+### Dashboard Job Endpoints (Cookie Auth)
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| POST | `/scrape` | Cookie | Run single-page scrape job |
+| POST | `/crawl` | Cookie | Run crawl job |
+| GET | `/history` | Cookie | Get current user history |
+
+### Trial Endpoints (Public, Rate-Limited)
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| POST | `/trial/scrape` | Public | Trial single-page scrape |
+| POST | `/trial/crawl` | Public | Trial crawl |
+
+### API Key Management (Cookie Auth)
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| POST | `/auth/api-keys` | Cookie | Create API key |
+| GET | `/auth/api-keys` | Cookie | List API keys (metadata only) |
+| DELETE | `/auth/api-keys/:id` | Cookie | Revoke API key |
+
+### Versioned API (API Key Auth)
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| POST | `/v1/scrape` | API Key | Programmatic scrape |
+| POST | `/v1/crawl` | API Key | Programmatic crawl |
+| GET | `/v1/history` | API Key | Programmatic history retrieval |
+
+## Common Request and Response Examples
+
+### Register: POST /auth/register
+
+Request:
+
+```json
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "StrongPassword123!"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "User registered successfully"
+}
+```
+
+### Login: POST /auth/login
+
+Request:
+
+```json
+{
+  "email": "jane@example.com",
+  "password": "StrongPassword123!"
+}
+```
+
+Response body includes user metadata and sets HttpOnly cookies:
+
+```json
+{
+  "user": {
+    "user_id": "...",
+    "first_name": "Jane",
+    "last_name": "Doe",
+    "email": "jane@example.com",
+    "is_verified": true,
+    "avatar_url": ""
+  }
+}
+```
+
+### Profile: GET /auth/me
+
+Requires access token cookie.
+
+Returns current user profile:
+
+```json
+{
+  "user_id": "...",
+  "first_name": "Jane",
+  "last_name": "Doe",
+  "email": "jane@example.com",
+  "is_verified": true,
+  "avatar_url": ""
+}
+```
+
+### Email Verify Payload: POST /auth/verify-email
+
+```json
+{
+  "email": "jane@example.com",
+  "code": 123456
+}
+```
+
+### Scrape/Crawl Payload
+
+Request:
+
+```json
+{
+  "url": "https://example.com"
+}
+```
+
+Both `/scrape` and `/crawl` return a job envelope:
+
+```json
+{
+  "message": {
+    "CRID": "...",
+    "UserID": "...",
+    "Pages": []
+  }
+}
+```
+
+### Create API Key: POST /auth/api-keys
+
+Request:
+
+```json
+{
+  "name": "Production Integrations"
+}
+```
+
+Response includes raw key once:
+
+```json
+{
+  "message": "API key created. Store it securely now; it will not be shown again.",
+  "api_key": "sk_live_...",
+  "meta": {
+    "key_id": "...",
+    "name": "Production Integrations",
+    "prefix": "sk_live_",
+    "last4": "abcd",
+    "daily_limit": 1000,
+    "is_active": true,
+    "created_at": "2026-03-23T00:00:00Z"
+  }
+}
+```
+
+## Error Handling
+
+Common error payload:
+
+```json
+{
+  "message": "Error details"
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| 400 | Invalid input |
+| 401 | Unauthorized |
+| 409 | Conflict (for example, duplicate registration) |
+| 429 | Rate limit or trial quota exceeded |
+| 500 | Server-side failure |

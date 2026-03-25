@@ -4,23 +4,29 @@ import (
 	"context"
 	"encoding/json"
 
+	"net/http"
 	"strings"
 	"sync"
 	"time"
-	"net/http"
 	domain "web_crawler_scraper/Domain"
 	"web_crawler_scraper/Infrastrucuture/config"
 
+	colly "github.com/gocolly/colly"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	logrus "github.com/sirupsen/logrus"
-	colly "github.com/gocolly/colly"
-	
 )
 
 type QueueItem struct {
 	URL   string
 	Depth int
+}
+
+type crawlWorkerResult struct {
+	item  QueueItem
+	page  *domain.Page
+	links []string
+	err   *domain.AppError
 }
 
 // Initialize Crawler services
@@ -118,17 +124,10 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 		}
 
 		var nextLevel []QueueItem
+		resultsCh := make(chan crawlWorkerResult, len(currentLevel))
 		var wg sync.WaitGroup
 
 		for _, item := range currentLevel {
-			// Check page limit before launching each goroutine
-			cr.mu.Lock()
-			limitReached := cr.PageCount >= cr.CrawlerConfig.MaxPages
-			cr.mu.Unlock()
-			if limitReached {
-				break
-			}
-
 			if !cr.AllowedByConfig(item.URL, item.Depth) {
 				continue
 			}
@@ -143,34 +142,49 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 				// colly.Collector internally — no shared state.
 				page, links, err := cr.Scraper.FetchAndParse(item.URL, cr.Result.CRID, cr.Result.UserID)
 				if err != nil {
-					logrus.WithFields(logrus.Fields{
-						"url":   item.URL,
-						"error": err.Message,
-					}).Warn(domain.LogCrawlPageError)
+					resultsCh <- crawlWorkerResult{item: item, err: err}
 					return
 				}
 
-				cr.mu.Lock()
-				if cr.PageCount < cr.CrawlerConfig.MaxPages {
-					cr.PageCount++
-					cr.Result.Pages = append(cr.Result.Pages, *page)
-					for _, link := range links {
-						if !cr.Visited[link] {
-							cr.Visited[link] = true
-							nextLevel = append(nextLevel, QueueItem{
-								URL:   link,
-								Depth: item.Depth + 1,
-							})
-						}
-					}
+				resultsCh <- crawlWorkerResult{
+					item:  item,
+					page:  page,
+					links: links,
 				}
-				cr.mu.Unlock()
 
 			}(item)
 		}
 
-		// Wait for all goroutines at this depth level to finish
-		wg.Wait()
+		go func() {
+			wg.Wait()
+			close(resultsCh)
+		}()
+
+		for result := range resultsCh {
+			if result.err != nil {
+				logrus.WithFields(logrus.Fields{
+					"url":   result.item.URL,
+					"error": result.err.Message,
+				}).Warn(domain.LogCrawlPageError)
+				continue
+			}
+
+			if result.page == nil || cr.PageCount >= cr.CrawlerConfig.MaxPages {
+				continue
+			}
+
+			cr.PageCount++
+			cr.Result.Pages = append(cr.Result.Pages, *result.page)
+			for _, link := range result.links {
+				if !cr.Visited[link] {
+					cr.Visited[link] = true
+					nextLevel = append(nextLevel, QueueItem{
+						URL:   link,
+						Depth: result.item.Depth + 1,
+					})
+				}
+			}
+		}
 
 		currentLevel = nextLevel
 	}

@@ -1,0 +1,78 @@
+---
+order: 8
+title: Troubleshooting
+description: Common issues and practical fixes for SpiderGo.
+icon: lightbulb
+---
+
+# Troubleshooting
+
+## 401 on Protected Dashboard Endpoints
+
+Symptoms:
+
+- /auth/me fails
+- /history, /crawl, or /scrape fails from frontend
+
+Checks:
+
+- Confirm frontend uses withCredentials=true.
+- Confirm backend app.domain matches cookie domain strategy.
+- Confirm secure_cookies setting matches local HTTP vs production HTTPS.
+- Confirm browser receives access and refresh cookies after login.
+
+## Refresh Loop or Forced Redirect to Login
+
+Symptoms:
+
+- requests keep retrying then redirect to /login
+
+Checks:
+
+- Verify /auth/refresh is reachable and returns valid cookie updates.
+- Verify refresh cookie path /auth/refresh is respected.
+- Verify VITE_API_BASE_URL is correct and not cross-origin misconfigured.
+
+## API Key Rejected on /v1 Endpoints
+
+Checks:
+
+- Header must be exactly: Authorization: Bearer sk_live_...
+- Ensure key is active and not revoked.
+- Ensure daily limit has not been exceeded.
+- Ensure request targets /v1/*, not cookie-auth routes.
+
+## Trial Endpoints Returning Limit Errors
+
+Cause:
+
+- IP-based rate limiter exceeded free trial quota.
+
+Fix:
+
+- Retry after limiter window or authenticate to use cookie-auth routes.
+
+## Crawl Returns Fewer Pages Than Expected
+
+Checks:
+
+- max_depth and max_pages config in backend crawler settings.
+- URL denied patterns may filter discovered links.
+- Target website may block crawling or limit discoverable internal links.
+
+## OAuth Callback Errors
+
+Checks:
+
+- provider query value must be google or github.
+- redirect URLs in provider config must match deployed callback URLs.
+- ensure oauth_state cookie is set and returned correctly.
+
+## Useful Debug Locations
+
+- Backend route registration: Backend/Delivery/Route/route.go
+- Auth controller behavior: Backend/Delivery/controller/auth_controller.go
+- Middleware auth/key checks: Backend/Infrastrucuture/middleware/middleware.go
+- Frontend API client: Frontend/src/lib/api.ts
+- Frontend auth state: Frontend/src/store/authSlice.ts
+- Frontend job state: Frontend/src/store/dashboardSlice.ts

@@ -1,0 +1,129 @@
+---
+order: 7
+title: Deployment
+description: Configuration and deployment notes for backend, frontend, and docs.
+icon: settings
+---
+
+# Deployment
+
+## Backend
+
+### Required Configuration
+
+> **Security note:** Do not commit sensitive credentials (JWT keys, OAuth secrets, DB/Redis passwords, email API keys) directly in `.yaml`. Keep safe defaults/placeholders in `config.yaml` and override real secrets from `.env` (or your deployment secret manager) at runtime.
+
+Use the following .yaml config sections from Backend/config.yaml:
+
+- app: port, name, dev, debug, domain, secure_cookies
+- db: dns
+- redis: address, password, db, pool_size, min_idle_conns, dial_timeout, read_timeout, write_timeout, pool_timeout, max_retries
+- rate_limiter.auth: limit, window
+- rate_limiter.api_key: max_keys_per_user, daily_limit
+- jwt_config: access_key, refresh_key, access_ttl, refresh_ttl
+- google_oauth: client_id, client_secret, redirect_url, user_url
+- github_oauth: client_id, client_secret, redirect_url, user_url
+- email: username, api_key
+- crawler: allowed_domains, max_depth, max_pages, max_concurrency, allowed_paths, denied_patterns
+
+Example skeleton:
+
+```yaml
+app:
+	port: 8080
+	domain: localhost
+	secure_cookies: true
+
+db:
+	dns: your-postgress-dns
+
+redis:
+	address: your-redis-address
+	password: your-redis-password
+
+rate_limiter:
+	auth:
+		limit: 5
+		window: 1m
+	api_key:
+		max_keys_per_user: 3
+		daily_limit: 1000
+
+jwt_config:
+	access_key: your-screet-key
+	refresh_key: your-refresh-screet-key
+	access_ttl: 10m
+	refresh_ttl: 48h
+
+google_oauth:
+	client_id: your-google-cloud-client-id
+	client_secret: your-google-app-client-screet
+	redirect_url: your-redirect-url
+	user_url: your-user-url
+
+github_oauth:
+	client_id: your-github-client-id
+	client_secret: your-google-app-client-screet
+	redirect_url: your-redirect-url
+	user_url: your-user-url
+
+email:
+	username: your-email-account
+	api_key: your-api-key
+
+crawler:
+	max_depth: 10
+	max_pages: 100
+	max_concurrency: 10
+```
+
+### CORS
+
+Backend allows configured domain plus listed production origins in main.go.
+
+When deploying, ensure:
+
+- frontend origin is included
+- secure cookies and same-site settings match HTTPS behavior
+
+### Runtime Dependencies
+
+- PostgreSQL must be reachable
+- Redis must be reachable
+- OAuth credentials must be valid
+- email API key must be configured for verification/reset workflows
+
+## Frontend
+
+Set Vite environment variables at build time:
+
+```bash
+VITE_API_BASE_URL=https://api.your-domain.com
+```
+
+Deploy static build output produced by:
+
+```bash
+npm run build
+```
+
+## Docs (Next.js)
+
+Docs app requires standard Next.js deployment.
+
+```bash
+cd docs/spider-go
+npm run build
+npm run start
+```
+
+If AI docs assistant is enabled, set OPENAI_API_KEY for docs runtime.
+
+## Production Hardening Checklist
+
+- Enable HTTPS on all public endpoints.
+- Set secure_cookies=true in backend config.
+- Use strong JWT keys and rotate secrets.
+- Restrict CORS to trusted domains only.
+- Monitor 429 rates for auth and trial endpoints.
+- Set sensible Redis and DB resource limits.
