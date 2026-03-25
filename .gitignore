@@ -1,0 +1,8 @@
+# Global workspace ignores for generated frontend/docs artifacts
+**/node_modules/
+**/.next/
+**/.next-build/
+**/.turbo/
+
+# Optional caches
+**/.cache/

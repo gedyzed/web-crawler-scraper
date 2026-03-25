@@ -1,0 +1,83 @@
+---
+order: 3
+title: Architecture
+description: Backend and frontend architecture of SpiderGo.
+icon: folder
+---
+
+# Architecture
+
+## System Overview
+
+SpiderGo is split into three runtime surfaces: a Go API backend, a React dashboard frontend, and this Next.js docs site.
+
+| Surface | Responsibility | Key Tech |
+| --- | --- | --- |
+| Backend | Auth, crawl/scrape execution, persistence, API keys | Gin, GORM, Redis, Colly |
+| Frontend | User flows, dashboards, job history, API key management | React 19, Redux Toolkit, Axios |
+| Docs | Developer and product documentation | Next.js, @farming-labs/docs |
+
+## Request Lifecycle
+
+1. User authenticates via email/password or OAuth.
+2. Backend issues access and refresh tokens as HttpOnly cookies.
+3. Frontend sends credentialed requests to protected routes.
+4. Usecase layer orchestrates crawl/scrape execution.
+5. Results are persisted in PostgreSQL and selectively cached in Redis.
+
+## Backend Layer Model
+
+| Layer | Purpose | Example Responsibilities |
+| --- | --- | --- |
+| Delivery | HTTP boundary | Routing, request binding, response formatting |
+| Usecase | Business workflow | Validate inputs, call repositories/services |
+| Repository | Data access | CRUD for users, keys, results, history |
+| Infrastructure | External systems | JWT, Redis, OAuth providers, crawler/scraper engine |
+| Domain | Core contracts | Entities, interfaces, constants |
+
+The backend composition root is `Delivery/main.go`, where config, DB/Redis clients, repositories, services, usecases, and route groups are wired.
+
+## Route Topology
+
+| Route Group | Auth Mode | Purpose |
+| --- | --- | --- |
+| /auth | Public + Cookie | Register/login/oauth/refresh/reset/verify |
+| /auth/me | Cookie | Current user profile |
+| /auth/api-keys | Cookie | API key lifecycle management |
+| /crawl, /scrape, /history | Cookie | Dashboard job execution and history |
+| /trial/* | Public (rate-limited) | Demo crawl/scrape endpoints |
+| /v1/* | API Key | Programmatic integration endpoints |
+
+## Security Architecture
+
+| Mechanism | Used By | Enforcement |
+| --- | --- | --- |
+| Cookie session auth | Browser dashboard routes | `AuthMiddleware` validates access token cookie and injects user context |
+| API key auth | `/v1/*` routes | `APIKeyMiddleware` validates Bearer key state and quota |
+
+## Crawl and Scrape Pipeline
+
+| Service | Execution Style | Output |
+| --- | --- | --- |
+| Scraper | Single-page fetch | Title, description, content, links, product metadata |
+| Crawler | Breadth-first traversal with limits | Multi-page aggregate result (`CrawlerResult`) |
+
+Crawler behavior includes depth/page caps, denied URL filtering, persistence of final output, and Redis caching for repeat seeds.
+
+## Frontend Architecture
+
+| Concern | Implementation |
+| --- | --- |
+| Routing | React Router route modules |
+| State | Redux Toolkit slices |
+| API client | Axios with `withCredentials` and token refresh retry |
+| Auth state | `authSlice` (login/signup/verify/reset/keys/profile) |
+| Job state | `dashboardSlice` (crawl/scrape/history/config/results) |
+
+## Documentation Architecture
+
+| File/Area | Role |
+| --- | --- |
+| `docs.config.tsx` | Theme, nav, icons, metadata, AI settings |
+| `app/docs/**/page.mdx` | Documentation content and order |
+| `app/docs/layout.tsx` | Generated docs layout wrapper |

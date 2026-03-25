@@ -1,0 +1,49 @@
+---
+order: 1
+title: Introduction
+description: SpiderGo documentation for the Go backend, React frontend, and docs app.
+icon: book
+---
+
+# Introduction
+
+SpiderGo is an web crawling and scraping platform with:
+
+- A Go backend with auth, API key access, crawler/scraper jobs, and history.
+- A React + Vite frontend for interactive job execution and account management.
+- A Fumadocs-based documentation app in this folder.
+
+This documentation is written for developers who want to:
+
+- Run the full stack locally.
+- Understand backend architecture and data flow.
+- Integrate with SpiderGo APIs using session cookies or API keys.
+- Extend frontend features and dashboard behavior.
+
+## What SpiderGo Does
+
+- **Scrape**: fetches one page and extracts text, metadata, links, and product data.
+- **Crawl**: traverses pages breadth-first and aggregates multiple page results.
+- **History**: tracks successful and failed jobs per authenticated user.
+- **API keys**: enables server-to-server usage through versioned endpoints.
+
+## Main Components
+
+- Backend: Gin, GORM, Redis, Colly, OAuth, JWT cookies.
+- Frontend: React 19, Vite, Redux Toolkit, React Router, Tailwind-based UI.
+- Docs: Next.js + @farming-labs/docs.
+
+## Documentation Map
+
+- [Quick Start](/docs/quick-start)
+- [Architecture](/docs/architecture)
+- [Backend API](/docs/backend-api)
+- [Frontend Guide](/docs/frontend)
+- [Data Models](/docs/data-models)
+- [Deployment](/docs/deployment)
+- [Troubleshooting](/docs/troubleshooting)
+
+## Read This First
+
+SpiderGo uses cookie-based auth for dashboard endpoints and bearer API keys for versioned programmatic endpoints. If you are building an integration, start with [Backend API](/docs/backend-api).
+
