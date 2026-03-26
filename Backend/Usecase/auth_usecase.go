@@ -28,8 +28,6 @@ type IAuthUsecase interface {
 	GetUserByID(ctx context.Context, id string) (*domain.User, *domain.AppError)
 }
 
-
-
 type authUsecase struct {
 	repo            domain.IUserRepo
 	tokenRepo       domain.IRefreshTokenRepo
@@ -177,6 +175,13 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 		return nil, &domain.AppError{
 			Message:    domain.ErrInvalidCredentials,
 			HttpStatus: 401,
+		}
+	}
+
+	if !old_user.Is_Verified {
+		return nil, &domain.AppError{
+			Message:    domain.ErrEmailNotVerified,
+			HttpStatus: 403,
 		}
 	}
 

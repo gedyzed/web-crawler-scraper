@@ -95,27 +95,29 @@ function Navbar() {
                     </span>
                 </Link>
 
-                     <div className="hidden sm:flex items-center gap-3">
-                     <a
+                <div className="hidden sm:flex items-center gap-6">
+                    <a
                         href="https://docs.spidergo.app"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300"
+                        className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                     >
+                        <BookOpen className="h-4 w-4" />
                         Docs
                     </a>
                     <a
                         href="https://docs.spidergo.app/cli"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300"
+                        className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                     >
+                        <Code2 className="h-4 w-4" />
                         CLI
                     </a>
                 </div>
 
                 <div className="hidden sm:flex items-center gap-3">
-                   
+
                     <ThemeToggle />
                     <a
                         href="https://github.com/gedyzed/web-crawler-scraper"

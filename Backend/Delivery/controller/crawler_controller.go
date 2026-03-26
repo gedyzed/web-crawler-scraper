@@ -24,7 +24,6 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 	ctx := c.Request.Context()
 	c.Request.URL.Path = c.FullPath() // Ensure the full path is set for logging
 
-
 	var input domain.URLFrontier
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
@@ -35,8 +34,9 @@ func (cl *CrawlerController) Crawler(c *gin.Context) {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrSeedURLNeeded})
 		return
 	}
-	
+
 	input.Depth = cl.config.MaxDepth
+	input.IP = c.ClientIP()
 	userID := ""
 	// Get user ID from context passdown form middelware
 	if _, exists := c.Get("userID"); exists {
@@ -79,4 +79,26 @@ func (cl *CrawlerController) GetHistory(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, history)
 }
 
+func (cl *CrawlerController) GetResult(c *gin.Context) {
+	ctx := c.Request.Context()
+	userID := c.GetString("userID")
+	historyID := c.Param("id")
 
+	if historyID == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "History ID is required"})
+		return
+	}
+
+	result, err := cl.CralwerUC.GetResultByHistoryID(ctx, historyID, userID)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"userID":    userID,
+			"historyID": historyID,
+			"error":     err.Message,
+		}).Error("Failed to fetch result by history ID")
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, result)
+}

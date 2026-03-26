@@ -7,7 +7,8 @@ var (
 
 // Errors
 var (
-	ErrInternalServer = "Internal Server Error"
+	ErrInternalServer   = "Internal Server Error"
+	ErrInvalidURLFormat = "Invalid URL format"
 )
 
 // Register Endpoint - User-facing error messages
@@ -70,6 +71,7 @@ var (
 	ErrUserAlreadyRegistered   = "User Already Registered"
 	ErrInvalidCredentials      = "Invalid Email or Password"
 	ErrUnauthorizedRequest     = "Unauthorized request"
+	ErrEmailNotVerified        = "Please verify your email to continue"
 	ErrInvalidVerificationCode = "Invalid Verification Code"
 	ErrVerificationCodeExpired = "Verification Code Has Expired"
 	MsgEmailVerifiedSuccess    = "Email Verified Successfully"
@@ -144,8 +146,8 @@ var (
 	LogFailedDeleteVerificationCode = "Failed to Delete Verification Code"
 )
 
-// For Free Trail 
-var ( 
+// For Free Trail
+var (
 	UserFreeTrialExpired = "Your free trial has expired. Please sign up to continue using the service."
 )
 

@@ -19,7 +19,7 @@ func setupScraperUsecaseTest(t *testing.T) (*gomock.Controller, *mocks.MockIResu
 	mockService := mocks.NewMockIScrapeService(ctrl)
 	mockkRateLimiter := mocks.NewMockIRateLimiter(ctrl)
 
-	uc := usecase.NewScraperUsecase(mockRepo, mockFactory,mockkRateLimiter)
+	uc := usecase.NewScraperUsecase(mockRepo, mockFactory, mockkRateLimiter)
 
 	return ctrl, mockRepo, mockFactory, mockService, uc
 }
@@ -35,7 +35,7 @@ func TestScrape_Success(t *testing.T) {
 	}
 
 	mockFactory.EXPECT().NewScraperService().Return(mockService)
-	page := &domain.Page{URL: "https://example.com"}
+	page := &domain.Page{URL: "https://example.com", ResponseTimeMS: 120, PayloadSize: 4096}
 
 	// gomock.Any() for resultID because it's generated dynamically
 	mockService.EXPECT().FetchAndParse("https://example.com", gomock.Any(), "user123").Return(page, []string{}, nil)
@@ -50,6 +50,9 @@ func TestScrape_Success(t *testing.T) {
 	assert.Equal(t, "user123", res.UserID)
 	assert.NotEmpty(t, res.CRID)
 	assert.Len(t, res.Pages, 1)
+	assert.Equal(t, 1, res.TotalPages)
+	assert.Equal(t, int64(120), res.TotalResponseTimeMS)
+	assert.Equal(t, int64(4096), res.TotalPayloadSize)
 }
 
 func TestScrape_Failure(t *testing.T) {

@@ -64,14 +64,20 @@ func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawler
 		colly.Async(false),
 	)
 
+	collector.WithTransport(&http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+		IdleConnTimeout:     60 * time.Second,
+	})
+
 	collector.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
-		Delay:       2 * time.Second,
-		RandomDelay: 1 * time.Second,
+		Delay:       100 * time.Millisecond,
+		RandomDelay: 100 * time.Millisecond,
 	})
 
 	return &CrawlerServices{
-		Scraper:       NewScraper(&f.config, collector),
+		Scraper:       NewScraper(collector),
 		mu:            &sync.Mutex{},
 		Visited:       make(map[string]bool),
 		CrawlerConfig: f.config,
@@ -140,6 +146,7 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 
 				// Each goroutine calls FetchAndParse which creates its own
 				// colly.Collector internally — no shared state.
+
 				page, links, err := cr.Scraper.FetchAndParse(item.URL, cr.Result.CRID, cr.Result.UserID)
 				if err != nil {
 					resultsCh <- crawlWorkerResult{item: item, err: err}
@@ -175,6 +182,9 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 
 			cr.PageCount++
 			cr.Result.Pages = append(cr.Result.Pages, *result.page)
+			cr.Result.TotalPages++
+			cr.Result.TotalResponseTimeMS += result.page.ResponseTimeMS
+			cr.Result.TotalPayloadSize += result.page.PayloadSize
 			for _, link := range result.links {
 				if !cr.Visited[link] {
 					cr.Visited[link] = true

@@ -25,6 +25,9 @@ rate_limiter:
   auth:
     limit: 5
     window: 1m
+  trial:
+    limit: 3
+    window: 0s
   api_key:
     max_keys_per_user: 3
     daily_limit: 1000

@@ -35,7 +35,8 @@ func main() {
 
 	db := infrastructure.DBConnect(&cfg.DB)
 	redis := infrastructure.NewRedisClient(&cfg.Redis)
-	rateLimiter := infrastructure.NewRedisRateLimiter(redis, cfg.RateLimit.Auth.Limit, cfg.RateLimit.Auth.Window)
+	authRateLimiter := infrastructure.NewRedisRateLimiter(redis, cfg.RateLimit.Auth.Limit, cfg.RateLimit.Auth.Window)
+	trialRateLimiter := infrastructure.NewRedisRateLimiter(redis, cfg.RateLimit.Trial.Limit, cfg.RateLimit.Trial.Window)
 	apiKeyRateLimiter := infrastructure.NewAPIKeyRedisRateLimiter(redis)
 
 	if err := db.AutoMigrate(&domain.ApiKey{}); err != nil {
@@ -67,19 +68,19 @@ func main() {
 	emailService := emailService.NewEmailService(&cfg.Email)
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
 	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, *redis)
-	scraperFactory := crawlerservicego.NewScraperServiceFactory(&cfg.Crawler)
+	scraperFactory := crawlerservicego.NewScraperServiceFactory()
 
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,
 		refreshTokenRepo,
-		rateLimiter,
+		authRateLimiter,
 		oauthServices,
 		jwtService,
 		passwordService,
 		emailService,
 	)
-	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory, rateLimiter)
-	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory, rateLimiter)
+	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory, trialRateLimiter)
+	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory, trialRateLimiter)
 	apiKeyUsecase := usecase.NewApiKeyUsecase(
 		apiKeyRepo,
 		cfg.RateLimit.APIKey.MaxKeysPerUser,

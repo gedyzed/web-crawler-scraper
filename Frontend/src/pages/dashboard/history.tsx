@@ -10,6 +10,7 @@ import {
     FileText,
     Download,
 } from "lucide-react"
+import api from "@/lib/api"
 import { clearHistory } from "@/store/dashboardSlice"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
 import { type HistoryItem, fetchHistory } from "@/store/dashboardSlice"
@@ -99,14 +100,28 @@ function HistoryCard({ job }: HistoryCardProps) {
                             <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                         <button
-                            onClick={() => {
-                                const blob = new Blob([JSON.stringify(job, null, 2)], { type: "application/json" })
-                                const url = URL.createObjectURL(blob)
-                                const a = document.createElement("a")
-                                a.href = url
-                                a.download = `job-${job.hid}.json`
-                                a.click()
-                                URL.revokeObjectURL(url)
+                            onClick={async (e) => {
+                                e.stopPropagation()
+                                try {
+                                    console.log("Fetching full result for job", job.hid)
+                                    const response = await api.get(`/history/${job.hid}/result`)
+                                    const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: "application/json" })
+                                    const url = URL.createObjectURL(blob)
+                                    const a = document.createElement("a")
+                                    a.href = url
+                                    a.download = `job-result-${job.hid}.json`
+                                    a.click()
+                                    URL.revokeObjectURL(url)
+                                } catch (err) {
+                                    console.error("Failed to download result", err)
+                                    const blob = new Blob([JSON.stringify(job, null, 2)], { type: "application/json" })
+                                    const url = URL.createObjectURL(blob)
+                                    const a = document.createElement("a")
+                                    a.href = url
+                                    a.download = `job-metadata-${job.hid}.json`
+                                    a.click()
+                                    URL.revokeObjectURL(url)
+                                }
                             }}
                             className="p-1.5 rounded-md text-neutral-400 hover:text-cyan-600 hover:bg-neutral-100 dark:hover:bg-white/5 transition-colors"
                             title="Download JSON"

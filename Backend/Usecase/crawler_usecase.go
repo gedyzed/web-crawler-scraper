@@ -12,6 +12,7 @@ import (
 type ICrawlerUsecase interface {
 	Crawl(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError)
 	FetchHistory(ctx context.Context, userID string) ([]domain.History, *domain.AppError)
+	GetResultByHistoryID(ctx context.Context, historyID string, userID string) (*domain.CrawlerResult, *domain.AppError)
 	CheckFreeTrial(ctx context.Context, ip string) (bool, *domain.AppError)
 }
 
@@ -36,6 +37,12 @@ func NewCrawlerUsecase(
 }
 
 func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError) {
+	normalizedURL, validationErr := domain.NormalizeAndValidateURL(input.URL)
+	if validationErr != nil {
+		return nil, validationErr
+	}
+	input.URL = normalizedURL
+
 	logrus.WithFields(logrus.Fields{
 		"url":    input.URL,
 		"userID": input.UserID,
@@ -49,11 +56,10 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 				Message:    domain.UserFreeTrialExpired,
 				HttpStatus: 429,
 			}
-		}	
-			
+		}
+
 		input.UserID = uuid.New().String() // Generate a temporary user ID for trail users
 	}
-
 
 	svc := c.cralwerSvsFactory.NewCrawlerService(input.UserID)
 	result, err := svc.Crawl(ctx, input.URL)
@@ -107,8 +113,8 @@ func (c *crawlerUsecase) FetchHistory(ctx context.Context, userID string) ([]dom
 	return c.repo.FindAllHistory(ctx, userID)
 }
 
-func (c *crawlerUsecase) CheckFreeTrial (ctx context.Context, ip string) (bool, *domain.AppError) {
-	
+func (c *crawlerUsecase) CheckFreeTrial(ctx context.Context, ip string) (bool, *domain.AppError) {
+
 	allowed, err := c.rateLimiter.Allow(ctx, ip)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{
@@ -128,4 +134,22 @@ func (c *crawlerUsecase) CheckFreeTrial (ctx context.Context, ip string) (bool, 
 	}
 
 	return true, nil
+}
+
+func (c *crawlerUsecase) GetResultByHistoryID(ctx context.Context, historyID string, userID string) (*domain.CrawlerResult, *domain.AppError) {
+	history, err := c.repo.FindHistoryByID(ctx, historyID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if history.ResultID == "" {
+		return nil, &domain.AppError{Message: "No result found for this history item", HttpStatus: 404}
+	}
+
+	result, err := c.repo.FindResultByID(ctx, history.ResultID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

@@ -37,6 +37,8 @@ export interface PageResult {
     Title: string;
     MetaDescription: string;
     TextContent: string;
+    PayloadSize: number;
+    Images: string[] | null;
     Links: LinkItem[] | null;
     Products: Product[] | null;
     ID: number;
@@ -45,6 +47,9 @@ export interface PageResult {
 export interface CrawlerResult {
     CRID: string;
     UserID: string;
+    TotalPages: number;
+    TotalResponseTimeMS: number;
+    TotalPayloadSize: number;
     Pages: PageResult[];
 }
 

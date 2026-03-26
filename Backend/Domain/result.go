@@ -7,10 +7,13 @@ import (
 )
 
 type CrawlerResult struct {
-	CRID       string `gorm:"unique"`
-	UserID     string
-	Pages      []Page `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:ResultID;references:CRID"`
-	gorm.Model `json:"-"`
+	CRID                string `gorm:"unique"`
+	UserID              string
+	TotalPages          int
+	TotalResponseTimeMS int64
+	TotalPayloadSize    int64
+	Pages               []Page `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:ResultID;references:CRID"`
+	gorm.Model          `json:"-"`
 }
 
 type Product struct {
@@ -31,6 +34,11 @@ type Link struct {
 	Type       string `gorm:"size:20"`
 }
 
+type Image struct {
+	Link
+	Type   string `gorm:"-"`
+}
+
 type Page struct {
 	PageID    string
 	ResultID  string
@@ -46,6 +54,8 @@ type Page struct {
 	Title           string
 	MetaDescription string
 	TextContent     string
+	PayloadSize     int64
+	Images          []Image `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`
 
 	Links    []Link    `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`
 	Products []Product `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`

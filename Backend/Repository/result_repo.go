@@ -70,3 +70,29 @@ func (r *resultRepo) FindAllHistory(ctx context.Context, userID string) ([]domai
 	}
 	return history, nil
 }
+
+func (r *resultRepo) FindResultByID(ctx context.Context, resultID string, userID string) (*domain.CrawlerResult, *domain.AppError) {
+	var result domain.CrawlerResult
+	err := r.db.WithContext(ctx).Preload("Pages").Preload("Pages.Links").Preload("Pages.Products").Where(&domain.CrawlerResult{CRID: resultID, UserID: userID}).First(&result).Error
+	if err != nil {
+		return nil, &domain.AppError{
+			Message:    "Failed to find result",
+			Err:        err.Error(),
+			HttpStatus: 500,
+		}
+	}
+	return &result, nil
+}
+
+func (r *resultRepo) FindHistoryByID(ctx context.Context, historyID string, userID string) (*domain.History, *domain.AppError) {
+	var history domain.History
+	err := r.db.WithContext(ctx).Where(&domain.History{HID: historyID, UserID: userID}).First(&history).Error
+	if err != nil {
+		return nil, &domain.AppError{
+			Message:    "Failed to find history",
+			Err:        err.Error(),
+			HttpStatus: 404,
+		}
+	}
+	return &history, nil
+}

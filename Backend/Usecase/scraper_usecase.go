@@ -11,29 +11,34 @@ import (
 
 type IScraperUsecase interface {
 	Scrape(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError)
-	CheckFreeTrial (ctx context.Context, ip string) (bool, *domain.AppError)
+	CheckFreeTrial(ctx context.Context, ip string) (bool, *domain.AppError)
 }
 
 type scraperUsecase struct {
-	repo       domain.IResultRepo
-	svsFactory domain.IScraperServiceFactory
+	repo        domain.IResultRepo
+	svsFactory  domain.IScraperServiceFactory
 	rateLimiter domain.IRateLimiter
 }
 
 func NewScraperUsecase(
-	repo domain.IResultRepo, 
+	repo domain.IResultRepo,
 	svs domain.IScraperServiceFactory,
 	rateLimiter domain.IRateLimiter,
-	) IScraperUsecase {
+) IScraperUsecase {
 	return &scraperUsecase{
-		repo:       repo,
-		svsFactory: svs,
+		repo:        repo,
+		svsFactory:  svs,
 		rateLimiter: rateLimiter,
 	}
 }
 
 func (s *scraperUsecase) Scrape(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError) {
 
+	normalizedURL, validationErr := domain.NormalizeAndValidateURL(input.URL)
+	if validationErr != nil {
+		return nil, validationErr
+	}
+	input.URL = normalizedURL
 
 	if input.Trail {
 		allowed, err := s.CheckFreeTrial(ctx, input.IP)
@@ -80,9 +85,12 @@ func (s *scraperUsecase) Scrape(ctx context.Context, input *domain.URLFrontier) 
 	}
 
 	result := &domain.CrawlerResult{
-		CRID:   uuid.New().String(),
-		UserID: input.UserID,
-		Pages:  []domain.Page{*page},
+		CRID:                uuid.New().String(),
+		UserID:              input.UserID,
+		TotalPages:          1,
+		TotalResponseTimeMS: page.ResponseTimeMS,
+		TotalPayloadSize:    page.PayloadSize,
+		Pages:               []domain.Page{*page},
 	}
 
 	if !input.Trail {
@@ -107,9 +115,8 @@ func (s *scraperUsecase) Scrape(ctx context.Context, input *domain.URLFrontier) 
 	return result, nil
 }
 
+func (s *scraperUsecase) CheckFreeTrial(ctx context.Context, ip string) (bool, *domain.AppError) {
 
-func (s *scraperUsecase) CheckFreeTrial (ctx context.Context, ip string) (bool, *domain.AppError) {
-	
 	allowed, err := s.rateLimiter.Allow(ctx, ip)
 	if err != nil {
 		logrus.WithFields(logrus.Fields{

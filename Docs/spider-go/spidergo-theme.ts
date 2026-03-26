@@ -46,7 +46,7 @@ export const spidergoTheme = extendTheme(darksharp(), {
         h1: { size: "2.65rem", weight: 750, letterSpacing: "-0.03em", lineHeight: "1.15" },
         h2: { size: "1.8rem", weight: 700, letterSpacing: "-0.02em", lineHeight: "1.2" },
         h3: { size: "1.35rem", weight: 650, lineHeight: "1.3" },
-        body: { size: "1.2rem", lineHeight: "1.85" },
+        body: { size: "1rem", lineHeight: "1.6" },
       },
     },
     codeBlock: {

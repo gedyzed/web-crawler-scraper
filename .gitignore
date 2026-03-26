@@ -6,3 +6,5 @@
 
 # Optional caches
 **/.cache/
+
+.env
