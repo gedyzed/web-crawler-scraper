@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"net/http"
 
 	domain "web_crawler_scraper/Domain"
-	"web_crawler_scraper/Infrastrucuture/config"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-shiori/go-readability"
@@ -19,11 +19,10 @@ import (
 )
 
 type ScraperServiceFactory struct {
-	config *config.CrawlerConfig
 }
 
-func NewScraperServiceFactory(cfg *config.CrawlerConfig) domain.IScraperServiceFactory {
-	return &ScraperServiceFactory{config: cfg}
+func NewScraperServiceFactory() domain.IScraperServiceFactory {
+	return &ScraperServiceFactory{}
 }
 
 func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
@@ -32,23 +31,28 @@ func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
 		colly.Async(false),
 	)
 
+	collector.WithTransport(&http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+		IdleConnTimeout:     90 * time.Second,
+	})
+
 	collector.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
-		Delay:       100 * time.Second,
-		RandomDelay: 100 * time.Second,
+		Delay:       100 * time.Millisecond,
+		RandomDelay: 100 * time.Millisecond,
 	})
-	return NewScraper(s.config, collector)
+	return NewScraper(collector)
 }
 
 // Scraper handles fetching and parsing pages.
 // It is stateless — all mutable state lives inside FetchAndParse.
 type Scraper struct {
-	config    *config.CrawlerConfig
 	collector *colly.Collector
 }
 
-func NewScraper(cfg *config.CrawlerConfig, collector *colly.Collector) domain.IScrapeService {
-	return &Scraper{config: cfg, collector: collector}
+func NewScraper(collector *colly.Collector) domain.IScrapeService {
+	return &Scraper{collector: collector}
 }
 
 // FetchAndParse visits a single URL and returns the parsed Page
@@ -129,17 +133,17 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 			})
 		}
 
-		for _, imageLink := range extractImageLinks(e.DOM, targetURL) {
-			if seenLinks[imageLink] {
-				continue
-			}
-			seenLinks[imageLink] = true
-			page.Links = append(page.Links, domain.Link{
-				PageID: page.PageID,
-				URL:    imageLink,
-				Type:   "Image",
-			})
-		}
+		// for _, imageLink := range extractImageLinks(e.DOM, targetURL) {
+		// 	if seenLinks[imageLink] {
+		// 		continue
+		// 	}
+		// 	seenLinks[imageLink] = true
+		// 	page.Links = append(page.Links, domain.Link{
+		// 		PageID: page.PageID,
+		// 		URL:    imageLink,
+		// 		Type:   "Image",
+		// 	})
+		// }
 	})
 
 	collector.OnError(func(e *colly.Response, err error) {

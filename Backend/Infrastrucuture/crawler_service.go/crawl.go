@@ -71,7 +71,7 @@ func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawler
 	})
 
 	return &CrawlerServices{
-		Scraper:       NewScraper(&f.config, collector),
+		Scraper:       NewScraper(collector),
 		mu:            &sync.Mutex{},
 		Visited:       make(map[string]bool),
 		CrawlerConfig: f.config,
