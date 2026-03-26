@@ -4,6 +4,7 @@ SpiderGo is a full-stack web crawler and scraper platform with:
 
 - A Go backend API (Gin + GORM + Redis)
 - A React frontend dashboard (Vite + TypeScript)
+- A Next.js documentation site
 
 
 ## Monorepo Structure
@@ -85,26 +86,6 @@ From Backend:
 
 ```bash
 go test ./...
-```
-
-## Useful Git Commands
-
-Check whether a file exists in commit history:
-
-```bash
-git log --follow -- path/to/file
-```
-
-Check file existence in a specific commit:
-
-```bash
-git show <commit-hash>:path/to/file
-```
-
-List files in a commit and filter by name:
-
-```bash
-git ls-tree -r <commit-hash> | grep <filename>
 ```
 
 ## Deployment Notes
