@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 	domain "web_crawler_scraper/Domain"
 
@@ -179,8 +180,17 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 	}
 
 	if !old_user.Is_Verified {
+		if emailErr := ac.SendVerificationEmail(ctx, old_user.Email); emailErr != nil {
+			logger.WithFields(logger.Fields{
+				"email": old_user.Email,
+				"error": emailErr.Err,
+			}).Error(domain.LogFailedSendEmail)
+			return nil, emailErr
+		}
+
 		return nil, &domain.AppError{
 			Message:    domain.ErrEmailNotVerified,
+			Err:        "verification_code_resent",
 			HttpStatus: 403,
 		}
 	}
@@ -401,6 +411,8 @@ func (ac *authUsecase) SendVerificationEmail(ctx context.Context, email string) 
 }
 
 func (ac *authUsecase) SendForgotPasswordEmail(ctx context.Context, email string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	uniqueCode, err := generateSecureNumber(100000, 999999)
 	if err != nil {
 		return &domain.AppError{
@@ -481,6 +493,8 @@ func (ac *authUsecase) GetUserByID(ctx context.Context, id string) (*domain.User
 }
 
 func (ac *authUsecase) ForgotPassword(ctx context.Context, email string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	// check if user exists
 	user, err := ac.repo.FindByEmail(ctx, email)
 	if err != nil {
@@ -495,6 +509,8 @@ func (ac *authUsecase) ForgotPassword(ctx context.Context, email string) *domain
 }
 
 func (ac *authUsecase) VerifyResetCode(ctx context.Context, email string, code string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	// Convert code to int64
 	var codeInt int64
 	_, err_ := fmt.Sscanf(code, "%d", &codeInt)
@@ -506,6 +522,8 @@ func (ac *authUsecase) VerifyResetCode(ctx context.Context, email string, code s
 }
 
 func (ac *authUsecase) ResetPassword(ctx context.Context, email string, password string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	user, err := ac.repo.FindByEmail(ctx, email)
 	if err != nil {
 		return err

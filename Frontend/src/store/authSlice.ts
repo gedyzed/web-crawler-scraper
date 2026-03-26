@@ -73,7 +73,7 @@ export const loginUser = createAsyncThunk(
             return profileRes.data
         } catch (err: any) {
             console.log(err.response)
-            return rejectWithValue(err.response?.data?.message || err.message || 'Login failed')
+            return rejectWithValue(err.response?.data || { message: err.message || 'Login failed' })
         }
     }
 )
@@ -442,7 +442,10 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.login.loading = false
-                state.login.error = (action.payload as string) || 'Login failed'
+                const payload = action.payload as { message?: string } | string | undefined
+                state.login.error = typeof payload === 'string'
+                    ? payload
+                    : payload?.message || 'Login failed'
             })
 
         // ── Signup ──

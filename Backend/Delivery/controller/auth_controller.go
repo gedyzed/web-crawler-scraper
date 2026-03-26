@@ -137,6 +137,16 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 
 	response, err := ac.authUC.Login(ctx, &user, ip)
 	if err != nil {
+		if err.HttpStatus == http.StatusForbidden && err.Message == domain.ErrEmailNotVerified {
+			c.IndentedJSON(err.HttpStatus, gin.H{
+				"message":               err.Message,
+				"requires_verification": true,
+				"redirect":              "/verify-email",
+				"email":                 user.Email,
+			})
+			return
+		}
+
 		if err.HttpStatus >= 500 {
 			logrus.WithFields(logrus.Fields{
 				"error":       err.Message,
@@ -379,6 +389,12 @@ func (ac *AuthController) ForgotPassword(c *gin.Context) {
 		return
 	}
 
+	request.Email = strings.ToLower(strings.TrimSpace(request.Email))
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
+		return
+	}
+
 	appErr := ac.authUC.ForgotPassword(ctx, request.Email)
 	if appErr != nil {
 		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
@@ -400,6 +416,12 @@ func (ac *AuthController) VerifyResetCode(c *gin.Context) {
 		return
 	}
 
+	request.Email = strings.ToLower(strings.TrimSpace(request.Email))
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
+		return
+	}
+
 	appErr := ac.authUC.VerifyResetCode(ctx, request.Email, request.Code)
 	if appErr != nil {
 		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
@@ -418,6 +440,12 @@ func (ac *AuthController) ResetPassword(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
+		return
+	}
+
+	request.Email = strings.ToLower(strings.TrimSpace(request.Email))
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
 		return
 	}
 

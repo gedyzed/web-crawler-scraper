@@ -55,6 +55,7 @@ func (s *emailService) SendEmail(name, subject, otp string, to []string) *domain
 		}).Error(domain.LogFailedSendEmail)
 		return &domain.AppError{
 			Message:    "Error in sending email",
+			Err:        err_.Error(),
 			HttpStatus: 500,
 		}
 	}
