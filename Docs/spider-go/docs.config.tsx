@@ -28,7 +28,7 @@ export default defineDocs({
     directory: "docs/spider-go",
   },
   theme: spidergoTheme,
- 
+
   ai: {
     enabled: true,
     // mode: "sidebar-icon",

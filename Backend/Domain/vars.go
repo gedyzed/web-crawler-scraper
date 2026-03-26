@@ -71,6 +71,7 @@ var (
 	ErrUserAlreadyRegistered   = "User Already Registered"
 	ErrInvalidCredentials      = "Invalid Email or Password"
 	ErrUnauthorizedRequest     = "Unauthorized request"
+	ErrEmailNotVerified        = "Please verify your email to continue"
 	ErrInvalidVerificationCode = "Invalid Verification Code"
 	ErrVerificationCodeExpired = "Verification Code Has Expired"
 	MsgEmailVerifiedSuccess    = "Email Verified Successfully"

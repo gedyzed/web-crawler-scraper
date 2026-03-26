@@ -98,6 +98,27 @@ export default function ForgotPasswordPage() {
         }
     }
 
+    const handlePaste = (e: React.ClipboardEvent) => {
+        e.preventDefault()
+        const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, CODE_LENGTH)
+        if (pasted.length === 0) return
+
+        for (let i = 0; i < CODE_LENGTH; i++) {
+            dispatch(setForgotPasswordCode({ index: i, value: pasted[i] || "" }))
+        }
+
+        dispatch(setForgotPasswordField({ field: 'error', value: '' }))
+
+        const newCode = Array.from({ length: CODE_LENGTH }, (_, i) => pasted[i] || "")
+        const nextEmpty = newCode.findIndex((d) => d === "")
+        if (nextEmpty === -1) {
+            inputRefs.current[CODE_LENGTH - 1]?.focus()
+            handleVerifyCode(newCode.join(""))
+        } else {
+            inputRefs.current[nextEmpty]?.focus()
+        }
+    }
+
     const handleResend = () => {
         if (timer > 0) return
         dispatch(resendResetCode({ email })).then(() => {
@@ -175,7 +196,7 @@ export default function ForgotPasswordPage() {
                             </form>
                         ) : (
                             <div className="flex flex-col gap-5">
-                                <div className="flex justify-center gap-2">
+                                <div className="flex justify-center gap-2" onPaste={handlePaste}>
                                     {code.map((digit, i) => (
                                         <Input
                                             key={i}

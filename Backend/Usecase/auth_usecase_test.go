@@ -82,7 +82,7 @@ func TestLogin_Success(t *testing.T) {
 
 	ctx := context.Background()
 	user := &domain.User{Email: "test@example.com", Password: "password123"}
-	existingUser := &domain.User{UserID: "user123", Email: "test@example.com", Password: "hashed_password"}
+	existingUser := &domain.User{UserID: "user123", Email: "test@example.com", Password: "hashed_password", Is_Verified: true}
 
 	exchangeData := &domain.ExchangeData{
 		RefreshToken: &domain.RefreshToken{Token: "refresh_token"},
