@@ -34,6 +34,11 @@ type Link struct {
 	Type       string `gorm:"size:20"`
 }
 
+type Image struct {
+	Link
+	Type   string `gorm:"-"`
+}
+
 type Page struct {
 	PageID    string
 	ResultID  string
@@ -50,7 +55,7 @@ type Page struct {
 	MetaDescription string
 	TextContent     string
 	PayloadSize     int64
-	Images          []string `gorm:"-"`
+	Images          []Image `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`
 
 	Links    []Link    `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`
 	Products []Product `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:PageID;references:PageID"`

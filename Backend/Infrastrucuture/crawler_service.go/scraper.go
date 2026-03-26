@@ -69,7 +69,7 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		FetchedAt: time.Now(),
 		Links:     make([]domain.Link, 0),
 		Products:  make([]domain.Product, 0),
-		Images:    make([]string, 0),
+		Images:    make([]domain.Image, 0),
 	}
 	var pageMu sync.Mutex
 	discoveredLinks := make([]string, 0)
@@ -126,7 +126,7 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		var articleContent string
 
 		var extractedProducts []domain.Product
-		var extractedImages []string
+		var extractedImages []domain.Image
 
 		wg.Add(1)
 		go func() {
@@ -604,9 +604,9 @@ func normalizeHost(host string) string {
 	return host
 }
 
-func extractImageLinks(doc *goquery.Selection, baseURL string) []string {
+func extractImageLinks(doc *goquery.Selection, baseURL string) []domain.Image {
 	seen := make(map[string]bool)
-	var links []string
+	var links []domain.Image
 
 	add := func(raw string) {
 		resolved := resolveURL(raw, baseURL)
@@ -614,7 +614,11 @@ func extractImageLinks(doc *goquery.Selection, baseURL string) []string {
 			return
 		}
 		seen[resolved] = true
-		links = append(links, resolved)
+		links = append(links, domain.Image{
+			Link: domain.Link{
+				URL: resolved,
+			},
+		})
 	}
 
 	doc.Find("img").Each(func(_ int, s *goquery.Selection) {
