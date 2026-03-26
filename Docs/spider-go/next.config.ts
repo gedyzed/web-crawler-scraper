@@ -6,7 +6,7 @@ const repoRoot = path.resolve(process.cwd(), "../..");
 export default withDocs({
   // Keep local dev on `.next`, but build/start on a separate directory so
   // workspace builds don't fail when example dev is already running.
-  distDir: process.env.NODE_ENV === "production" ? ".next-build" : ".next",
+  distDir: process.env.NODE_ENV === "production" && !process.env.VERCEL ? ".next-build" : ".next",
   turbopack: {
     // Resolve linked workspace packages from the repo root even when a parent
     // directory also has a lockfile and Turbopack guesses the wrong root.
