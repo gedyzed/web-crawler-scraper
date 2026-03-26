@@ -35,13 +35,17 @@ export default defineDocs({
     mode: "floating",
     position: "bottom-right",
     floatingStyle: "full-modal",
-    apiKey: process.env.OPENAI_API_KEY,
+    providers:{
+      groq: {
+        baseUrl: "https://api.groq.com/openai/v1",
+        apiKey: process.env.GROQ_API_KEY,
+      },  
+    },
     model: {
       models: [
-        { id: "gpt-4o-mini", label: "GPT-4o mini (fast)", provider: "openai" },
-        { id: "gpt-4o", label: "GPT-4o (quality)", provider: "openai" },
+        { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", provider: "groq" },        
       ],
-      defaultModel: "gpt-4o-mini",
+      defaultModel: "llama-3.3-70b-versatile",
     },
     aiLabel: "AI",
     suggestedQuestions: [
@@ -49,6 +53,7 @@ export default defineDocs({
       "How does API key authentication work?",
       "What is the difference between crawl and scrape?",
       "Which endpoints are used by the frontend dashboard?",
+      "How many pages do crawl traverse?"
     ],
     loader: "shimmer-dots",
   },
@@ -59,7 +64,7 @@ export default defineDocs({
         <span className="uppercase font-mono tracking-tighter">SpiderGo Docs</span>
       </div>
     ),
-    url: "/docs",
+    url: "/",
   },
   components: {
     MyNote,
