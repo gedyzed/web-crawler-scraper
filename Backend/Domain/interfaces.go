@@ -52,6 +52,8 @@ type IResultRepo interface {
 	SaveResult(ctx context.Context, result *CrawlerResult) *AppError
 	SaveHistory(ctx context.Context, history *History) *AppError
 	FindAllHistory(ctx context.Context, userID string) ([]History, *AppError)
+	FindResultByID(ctx context.Context, resultID string, userID string) (*CrawlerResult, *AppError)
+	FindHistoryByID(ctx context.Context, historyID string, userID string) (*History, *AppError)
 }
 
 type IApiKeyRepo interface {

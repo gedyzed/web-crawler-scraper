@@ -3,10 +3,11 @@ package crawlerservicego
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
-	"net/http"
 
 	domain "web_crawler_scraper/Domain"
 
@@ -34,7 +35,7 @@ func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
 	collector.WithTransport(&http.Transport{
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
-		IdleConnTimeout:     90 * time.Second,
+		IdleConnTimeout:     60 * time.Second,
 	})
 
 	collector.Limit(&colly.LimitRule{
@@ -68,7 +69,9 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		FetchedAt: time.Now(),
 		Links:     make([]domain.Link, 0),
 		Products:  make([]domain.Product, 0),
+		Images:    make([]string, 0),
 	}
+	var pageMu sync.Mutex
 	discoveredLinks := make([]string, 0)
 	seenDiscovered := make(map[string]bool)
 
@@ -80,9 +83,12 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 
 	collector.OnResponse(func(e *colly.Response) {
 		startTime := e.Ctx.GetAny("start_time").(time.Time)
+		pageMu.Lock()
+		defer pageMu.Unlock()
 		page.StatusCode = e.StatusCode
 		page.ResponseTimeMS = time.Since(startTime).Milliseconds()
 		page.ContentType = e.Headers.Get("Content-Type")
+		page.PayloadSize = int64(len(e.Body))
 	})
 
 	collector.OnHTML("a[href]", func(e *colly.HTMLElement) {
@@ -97,6 +103,13 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		seenDiscovered[link] = true
 
 		discoveredLinks = append(discoveredLinks, link)
+		pageMu.Lock()
+		page.Links = append(page.Links, domain.Link{
+			PageID: page.PageID,
+			URL:    link,
+			Type:   linkType(link, targetURL),
+		})
+		pageMu.Unlock()
 	})
 
 	collector.OnHTML("html", func(e *colly.HTMLElement) {
@@ -106,47 +119,54 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 			return
 		}
 
-		article, parseErr := ParseRawHTML(rawHTML, e.Request.URL)
-		if parseErr != nil {
-			logrus.WithField("error", parseErr.Message).Warn(domain.LogHTMLParseError)
-			return
-		}
+		var wg sync.WaitGroup
 
-		page.Title = article.Title
-		page.MetaDescription = article.Excerpt
-		page.TextContent = article.TextContent
+		var articleTitle string
+		var articleExcerpt string
+		var articleContent string
 
-		// E-commerce Product Extraction
-		// page.Products = extractProducts(e, targetURL)
+		var extractedProducts []domain.Product
+		var extractedImages []string
 
-		// Populate page.Links with unique links and correct grouping.
-		seenLinks := make(map[string]bool)
-		for _, link := range discoveredLinks {
-			if seenLinks[link] {
-				continue
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			article, parseErr := ParseRawHTML(rawHTML, e.Request.URL)
+			if parseErr != nil {
+				logrus.WithField("error", parseErr.Message).Warn(domain.LogHTMLParseError)
+				return
 			}
-			seenLinks[link] = true
-			page.Links = append(page.Links, domain.Link{
-				PageID: page.PageID,
-				URL:    link,
-				Type:   linkType(link, targetURL),
-			})
-		}
+			articleTitle = article.Title
+			articleExcerpt = article.Excerpt
+			articleContent = article.TextContent
+		}()
 
-		// for _, imageLink := range extractImageLinks(e.DOM, targetURL) {
-		// 	if seenLinks[imageLink] {
-		// 		continue
-		// 	}
-		// 	seenLinks[imageLink] = true
-		// 	page.Links = append(page.Links, domain.Link{
-		// 		PageID: page.PageID,
-		// 		URL:    imageLink,
-		// 		Type:   "Image",
-		// 	})
-		// }
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			extractedProducts = extractProducts(e, targetURL)
+		}()
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			extractedImages = extractImageLinks(e.DOM, targetURL)
+		}()
+
+		wg.Wait()
+
+		pageMu.Lock()
+		page.Title = articleTitle
+		page.MetaDescription = articleExcerpt
+		page.TextContent = articleContent
+		page.Products = extractedProducts
+		page.Images = extractedImages
+		pageMu.Unlock()
 	})
 
 	collector.OnError(func(e *colly.Response, err error) {
+		pageMu.Lock()
+		defer pageMu.Unlock()
 		page.StatusCode = e.StatusCode
 	})
 

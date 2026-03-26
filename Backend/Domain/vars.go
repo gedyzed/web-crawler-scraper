@@ -7,7 +7,8 @@ var (
 
 // Errors
 var (
-	ErrInternalServer = "Internal Server Error"
+	ErrInternalServer   = "Internal Server Error"
+	ErrInvalidURLFormat = "Invalid URL format"
 )
 
 // Register Endpoint - User-facing error messages
@@ -144,8 +145,8 @@ var (
 	LogFailedDeleteVerificationCode = "Failed to Delete Verification Code"
 )
 
-// For Free Trail 
-var ( 
+// For Free Trail
+var (
 	UserFreeTrialExpired = "Your free trial has expired. Please sign up to continue using the service."
 )
 

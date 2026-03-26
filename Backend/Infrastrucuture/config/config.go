@@ -56,6 +56,7 @@ type RedisConfig struct {
 
 type RateLimitConfig struct {
 	Auth   AuthRateLimiterConfig   `mapstructure:"auth"`
+	Trial  AuthRateLimiterConfig   `mapstructure:"trial"`
 	APIKey APIKeyRateLimiterConfig `mapstructure:"api_key"`
 }
 
@@ -132,6 +133,8 @@ func LoadConfig(path string) *Config {
 	viper.SetDefault("redis.max_retries", 2)
 	viper.SetDefault("rate_limiter.auth.limit", 5)
 	viper.SetDefault("rate_limiter.auth.window", "1m")
+	viper.SetDefault("rate_limiter.trial.limit", 3)
+	viper.SetDefault("rate_limiter.trial.window", "0s")
 	viper.SetDefault("rate_limiter.api_key.max_keys_per_user", 3)
 	viper.SetDefault("rate_limiter.api_key.daily_limit", 1000)
 

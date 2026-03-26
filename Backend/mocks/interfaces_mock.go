@@ -506,6 +506,36 @@ func (mr *MockIResultRepoMockRecorder) FindAllHistory(ctx, userID any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllHistory", reflect.TypeOf((*MockIResultRepo)(nil).FindAllHistory), ctx, userID)
 }
 
+// FindHistoryByID mocks base method.
+func (m *MockIResultRepo) FindHistoryByID(ctx context.Context, historyID, userID string) (*domain.History, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindHistoryByID", ctx, historyID, userID)
+	ret0, _ := ret[0].(*domain.History)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// FindHistoryByID indicates an expected call of FindHistoryByID.
+func (mr *MockIResultRepoMockRecorder) FindHistoryByID(ctx, historyID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindHistoryByID", reflect.TypeOf((*MockIResultRepo)(nil).FindHistoryByID), ctx, historyID, userID)
+}
+
+// FindResultByID mocks base method.
+func (m *MockIResultRepo) FindResultByID(ctx context.Context, resultID, userID string) (*domain.CrawlerResult, *domain.AppError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindResultByID", ctx, resultID, userID)
+	ret0, _ := ret[0].(*domain.CrawlerResult)
+	ret1, _ := ret[1].(*domain.AppError)
+	return ret0, ret1
+}
+
+// FindResultByID indicates an expected call of FindResultByID.
+func (mr *MockIResultRepoMockRecorder) FindResultByID(ctx, resultID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindResultByID", reflect.TypeOf((*MockIResultRepo)(nil).FindResultByID), ctx, resultID, userID)
+}
+
 // SaveHistory mocks base method.
 func (m *MockIResultRepo) SaveHistory(ctx context.Context, history *domain.History) *domain.AppError {
 	m.ctrl.T.Helper()
