@@ -47,18 +47,30 @@ export default function DashboardPage() {
         .slice(0, 6)
 
     const getStatusColor = (status: string, code?: number) => {
-        if (code === 200 || status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
+        const normalized = status.toLowerCase()
+
+        if (normalized === 'failed' || normalized === 'error' || (code !== undefined && code >= 400)) {
+            return "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/30"
+        }
+        if (normalized === 'completed' || normalized === 'success') {
             return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30"
         }
-        if (status.toLowerCase() === 'failed' || status.toLowerCase() === 'error' || (code && code >= 400)) {
-            return "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/30"
+        if (normalized === 'pending' || normalized === 'queued' || normalized === 'running') {
+            return "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/30"
+        }
+        if (code === 200) {
+            return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30"
         }
         return "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/30"
     }
 
     const getStatusText = (status: string, code?: number) => {
-        if (code === 200 || status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') return 'Success'
-        if (status.toLowerCase() === 'failed' || status.toLowerCase() === 'error' || (code && code >= 400)) return 'Failed'
+        const normalized = status.toLowerCase()
+
+        if (normalized === 'failed' || normalized === 'error' || (code !== undefined && code >= 400)) return 'Failed'
+        if (normalized === 'completed' || normalized === 'success') return 'Success'
+        if (normalized === 'pending' || normalized === 'queued' || normalized === 'running') return 'Pending'
+        if (code === 200) return 'Success'
         return 'Pending'
     }
 
@@ -109,13 +121,13 @@ export default function DashboardPage() {
                                 <TabsList className="bg-transparent p-0 h-auto gap-1">
                                     <TabsTrigger
                                         value="scrape"
-                                        className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 transition-colors border border-neutral-200 dark:border-white/10 dark:data-[state=active]:border-white/20"
+                                        className="rounded-sm px-4 py-2 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 transition-colors border border-neutral-200 dark:border-white/10 dark:data-[state=active]:border-white/20"
                                     >
                                         <Search className="h-3.5 w-3.5 mr-2" /> Scrape
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="crawl"
-                                        className="rounded-lg px-4 py-2 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 transition-colors border border-neutral-200 dark:border-white/10 dark:data-[state=active]:border-white/20"
+                                        className="rounded-sm px-4 py-2 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 transition-colors border border-neutral-200 dark:border-white/10 dark:data-[state=active]:border-white/20"
                                     >
                                         <Globe className="h-3.5 w-3.5 mr-2" /> Crawl
                                     </TabsTrigger>
@@ -125,7 +137,7 @@ export default function DashboardPage() {
                             <Button
                                 onClick={handleRun}
                                 disabled={jobLoading || !jobUrl.trim()}
-                                className="h-10 px-6 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer font-medium"
+                                className="h-10 px-6 rounded-sm bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm transition-all hover:shadow-md flex items-center justify-center gap-2 cursor-pointer font-medium"
                             >
                                 {jobLoading ? (
                                     <>

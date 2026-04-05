@@ -3,7 +3,6 @@ import {
     History,
     Key,
     LayoutDashboard,
-    Settings2,
     User,
 } from "lucide-react"
 
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAppSelector } from "@/store/hooks"
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
+import spidergoLogo from "@/assets/spidergo-logo.png"
 
 const platformItems = [
     {
@@ -35,11 +35,6 @@ const platformItems = [
         title: "Profile",
         url: "/profile",
         icon: User,
-    },
-    {
-        title: "Settings",
-        url: "/settings",
-        icon: Settings2,
     },
 ]
 
@@ -65,10 +60,10 @@ export function AppSidebar({
             <SidebarHeader>
                 <div className="flex items-center gap-1.5 group-data-[collapsible=icon]:justify-center px-4 group-data-[collapsible=icon]:px-0 h-12 shrink-0">
                     <ImageWithSkeleton
-                        src="/spidergo-logo.png"
+                        src={spidergoLogo}
                         alt="SpiderGo"
-                        className="h-6 w-6 shrink-0"
-                        containerClassName="h-6 w-6 shrink-0"
+                        className="h-8 w-8 shrink-0"
+                        containerClassName="h-8 w-8 shrink-0"
                     />
                     <span className="text-lg font-bold tracking-tight group-data-[collapsible=icon]:hidden truncate">
                         Spider<span className="text-primary">Go</span>

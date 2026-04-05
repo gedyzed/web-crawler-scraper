@@ -17,6 +17,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeft, Mail, Loader2, KeyRound, RotateCcw, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
+import spidergoLogo from "@/assets/spidergo-logo.png"
 import {
     setForgotPasswordField,
     setForgotPasswordCode,
@@ -140,10 +141,10 @@ export default function ForgotPasswordPage() {
             <div className="relative flex w-full max-w-sm flex-col gap-6">
                 <Link to="/" className="flex items-center gap-1.5 self-center font-medium">
                     <ImageWithSkeleton
-                        src="/spidergo-logo.png"
+                        src={spidergoLogo}
                         alt="SpiderGo"
-                        className="h-7 w-7"
-                        containerClassName="h-7 w-7"
+                        className="h-8 w-8"
+                        containerClassName="h-8 w-8"
                     />
                     <span className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                         Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>
@@ -183,7 +184,7 @@ export default function ForgotPasswordPage() {
                                         <Input
                                             id="email"
                                             type="email"
-                                            placeholder="m@example.com"
+                                            placeholder="john.doe@example.com"
                                             value={email}
                                             onChange={(e) => dispatch(setForgotPasswordField({ field: 'email', value: e.target.value }))}
                                             required

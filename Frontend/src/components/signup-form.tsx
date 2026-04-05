@@ -110,7 +110,7 @@ export function SignupForm({ className, ...props }: SignupFormProps) {
                     <Input
                         id="email"
                         type="email"
-                        placeholder="m@example.com"
+                        placeholder="john.doe@example.com"
                         required
                         value={email}
                         onChange={(e) =>

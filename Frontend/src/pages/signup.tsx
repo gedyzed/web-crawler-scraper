@@ -1,6 +1,8 @@
 import { SignupForm } from "@/components/signup-form"
 import { Link } from "react-router-dom"
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
+import spidergoLogo from "@/assets/spidergo-logo.png"
+import scrapingImage from "@/assets/scraping.png"
 
 export default function SignupPage() {
     return (
@@ -10,10 +12,10 @@ export default function SignupPage() {
                 <div className="flex justify-center gap-2 md:justify-start">
                     <Link to="/" className="flex items-center gap-1.5 font-medium">
                         <ImageWithSkeleton
-                            src="/spidergo-logo.png"
+                            src={spidergoLogo}
                             alt="SpiderGo"
-                            className="h-7 w-7"
-                            containerClassName="h-7 w-7"
+                            className="h-8 w-8"
+                            containerClassName="h-8 w-8"
                         />
                         <span className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                             Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>
@@ -30,7 +32,7 @@ export default function SignupPage() {
             {/* Right — Side Image */}
             <div className="bg-muted relative hidden lg:block">
                 <ImageWithSkeleton
-                    src="/scraping.png"
+                    src={scrapingImage}
                     alt="SpiderGo web crawler illustration"
                     className="absolute inset-0 h-full w-full object-cover"
                     containerClassName="absolute inset-0"

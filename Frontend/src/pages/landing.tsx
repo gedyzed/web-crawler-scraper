@@ -11,6 +11,7 @@ import CrawlerBackground from "@/components/CrawlerBackground";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ConsolePreviewSkeleton } from "@/components/loading-skeletons";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
+import spidergoLogo from "@/assets/spidergo-logo.png";
 import {
     Globe,
     Zap,
@@ -83,12 +84,12 @@ function Navbar() {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 border-b border-neutral-200 dark:border-white/[0.06] bg-white/80 dark:bg-[#0a0e14]/70 backdrop-blur-xl">
             <div className="mx-auto max-w-6xl flex items-center justify-between px-6 h-16">
-                <Link to="/" className="flex items-center gap-1.5 group">
+                <Link to="/" className="flex items-center justify-center gap-1.5 group">
                     <ImageWithSkeleton
-                        src="/spidergo-logo.png"
+                        src={spidergoLogo}
                         alt="SpiderGo"
-                        className="h-12 w-12 transition-transform group-hover:scale-110"
-                        containerClassName="h-12 w-12"
+                        className="h-8 w-8 transition-transform group-hover:scale-110"
+                        containerClassName="h-8 w-8"
                     />
                     <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                         Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>
@@ -98,7 +99,6 @@ function Navbar() {
                 <div className="hidden sm:flex items-center gap-6">
                     <a
                         href="https://docs.spidergo.app"
-                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                     >
@@ -107,7 +107,6 @@ function Navbar() {
                     </a>
                     <a
                         href="https://docs.spidergo.app/cli"
-                        target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
                     >
@@ -123,14 +122,14 @@ function Navbar() {
                         href="https://github.com/gedyzed/web-crawler-scraper"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300"
+                        className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300"
                     >
                         <Github className="h-4 w-4" />
                         <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500 dark:text-amber-400 dark:fill-amber-400" />
                         <span className="font-semibold">{stars ?? "..."}</span>
                     </a>
                     <Button
-                        className="bg-cyan-600 text-white hover:bg-cyan-500 rounded-lg text-sm px-5"
+                        className="bg-cyan-600 text-white hover:bg-cyan-500 rounded-sm text-sm px-5"
                         asChild
                     >
                         <Link to="/signup">
@@ -141,7 +140,7 @@ function Navbar() {
 
                 <div className="sm:hidden flex items-center gap-2">
                     <Button
-                        className="bg-cyan-600 text-white hover:bg-cyan-500 rounded-lg text-sm px-4"
+                        className="bg-cyan-600 text-white hover:bg-cyan-500 rounded-sm text-sm px-4"
                         asChild
                     >
                         <Link to="/signup">Get Started</Link>
@@ -150,7 +149,7 @@ function Navbar() {
                         type="button"
                         aria-label="Toggle menu"
                         onClick={() => setMobileMenuOpen((prev) => !prev)}
-                        className="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 text-neutral-700 dark:text-neutral-200"
+                        className="inline-flex items-center justify-center h-10 w-10 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 text-neutral-700 dark:text-neutral-200"
                     >
                         {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                     </button>
@@ -181,9 +180,8 @@ function Navbar() {
                     </a>
                     <a
                         href="https://docs.spidergo.app"
-                        target="_blank"
                         rel="noopener noreferrer"
-                        className="h-10 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 flex items-center justify-start gap-2 px-3 text-sm text-neutral-700 dark:text-neutral-300"
+                        className="h-10 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 flex items-center justify-start gap-2 px-3 text-sm text-neutral-700 dark:text-neutral-300"
                         onClick={() => setMobileMenuOpen(false)}
                     >
                         <BookOpen className="h-4 w-4" />
@@ -191,9 +189,8 @@ function Navbar() {
                     </a>
                     <a
                         href="https://docs.spidergo.app/cli"
-                        target="_blank"
                         rel="noopener noreferrer"
-                        className="h-10 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 flex items-center justify-start gap-2 px-3 text-sm text-neutral-700 dark:text-neutral-300"
+                        className="h-10 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 flex items-center justify-start gap-2 px-3 text-sm text-neutral-700 dark:text-neutral-300"
                         onClick={() => setMobileMenuOpen(false)}
                     >
                         <Code2 className="h-4 w-4" />
@@ -280,14 +277,14 @@ function HeroSection() {
                                 <TabsList className="bg-transparent p-0 h-auto gap-1">
                                     <TabsTrigger
                                         value="scrape"
-                                        className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 data-[state=active]:shadow-none transition-colors border border-neutral-200 dark:border-white/10"
+                                        className="rounded-sm px-3 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 data-[state=active]:shadow-none transition-colors border border-neutral-200 dark:border-white/10"
                                     >
                                         <Search className="h-3.5 w-3.5 mr-1.5" />
                                         Scrape
                                     </TabsTrigger>
                                     <TabsTrigger
                                         value="crawl"
-                                        className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 data-[state=active]:shadow-none transition-colors border border-neutral-200 dark:border-white/10"
+                                        className="rounded-sm px-3 py-1.5 text-sm font-medium text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 data-[state=active]:bg-neutral-100 dark:data-[state=active]:bg-white/10 data-[state=active]:text-neutral-900 dark:data-[state=active]:text-neutral-100 data-[state=active]:shadow-none transition-colors border border-neutral-200 dark:border-white/10"
                                     >
                                         <Globe className="h-3.5 w-3.5 mr-1.5" />
                                         Crawl
@@ -297,7 +294,7 @@ function HeroSection() {
                             <Button
                                 onClick={handleRun}
                                 disabled={loading || !url.trim()}
-                                className="h-10 w-20 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-200/50 dark:shadow-cyan-900/40 transition-all p-0 flex items-center justify-center cursor-pointer"
+                                className="h-10 w-20 rounded-sm bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-200/50 dark:shadow-cyan-900/40 transition-all p-0 flex items-center justify-center cursor-pointer"
                             >
                                 {loading ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -470,7 +467,7 @@ function CTASection() {
                         </p>
                         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
                             <Button
-                                className="h-12 px-8 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-sm shadow-lg shadow-cyan-200/50 dark:shadow-cyan-900/40"
+                                className="h-12 px-10 rounded-sm bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-sm shadow-lg shadow-cyan-200/50 dark:shadow-cyan-900/40"
                                 asChild
                             >
                                 <Link to="/signup">
@@ -479,7 +476,7 @@ function CTASection() {
                             </Button>
                             <Button
                                 variant="outline"
-                                className="h-12 px-8 items-center gap-2 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white"
+                                className="h-12 px-10 items-center gap-2 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors text-sm text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white"
                                 asChild
                             >
                                 <a
@@ -507,10 +504,10 @@ function Footer() {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-1.5">
                         <ImageWithSkeleton
-                            src="/spidergo-logo.png"
+                            src={spidergoLogo}
                             alt="SpiderGo"
-                            className="h-7 w-7"
-                            containerClassName="h-7 w-7"
+                            className="h-8 w-8"
+                            containerClassName="h-8 w-8"
                         />
                         <span className="text-lg font-bold text-neutral-900 dark:text-neutral-100">
                             Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>

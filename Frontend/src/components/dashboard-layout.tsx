@@ -1,5 +1,5 @@
 import { Outlet, useLocation, Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Search, Globe, History, LayoutDashboard, User, Settings2, Key, X, type LucideIcon } from "lucide-react"
+import { Search, Globe, History, LayoutDashboard, User, Key, X, type LucideIcon } from "lucide-react"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
     SidebarInset,
@@ -31,7 +31,6 @@ const navItems: NavItem[] = [
     { label: "Homepage", path: "/", icon: LayoutDashboard },
     { label: "History", path: "/history", icon: History },
     { label: "Profile", path: "/profile", icon: User },
-    { label: "Settings", path: "/settings", icon: Settings2 },
     { label: "API Keys", path: "/api-keys", icon: Key },
 ]
 
@@ -104,7 +103,7 @@ export default function DashboardLayout() {
                             <div className="flex items-center gap-3 relative mr-1 sm:mr-4">
                                 <div
                                     onClick={() => dispatch(setIsSearchOpen(true))}
-                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/5 text-sm text-neutral-500 cursor-pointer hover:border-neutral-300 dark:hover:border-white/20 transition-colors"
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-50 dark:bg-white/5 text-sm text-neutral-500 cursor-pointer hover:border-neutral-300 dark:hover:border-white/20 transition-colors"
                                 >
                                     <Search className="h-3.5 w-3.5" />
                                     <span className="hidden sm:inline">Search...</span>
@@ -145,7 +144,7 @@ export default function DashboardLayout() {
                                                                             navigate(item.path)
                                                                             dispatch(setIsSearchOpen(false))
                                                                         }}
-                                                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 dark:hover:bg-white/5 text-left transition-colors group"
+                                                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-sm hover:bg-neutral-50 dark:hover:bg-white/5 text-left transition-colors group"
                                                                     >
                                                                         <div className="h-7 w-7 rounded-md bg-neutral-100 dark:bg-white/10 flex items-center justify-center text-neutral-500 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-950/50 group-hover:text-cyan-600">
                                                                             <item.icon className="h-4 w-4" />
@@ -165,7 +164,7 @@ export default function DashboardLayout() {
                                                                             navigate("/history")
                                                                             dispatch(setIsSearchOpen(false))
                                                                         }}
-                                                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-50 text-left transition-colors group"
+                                                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-sm hover:bg-neutral-50 text-left transition-colors group"
                                                                     >
                                                                         <div className="h-7 w-7 rounded-md bg-neutral-100 flex items-center justify-center text-neutral-500 group-hover:bg-cyan-50 group-hover:text-cyan-600">
                                                                             <Globe className="h-4 w-4" />

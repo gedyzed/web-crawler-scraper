@@ -23,18 +23,30 @@ function formatShortDate(dateStr: string) {
 }
 
 function getStatusColor(status: string, code?: number) {
-    if (code === 200 || status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
+    const normalized = status.toLowerCase()
+
+    if (normalized === 'failed' || normalized === 'error' || (code !== undefined && code >= 400)) {
+        return "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/30"
+    }
+    if (normalized === 'completed' || normalized === 'success') {
         return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30"
     }
-    if (status.toLowerCase() === 'failed' || status.toLowerCase() === 'error' || (code && code >= 400)) {
-        return "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200 dark:border-red-800/30"
+    if (normalized === 'pending' || normalized === 'queued' || normalized === 'running') {
+        return "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/30"
+    }
+    if (code === 200) {
+        return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/30"
     }
     return "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/30"
 }
 
 function getStatusText(status: string, code?: number) {
-    if (code === 200 || status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') return 'Success'
-    if (status.toLowerCase() === 'failed' || status.toLowerCase() === 'error' || (code && code >= 400)) return 'Failed'
+    const normalized = status.toLowerCase()
+
+    if (normalized === 'failed' || normalized === 'error' || (code !== undefined && code >= 400)) return 'Failed'
+    if (normalized === 'completed' || normalized === 'success') return 'Success'
+    if (normalized === 'pending' || normalized === 'queued' || normalized === 'running') return 'Pending'
+    if (code === 200) return 'Success'
     return 'Pending'
 }
 
@@ -67,7 +79,7 @@ function HistoryCard({ job }: HistoryCardProps) {
                 </div>
 
                 {/* Stats Row */}
-                <div className="grid grid-cols-3 gap-2 py-3 px-3 rounded-lg bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5 mb-4 text-center">
+                <div className="grid grid-cols-3 gap-2 py-3 px-3 rounded-sm bg-neutral-50 dark:bg-white/[0.02] border border-neutral-100 dark:border-white/5 mb-4 text-center">
                     <div>
                         <div className="text-[10px] text-neutral-400 uppercase font-semibold tracking-wider mb-0.5">Pages</div>
                         <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100">{job.pages_crawled ?? 1}</div>
@@ -205,7 +217,7 @@ export default function HistoryPage() {
                     <button
                         key={f.value}
                         onClick={() => setActiveFilter(f.value)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeFilter === f.value
+                        className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${activeFilter === f.value
                             ? 'bg-neutral-900 dark:bg-white/10 text-white dark:text-neutral-100'
                             : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-white/5'
                             }`}

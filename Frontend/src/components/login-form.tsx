@@ -109,7 +109,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                     <Input
                         id="email"
                         type="email"
-                        placeholder="m@example.com"
+                        placeholder="john.doe@example.com"
                         autoComplete="username"
                         required
                         value={email}
