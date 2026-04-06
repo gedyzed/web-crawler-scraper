@@ -59,6 +59,31 @@ interface AuthState {
     }
 }
 
+const splitFullName = (name: string): { first_name: string; last_name: string } => {
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    const first_name = parts[0] || ''
+    const last_name = parts.slice(1).join(' ')
+    return { first_name, last_name }
+}
+
+const normalizeUser = (payload: any): User => {
+    const data = payload?.user || payload || {}
+    const firstname = data.first_name || data.firstName || data.firstname || ''
+    const lastname = data.last_name || data.lastName || data.lastname || ''
+    const email = data.email || data.Email || ''
+    const combinedName = `${firstname} ${lastname}`.trim()
+    const name = data.name || data.Name || combinedName || undefined
+    const username = data.username || (email ? email.split('@')[0] : '') || 'User'
+
+    return {
+        firstname,
+        lastname,
+        name,
+        email,
+        username,
+    }
+}
+
 // ─── Async Thunks ─────────────────────────────────────────
 
 export const loginUser = createAsyncThunk(
@@ -82,7 +107,8 @@ export const signupUser = createAsyncThunk(
     'auth/signupUser',
     async ({ name, email, password }: { name: string; email: string; password: string }, { rejectWithValue }) => {
         try {
-            const response = await api.post('/auth/register', { name, email, password })
+            const { first_name, last_name } = splitFullName(name)
+            const response = await api.post('/auth/register', { first_name, last_name, email, password })
             console.log(response.data)
             return response.data
         } catch (err: any) {
@@ -432,13 +458,7 @@ const authSlice = createSlice({
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.login.loading = false
                 state.isAuthenticated = true
-                const email = action.payload?.Email || action.payload?.email || ''
-                state.user = {
-                    firstname: action.payload.firstname,
-                    lastname: action.payload.lastname,
-                    name: action.payload.name || action.payload.Name,
-                    username: action.payload.username || email.split('@')[0] || 'User', email
-                }
+                state.user = normalizeUser(action.payload)
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.login.loading = false
@@ -547,13 +567,7 @@ const authSlice = createSlice({
             .addCase(checkAuth.fulfilled, (state, action) => {
                 state.authLoading = false
                 state.isAuthenticated = true
-                const email = action.payload?.Email || action.payload?.email || ''
-                state.user = {
-                    firstname: action.payload.firstname,
-                    lastname: action.payload.lastname,
-                    name: action.payload.name || action.payload.Name,
-                    username: action.payload.username || email.split('@')[0] || 'User', email
-                }
+                state.user = normalizeUser(action.payload)
             })
             .addCase(checkAuth.rejected, (state) => {
                 state.authLoading = false

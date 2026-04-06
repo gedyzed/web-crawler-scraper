@@ -65,6 +65,20 @@ export interface HistoryItem {
     pages_crawled?: number;
     duration?: string;
     size?: string;
+    total_pages?: number;
+    total_response_time_ms?: number;
+    total_payload_size?: number;
+    TotalPages?: number;
+    TotalResponseTimeMS?: number;
+    TotalPayloadSize?: number;
+    result?: {
+        total_pages?: number;
+        total_response_time_ms?: number;
+        total_payload_size?: number;
+        TotalPages?: number;
+        TotalResponseTimeMS?: number;
+        TotalPayloadSize?: number;
+    };
     ID?: number;
     CreatedAt?: string;
 }
@@ -84,6 +98,61 @@ interface DashboardState {
     isSearchOpen: boolean;
     newAllowedPattern: string;
     newDeniedPattern: string;
+}
+
+const formatDuration = (ms?: number): string | undefined => {
+    if (typeof ms !== 'number' || Number.isNaN(ms) || ms <= 0) return undefined
+    if (ms < 1000) return `${ms}ms`
+
+    const seconds = ms / 1000
+    if (seconds < 60) return `${seconds.toFixed(1)}s`
+
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.round(seconds % 60)
+    return `${minutes}m ${remainingSeconds}s`
+}
+
+const formatBytes = (bytes?: number): string | undefined => {
+    if (typeof bytes !== 'number' || Number.isNaN(bytes) || bytes < 0) return undefined
+    if (bytes < 1024) return `${bytes} B`
+
+    const units = ['KB', 'MB', 'GB', 'TB']
+    let size = bytes / 1024
+    let unitIndex = 0
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024
+        unitIndex += 1
+    }
+
+    return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`
+}
+
+const normalizeHistoryItem = (item: HistoryItem): HistoryItem => {
+    const resultMetrics = item.result || {}
+
+    const pages = item.pages_crawled
+        ?? item.total_pages
+        ?? item.TotalPages
+        ?? resultMetrics.total_pages
+        ?? resultMetrics.TotalPages
+
+    const responseTimeMS = item.total_response_time_ms
+        ?? item.TotalResponseTimeMS
+        ?? resultMetrics.total_response_time_ms
+        ?? resultMetrics.TotalResponseTimeMS
+
+    const payloadSize = item.total_payload_size
+        ?? item.TotalPayloadSize
+        ?? resultMetrics.total_payload_size
+        ?? resultMetrics.TotalPayloadSize
+
+    return {
+        ...item,
+        pages_crawled: pages,
+        duration: item.duration || formatDuration(responseTimeMS),
+        size: item.size || formatBytes(payloadSize),
+    }
 }
 
 
@@ -225,7 +294,7 @@ const dashboardSlice = createSlice({
             })
             .addCase(fetchHistory.fulfilled, (state, action) => {
                 state.historyLoading = false
-                state.history = action.payload
+                state.history = action.payload.map(normalizeHistoryItem)
             })
             .addCase(fetchHistory.rejected, (state, action) => {
                 state.historyLoading = false
@@ -246,7 +315,6 @@ const dashboardSlice = createSlice({
                 } else if (action.meta.arg.type === 'scrape') {
                     state.scrapeResult = action.payload
                 }
-                state.jobUrl = ''
             })
             .addCase(runJob.rejected, (state, action) => {
                 state.jobLoading = false
