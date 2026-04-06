@@ -22,5 +22,7 @@ func DBConnect(cfg *config.DBConfig) *gorm.DB {
 		logrus.WithError(err).Fatal("Failed to connect to postgres database")
 	}
 
+	
+
 	return db
 }

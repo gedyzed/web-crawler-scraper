@@ -67,8 +67,8 @@ func main() {
 	passwordService := infrastructure.NewPasswordService()
 	emailService := emailService.NewEmailService(&cfg.Email)
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
-	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, *redis)
-	scraperFactory := crawlerservicego.NewScraperServiceFactory()
+	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, cfg.Scraper, *redis)
+	scraperFactory := crawlerservicego.NewScraperServiceFactory(cfg.Scraper)
 
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,

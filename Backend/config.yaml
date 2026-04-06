@@ -62,6 +62,11 @@ crawler:
     max_concurrency: 10
     allowed_paths:
     denied_patterns:
+
+scraper:
+  max_links_per_page: 100
+  max_images_per_page: 50
+  max_products_per_page: 20
      
 
 

@@ -22,6 +22,7 @@ type Config struct {
 	Security  SecurityConfig  `mapstructure:"security"`
 	Email     EmailConfig     `mapstructure:"email"`
 	Crawler   CrawlerConfig   `mapstructure:"crawler"`
+	Scraper   ScraperConfig   `mapstructure:"scraper"`
 }
 
 type SecurityConfig struct {
@@ -100,6 +101,12 @@ type CrawlerConfig struct {
 	DeniedPatterns []string `mapstructure:"denied_patterns"`
 }
 
+type ScraperConfig struct {
+	MaxLinksPerPage    int `mapstructure:"max_links_per_page"`
+	MaxImagesPerPage   int `mapstructure:"max_images_per_page"`
+	MaxProductsPerPage int `mapstructure:"max_products_per_page"`
+}
+
 func ValidateConfig(cfg *Config) error {
 	validate := validator.New()
 	return validate.Struct(cfg)
@@ -137,6 +144,9 @@ func LoadConfig(path string) *Config {
 	viper.SetDefault("rate_limiter.trial.window", "0s")
 	viper.SetDefault("rate_limiter.api_key.max_keys_per_user", 3)
 	viper.SetDefault("rate_limiter.api_key.daily_limit", 1000)
+	viper.SetDefault("scraper.max_links_per_page", 100)
+	viper.SetDefault("scraper.max_images_per_page", 50)
+	viper.SetDefault("scraper.max_products_per_page", 20)
 
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {

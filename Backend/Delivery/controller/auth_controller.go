@@ -190,12 +190,12 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, gin.H{
 		"user": gin.H{
-			"user_id":     response.User.UserID,
-			"first_name":  response.User.FirstName,
-			"last_name":   response.User.LastName,
+			"userId":      response.User.UserID,
+			"firstName":   response.User.FirstName,
+			"lastName":    response.User.LastName,
 			"email":       response.User.Email,
-			"is_verified": response.User.Is_Verified,
-			"avatar_url":  response.User.AvatarURL,
+			"isVerified":  response.User.Is_Verified,
+			"avatarUrl":   response.User.AvatarURL,
 		},
 	})
 
@@ -369,12 +369,12 @@ func (ac *AuthController) GetProfile(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, gin.H{
-		"user_id":     user.UserID,
-		"first_name":  user.FirstName,
-		"last_name":   user.LastName,
+		"userId":      user.UserID,
+		"firstName":   user.FirstName,
+		"lastName":    user.LastName,
 		"email":       user.Email,
-		"is_verified": user.Is_Verified,
-		"avatar_url":  user.AvatarURL,
+		"isVerified":  user.Is_Verified,
+		"avatarUrl":   user.AvatarURL,
 	})
 }
 

@@ -83,6 +83,11 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 		return nil, err
 	}
 
+	if result.Cached {
+		result.UserID = input.UserID
+		return result, nil
+	}
+
 	// Generate unique ID for the result
 	result.CRID = uuid.New().String()
 	result.UserID = input.UserID
