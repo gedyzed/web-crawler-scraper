@@ -471,7 +471,7 @@ function CTASection() {
                                 asChild
                             >
                                 <Link to="/signup">
-                                    Get Started Free <ArrowRight className="h-4 w-4 ml-2" />
+                                    Get Started <ArrowRight className="h-4 w-4 ml-2" />
                                 </Link>
                             </Button>
                             <Button
