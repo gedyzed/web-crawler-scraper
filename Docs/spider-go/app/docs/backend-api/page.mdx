@@ -48,6 +48,7 @@ Authorization: Bearer sk_live_your_key
 | POST | `/auth/register` | Public | Create account |
 | POST | `/auth/login` | Public | Login and set auth cookies |
 | GET | `/auth/me` | Cookie | Get current profile |
+| DELETE | `/auth/me` | Cookie | Delete current account and clear auth cookies |
 | GET | `/auth/refresh` | Cookie | Refresh/rotate session tokens |
 | GET | `/auth/oauth` | Public | OAuth provider redirect |
 | GET | `/auth/oauth/google` | Public | Google OAuth callback flow |
@@ -65,6 +66,8 @@ Authorization: Bearer sk_live_your_key
 | POST | `/scrape` | Cookie | Run single-page scrape job |
 | POST | `/crawl` | Cookie | Run crawl job |
 | GET | `/history` | Cookie | Get current user history |
+| GET | `/history/:id/result` | Cookie | Get crawl/scrape result by history id |
+| DELETE | `/history/:id` | Cookie | Delete a history item |
 
 ### Trial Endpoints (Public, Rate-Limited)
 
@@ -185,6 +188,16 @@ Both `/scrape` and `/crawl` return a job envelope:
 }
 ```
 
+When `/crawl` returns a cached result, the payload includes:
+
+```json
+{
+  "message": {
+    "Cached": true
+  }
+}
+```
+
 ### Create API Key: POST /auth/api-keys
 
 Request:
@@ -192,6 +205,26 @@ Request:
 ```json
 {
   "name": "Production Integrations"
+}
+```
+
+### Delete Account: DELETE /auth/me
+
+Response:
+
+```json
+{
+  "message": "User deleted successfully"
+}
+```
+
+### Delete History: DELETE /history/:id
+
+Response:
+
+```json
+{
+  "message": "History deleted successfully"
 }
 ```
 
