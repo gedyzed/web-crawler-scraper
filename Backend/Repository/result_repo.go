@@ -96,3 +96,29 @@ func (r *resultRepo) FindHistoryByID(ctx context.Context, historyID string, user
 	}
 	return &history, nil
 }
+
+func (r *resultRepo) DeleteHistoryByID(ctx context.Context, historyID string, userID string) *domain.AppError {
+	res := r.db.WithContext(ctx).Where("hid = ? AND user_id = ?", historyID, userID).Delete(&domain.History{})
+	if res.Error != nil {
+		logger.WithFields(logger.Fields{
+			"history_id": historyID,
+			"user_id":    userID,
+			"error":      res.Error,
+		}).Error("Failed to delete history")
+
+		return &domain.AppError{
+			Message:    "Failed to delete history",
+			Err:        res.Error.Error(),
+			HttpStatus: 500,
+		}
+	}
+
+	if res.RowsAffected == 0 {
+		return &domain.AppError{
+			Message:    "History not found",
+			HttpStatus: 404,
+		}
+	}
+
+	return nil
+}

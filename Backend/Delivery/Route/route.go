@@ -17,6 +17,7 @@ func AuthRoutes(router *gin.Engine,
 	{
 		auth.POST("/register", authHandler.RegisterUser)
 		auth.POST("/login", authHandler.LoginUser)
+		auth.POST("/logout", authHandler.LogoutUser)
 		auth.GET("/oauth", authHandler.OAuthHandler)
 		auth.GET("/oauth/google", authHandler.GoogleOAuthCallBack)
 		auth.GET("/oauth/github", authHandler.GithubOAuthCallBack)
@@ -33,6 +34,7 @@ func AuthRoutes(router *gin.Engine,
 	profile.Use(middlewares.AuthMiddleware())
 	{
 		profile.GET("", authHandler.GetProfile)
+		profile.DELETE("", authHandler.DeleteUser)
 
 	}
 
@@ -83,5 +85,6 @@ func CrawlerAndScraperRoutes(
 	history.Use(middlewares.AuthMiddleware())
 	history.GET("", crawlerHandler.GetHistory)
 	history.GET("/:id/result", crawlerHandler.GetResult)
+	history.DELETE("/:id", crawlerHandler.DeleteHistory)
 
 }

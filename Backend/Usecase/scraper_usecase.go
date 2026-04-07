@@ -131,7 +131,7 @@ func (s *scraperUsecase) CheckFreeTrial(ctx context.Context, ip string) (bool, *
 	if !allowed {
 		return false, &domain.AppError{
 			Message:    domain.UserFreeTrialExpired,
-			HttpStatus: 401,
+			HttpStatus: 429,
 		}
 	}
 

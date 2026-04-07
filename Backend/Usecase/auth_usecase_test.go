@@ -40,7 +40,7 @@ func setupAuthUsecaseTest(t *testing.T) (*gomock.Controller, *mocks.MockIUserRep
 }
 
 func TestRegister_Success(t *testing.T) {
-	ctrl, mockUserRepo, _, _, _, _, mockPassword, mockEmail, uc := setupAuthUsecaseTest(t)
+	ctrl, mockUserRepo, _, _, _, _, mockPassword, _, uc := setupAuthUsecaseTest(t)
 	defer ctrl.Finish()
 
 	ctx := context.Background()
@@ -49,8 +49,6 @@ func TestRegister_Success(t *testing.T) {
 	// Expectations
 	mockUserRepo.EXPECT().FindByEmail(ctx, user.Email).Return(nil, nil)
 	mockPassword.EXPECT().HashPassword(user.Password).Return("hashed_password", nil)
-	mockUserRepo.EXPECT().CreateVerificationCode(ctx, gomock.Any()).Return(nil)
-	mockEmail.EXPECT().SendEmail("user", domain.EmailVerification, gomock.Any(), []string{user.Email}).Return(nil)
 	mockUserRepo.EXPECT().Create(ctx, user).Return(nil)
 
 	err := uc.Register(ctx, user, "127.0.0.1")

@@ -358,6 +358,25 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	}
 }
 
+func (ac *AuthController) LogoutUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accessToken, _ := c.Cookie(domain.AccessToken)
+	refreshToken, _ := c.Cookie(domain.RefreshTokenCookie)
+
+	if err := ac.authUC.Logout(ctx, accessToken, refreshToken); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"error": err.Message,
+		}).Warn("Failed to revoke refresh token during logout")
+	}
+
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie(domain.AccessToken, "", -1, "/", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+	c.SetCookie(domain.RefreshTokenCookie, "", -1, "/auth/refresh", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
 func (ac *AuthController) GetProfile(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID := c.GetString("userID")
@@ -376,6 +395,22 @@ func (ac *AuthController) GetProfile(c *gin.Context) {
 		"isVerified":  user.Is_Verified,
 		"avatarUrl":   user.AvatarURL,
 	})
+}
+
+func (ac *AuthController) DeleteUser(c *gin.Context) {
+	ctx := c.Request.Context()
+	userID := c.GetString("userID")
+
+	if err := ac.authUC.DeleteUser(ctx, userID); err != nil {
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
+		return
+	}
+
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie(domain.AccessToken, "", -1, "/", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+	c.SetCookie(domain.RefreshTokenCookie, "", -1, "/auth/refresh", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
 func (ac *AuthController) ForgotPassword(c *gin.Context) {

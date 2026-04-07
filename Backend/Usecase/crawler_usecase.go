@@ -2,10 +2,13 @@ package usecase
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"time"
 	domain "web_crawler_scraper/Domain"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -13,6 +16,7 @@ type ICrawlerUsecase interface {
 	Crawl(ctx context.Context, input *domain.URLFrontier) (*domain.CrawlerResult, *domain.AppError)
 	FetchHistory(ctx context.Context, userID string) ([]domain.History, *domain.AppError)
 	GetResultByHistoryID(ctx context.Context, historyID string, userID string) (*domain.CrawlerResult, *domain.AppError)
+	DeleteHistory(ctx context.Context, historyID string, userID string) *domain.AppError
 	CheckFreeTrial(ctx context.Context, ip string) (bool, *domain.AppError)
 }
 
@@ -21,18 +25,76 @@ type crawlerUsecase struct {
 	cralwerSvsFactory domain.ICrawlerServiceFactory
 	scraperSvsFactory domain.IScraperServiceFactory
 	rateLimiter       domain.IRateLimiter
+	redisClient       *redis.Client
 }
 
 func NewCrawlerUsecase(
 	repo domain.IResultRepo,
 	cSvsFactory domain.ICrawlerServiceFactory,
 	rateLimiter domain.IRateLimiter,
+	redisClient *redis.Client,
 
 ) ICrawlerUsecase {
 	return &crawlerUsecase{
 		repo:              repo,
 		cralwerSvsFactory: cSvsFactory,
 		rateLimiter:       rateLimiter,
+		redisClient:       redisClient,
+	}
+}
+
+func (c *crawlerUsecase) cacheKey(url string) string {
+	return fmt.Sprintf("crawl:%s", url)
+}
+
+func (c *crawlerUsecase) getCachedResult(ctx context.Context, normalizedURL string) *domain.CrawlerResult {
+	if c.redisClient == nil {
+		return nil
+	}
+
+	data, err := c.redisClient.Get(ctx, c.cacheKey(normalizedURL)).Result()
+	if err != nil {
+		if err != redis.Nil {
+			logrus.WithFields(logrus.Fields{
+				"url":   normalizedURL,
+				"error": err.Error(),
+			}).Warn("Failed to read crawler cache")
+		}
+		return nil
+	}
+
+	var cached domain.CrawlerResult
+	if err := json.Unmarshal([]byte(data), &cached); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":   normalizedURL,
+			"error": err.Error(),
+		}).Warn("Failed to decode crawler cache")
+		return nil
+	}
+
+	cached.Cached = true
+	return &cached
+}
+
+func (c *crawlerUsecase) setCachedResult(ctx context.Context, normalizedURL string, result *domain.CrawlerResult) {
+	if c.redisClient == nil || result == nil {
+		return
+	}
+
+	jsonBytes, err := json.Marshal(result)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":   normalizedURL,
+			"error": err.Error(),
+		}).Warn("Failed to encode crawler cache")
+		return
+	}
+
+	if err := c.redisClient.Set(ctx, c.cacheKey(normalizedURL), string(jsonBytes), 4*time.Hour).Err(); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":   normalizedURL,
+			"error": err.Error(),
+		}).Warn("Failed to write crawler cache")
 	}
 }
 
@@ -61,6 +123,11 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 		input.UserID = uuid.New().String() // Generate a temporary user ID for trail users
 	}
 
+	if cachedResult := c.getCachedResult(ctx, input.URL); cachedResult != nil {
+		cachedResult.UserID = input.UserID
+		return cachedResult, nil
+	}
+
 	svc := c.cralwerSvsFactory.NewCrawlerService(input.UserID)
 	result, err := svc.Crawl(ctx, input.URL)
 	if err != nil {
@@ -83,14 +150,11 @@ func (c *crawlerUsecase) Crawl(ctx context.Context, input *domain.URLFrontier) (
 		return nil, err
 	}
 
-	if result.Cached {
-		result.UserID = input.UserID
-		return result, nil
-	}
-
 	// Generate unique ID for the result
 	result.CRID = uuid.New().String()
 	result.UserID = input.UserID
+	result.Cached = false
+	c.setCachedResult(ctx, input.URL, result)
 
 	if !input.Trail {
 		// Save successful crawl result to database
@@ -134,7 +198,7 @@ func (c *crawlerUsecase) CheckFreeTrial(ctx context.Context, ip string) (bool, *
 	if !allowed {
 		return false, &domain.AppError{
 			Message:    domain.UserFreeTrialExpired,
-			HttpStatus: 401,
+			HttpStatus: 429,
 		}
 	}
 
@@ -157,4 +221,12 @@ func (c *crawlerUsecase) GetResultByHistoryID(ctx context.Context, historyID str
 	}
 
 	return result, nil
+}
+
+func (c *crawlerUsecase) DeleteHistory(ctx context.Context, historyID string, userID string) *domain.AppError {
+	if historyID == "" {
+		return &domain.AppError{Message: "History ID is required", HttpStatus: 400}
+	}
+
+	return c.repo.DeleteHistoryByID(ctx, historyID, userID)
 }

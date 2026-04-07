@@ -69,6 +69,20 @@ func (mr *MockIUserRepoMockRecorder) CreateVerificationCode(ctx, verification an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateVerificationCode", reflect.TypeOf((*MockIUserRepo)(nil).CreateVerificationCode), ctx, verification)
 }
 
+// DeleteByID mocks base method.
+func (m *MockIUserRepo) DeleteByID(ctx context.Context, id string) *domain.AppError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteByID", ctx, id)
+	ret0, _ := ret[0].(*domain.AppError)
+	return ret0
+}
+
+// DeleteByID indicates an expected call of DeleteByID.
+func (mr *MockIUserRepoMockRecorder) DeleteByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByID", reflect.TypeOf((*MockIUserRepo)(nil).DeleteByID), ctx, id)
+}
+
 // DeleteVerificationCode mocks base method.
 func (m *MockIUserRepo) DeleteVerificationCode(ctx context.Context, email string) *domain.AppError {
 	m.ctrl.T.Helper()
@@ -504,6 +518,20 @@ func (m *MockIResultRepo) FindAllHistory(ctx context.Context, userID string) ([]
 func (mr *MockIResultRepoMockRecorder) FindAllHistory(ctx, userID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindAllHistory", reflect.TypeOf((*MockIResultRepo)(nil).FindAllHistory), ctx, userID)
+}
+
+// DeleteHistoryByID mocks base method.
+func (m *MockIResultRepo) DeleteHistoryByID(ctx context.Context, historyID, userID string) *domain.AppError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteHistoryByID", ctx, historyID, userID)
+	ret0, _ := ret[0].(*domain.AppError)
+	return ret0
+}
+
+// DeleteHistoryByID indicates an expected call of DeleteHistoryByID.
+func (mr *MockIResultRepoMockRecorder) DeleteHistoryByID(ctx, historyID, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteHistoryByID", reflect.TypeOf((*MockIResultRepo)(nil).DeleteHistoryByID), ctx, historyID, userID)
 }
 
 // FindHistoryByID mocks base method.

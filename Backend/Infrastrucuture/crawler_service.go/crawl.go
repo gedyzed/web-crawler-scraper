@@ -2,7 +2,6 @@ package crawlerservicego
 
 import (
 	"context"
-	"encoding/json"
 
 	"net/http"
 	"strings"
@@ -13,7 +12,6 @@ import (
 
 	colly "github.com/gocolly/colly"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -36,7 +34,6 @@ type CrawlerServices struct {
 	Visited       map[string]bool
 	CrawlerConfig config.CrawlerConfig
 	Result        *domain.CrawlerResult
-	redisClient   redis.Client
 	PageCount     int
 }
 
@@ -44,14 +41,12 @@ type CrawlerServices struct {
 type CrawlerServiceFactory struct {
 	crawlerConfig config.CrawlerConfig
 	scraperConfig config.ScraperConfig
-	redisClient   redis.Client
 }
 
-func NewCrawlerServiceFactory(crawlerCfg config.CrawlerConfig, scraperCfg config.ScraperConfig, rdb redis.Client) domain.ICrawlerServiceFactory {
+func NewCrawlerServiceFactory(crawlerCfg config.CrawlerConfig, scraperCfg config.ScraperConfig) domain.ICrawlerServiceFactory {
 	return &CrawlerServiceFactory{
 		crawlerConfig: crawlerCfg,
 		scraperConfig: scraperCfg,
-		redisClient:   rdb,
 	}
 }
 
@@ -84,36 +79,12 @@ func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawler
 		Visited:       make(map[string]bool),
 		CrawlerConfig: f.crawlerConfig,
 		Result:        result,
-		redisClient:   f.redisClient,
 		PageCount:     0,
 	}
 }
 
 // Crawling — BFS level-order traversal
 func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.CrawlerResult, *domain.AppError) {
-
-	// ── Check Redis cache ──
-	if cr.redisClient.Exists(ctx, seedURL).Val() > 0 {
-		data, err := cr.redisClient.Get(ctx, seedURL).Result()
-		if err != nil {
-			return nil, &domain.AppError{
-				Message:    domain.ErrInternalServer,
-				Err:        err.Error(),
-				HttpStatus: http.StatusInternalServerError,
-			}
-		}
-
-		var result domain.CrawlerResult
-		if err := json.Unmarshal([]byte(data), &result); err != nil {
-			return nil, &domain.AppError{
-				Message:    domain.ErrInternalServer,
-				Err:        err.Error(),
-				HttpStatus: http.StatusInternalServerError,
-			}
-		}
-		result.Cached = true
-		return &result, nil
-	}
 
 	// ── BFS crawl ──
 	currentLevel := []QueueItem{{URL: seedURL, Depth: 0}}
@@ -215,12 +186,7 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 		currentLevel = nextLevel
 	}
 
-	// Cache result in Redis ─
 	cr.Result.Cached = false
-	jsonBytes, err := json.Marshal(cr.Result)
-	if err == nil {
-		cr.redisClient.Set(ctx, seedURL, string(jsonBytes), time.Hour*4)
-	}
 
 	logrus.WithField("pages", cr.PageCount).Info(domain.LogCrawlCompleted)
 
