@@ -8,7 +8,7 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { ShieldCheck, Loader2, CheckCircle2, RotateCcw, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
@@ -28,11 +28,20 @@ const CODE_LENGTH = 6
 export default function VerifyEmailPage() {
     const dispatch = useAppDispatch()
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+    const navigate = useNavigate()
 
     const { code, loading, verified, timer, error } = useAppSelector(
         (state) => state.auth.verifyEmail
     )
     const signupEmail = useAppSelector((state) => state.auth.signup.email)
+
+    const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((signupEmail || "").trim())
+
+    useEffect(() => {
+        if (!hasValidEmail) {
+            navigate("/", { replace: true })
+        }
+    }, [hasValidEmail, navigate])
 
     // Focus first input on mount, cleanup on unmount
     useEffect(() => {
@@ -71,6 +80,7 @@ export default function VerifyEmailPage() {
         const newCode = [...code]
         newCode[index] = digit
         if (newCode.every((d) => d !== "") && newCode.join("").length === CODE_LENGTH) {
+            if (!hasValidEmail) return
             dispatch(verifyEmailCode({ email: signupEmail, code: newCode.join("") }))
         }
     }
@@ -94,6 +104,7 @@ export default function VerifyEmailPage() {
         const nextEmpty = newCode.findIndex((d) => d === "")
         if (nextEmpty === -1) {
             inputRefs.current[CODE_LENGTH - 1]?.focus()
+            if (!hasValidEmail) return
             dispatch(verifyEmailCode({ email: signupEmail, code: newCode.join("") }))
         } else {
             inputRefs.current[nextEmpty]?.focus()
@@ -101,7 +112,7 @@ export default function VerifyEmailPage() {
     }
 
     const handleResend = () => {
-        if (timer > 0) return
+        if (timer > 0 || !hasValidEmail) return
         dispatch(resendVerificationCode({ email: signupEmail })).then(() => {
             inputRefs.current[0]?.focus()
         })

@@ -141,8 +141,9 @@ export default function DashboardPage() {
                             >
                                 {jobLoading ? (
                                     <>
+                                        
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        Starting...
+                                        {jobType === "crawl" ? "Crawling..." : "Scraping..."}
                                     </>
                                 ) : (
                                     <>

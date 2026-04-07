@@ -68,11 +68,13 @@ const splitFullName = (name: string): { first_name: string; last_name: string } 
 
 const normalizeUser = (payload: any): User => {
     const data = payload?.user || payload || {}
-    const firstname = data.first_name || data.firstName || data.firstname || ''
-    const lastname = data.last_name || data.lastName || data.lastname || ''
-    const email = data.email || data.Email || ''
+    const firstname = (data.first_name || data.firstName || data.firstname || data.FirstName || '').trim()
+    const lastname = (data.last_name || data.lastName || data.lastname || data.LastName || '').trim()
+    const email = (data.email || data.Email || '').trim()
     const combinedName = `${firstname} ${lastname}`.trim()
-    const name = data.name || data.Name || combinedName || undefined
+    const rawName = (data.name || data.Name || '').trim()
+    const name = combinedName
+        || (rawName && rawName.toLowerCase() !== email.toLowerCase() ? rawName : undefined)
     const username = data.username || (email ? email.split('@')[0] : '') || 'User'
 
     return {
@@ -223,6 +225,18 @@ export const generateApiKey = createAsyncThunk(
             return response.data
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message || 'Failed to generate API Key')
+        }
+    }
+)
+
+export const logoutUser = createAsyncThunk(
+    'auth/logoutUser',
+    async (_, { rejectWithValue }) => {
+        try {
+            await api.post('/auth/logout')
+            return true
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || err.message || 'Logout failed')
         }
     }
 )
@@ -466,6 +480,21 @@ const authSlice = createSlice({
                 state.login.error = typeof payload === 'string'
                     ? payload
                     : payload?.message || 'Login failed'
+            })
+
+        // ── Logout ──
+        builder
+            .addCase(logoutUser.pending, (state) => {
+                state.login.loading = true
+            })
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.login.loading = false
+                state.isAuthenticated = false
+                state.user = null
+                state.apiKeys = { ...initialState.apiKeys }
+            })
+            .addCase(logoutUser.rejected, (state) => {
+                state.login.loading = false
             })
 
         // ── Signup ──

@@ -163,7 +163,26 @@ export const fetchHistory = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await api.get('/history')
-            return response.data as HistoryItem[]
+            const history = response.data as HistoryItem[]
+
+            const hydratedHistory = await Promise.all(history.map(async (item) => {
+                const base = normalizeHistoryItem(item)
+                if (base.duration && base.size && base.pages_crawled !== undefined) {
+                    return base
+                }
+
+                try {
+                    const resultResponse = await api.get(`/history/${item.hid}/result`)
+                    return normalizeHistoryItem({
+                        ...item,
+                        result: resultResponse.data,
+                    })
+                } catch {
+                    return base
+                }
+            }))
+
+            return hydratedHistory
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.response?.data?.message || err.message || 'Failed to fetch history')
         }
@@ -294,7 +313,7 @@ const dashboardSlice = createSlice({
             })
             .addCase(fetchHistory.fulfilled, (state, action) => {
                 state.historyLoading = false
-                state.history = action.payload.map(normalizeHistoryItem)
+                state.history = action.payload
             })
             .addCase(fetchHistory.rejected, (state, action) => {
                 state.historyLoading = false

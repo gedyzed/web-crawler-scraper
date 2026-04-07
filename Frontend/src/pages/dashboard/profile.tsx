@@ -14,20 +14,32 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import api from "@/lib/api"
 import { logout } from "@/store/authSlice"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function ProfilePage() {
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
     const user = useAppSelector((state) => state.auth.user)
     const email = user?.email || "user@example.com"
+    const firstName = user?.firstname?.trim() || "-"
+    const lastName = user?.lastname?.trim() || "-"
+    const fullName = `${user?.firstname || ""} ${user?.lastname || ""}`.trim()
+    const displayName = fullName || user?.name || email
     const initial = email.charAt(0).toUpperCase()
     const [isDeleting, setIsDeleting] = useState(false)
     const [deleteError, setDeleteError] = useState("")
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
     const handleDeleteAccount = async () => {
-        const confirmed = window.confirm("Delete your account permanently? This action cannot be undone.")
-        if (!confirmed) return
-
         setDeleteError("")
         setIsDeleting(true)
         try {
@@ -41,6 +53,7 @@ export default function ProfilePage() {
             )
         } finally {
             setIsDeleting(false)
+            setDeleteConfirmOpen(false)
         }
     }
 
@@ -58,7 +71,7 @@ export default function ProfilePage() {
                             <span className="text-2xl font-bold text-cyan-700 dark:text-cyan-400">{initial}</span>
                         </div>
                         <div className="space-y-1">
-                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{email}</h3>
+                            <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{displayName}</h3>
                             <div className="flex items-center gap-4 text-sm text-neutral-500 flex-wrap justify-center sm:justify-start">
                                 <span className="flex items-center gap-1.5">
                                     <Mail className="h-3.5 w-3.5" />
@@ -82,12 +95,16 @@ export default function ProfilePage() {
                     </div>
                     <CardContent className="p-5 space-y-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-neutral-500">Email</span>
-                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{email}</span>
+                            <span className="text-sm text-neutral-500">First Name</span>
+                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{firstName}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-sm text-neutral-500">Role</span>
-                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">User</span>
+                            <span className="text-sm text-neutral-500">Last Name</span>
+                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{lastName}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm text-neutral-500">Email</span>
+                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{email}</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -107,7 +124,7 @@ export default function ProfilePage() {
                         <div className="flex items-center justify-between">
                             <span className="text-sm text-neutral-500">API Documentation</span>
                             <Button variant="outline" size="sm" className="h-8 px-4 py-2 text-xs gap-1.5 rounded-sm border-neutral-200 dark:border-white/10" asChild>
-                                <a href="https://github.com/gedyzed/web-crawler-scraper" target="_blank" rel="noopener noreferrer">
+                                <a href="https://docs.spidergo.app" target="_blank" rel="noopener noreferrer">
                                     <ExternalLink className="h-3 w-3" />
                                     View Docs
                                 </a>
@@ -131,7 +148,7 @@ export default function ProfilePage() {
                         <Button
                             variant="destructive"
                             size="sm"
-                            onClick={handleDeleteAccount}
+                            onClick={() => setDeleteConfirmOpen(true)}
                             disabled={isDeleting}
                             className="h-8 px-4 py-2 rounded-sm"
                         >
@@ -150,6 +167,39 @@ export default function ProfilePage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <AlertDialogContent className="bg-white dark:bg-[#131920] border-neutral-200 dark:border-white/10">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-neutral-900 dark:text-neutral-100">Delete Account</AlertDialogTitle>
+                        <AlertDialogDescription className="text-neutral-500">
+                            Delete your account permanently? This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            className="border-neutral-200 dark:border-white/10 text-neutral-600 dark:text-neutral-400 cursor-pointer"
+                            disabled={isDeleting}
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting}
+                            className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                "Delete Account"
+                            )}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }

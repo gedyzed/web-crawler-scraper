@@ -49,7 +49,7 @@ const LIGHT: Palette = {
     bgColor: "hsl(210 20% 98%)",
     glyphColor: "rgba(60, 65, 75, ",
     bracketColor: "rgba(50, 55, 65, ",
-    lineColor: "rgba(0, 0, 0, 0.04)",
+    lineColor: "rgba(0, 0, 0, 0.07)",
 };
 
 const CONFIG = {
@@ -237,7 +237,7 @@ export default function CrawlerBackground() {
 
         // Grid lines (very subtle)
         ctx.strokeStyle = pal.lineColor;
-        ctx.lineWidth = 0.5;
+        ctx.lineWidth = resolvedTheme === "dark" ? 0.7 : 0.7;
         for (let x = CONFIG.cellSize; x < width; x += CONFIG.cellSize) {
             ctx.beginPath();
             ctx.moveTo(x, 0);
