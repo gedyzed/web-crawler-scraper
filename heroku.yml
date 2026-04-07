@@ -1,0 +1,11 @@
+# heroku.yml for Go backend in /Backend
+
+# multi-stage build
+build:
+  docker:
+    release:
+        dockerfile: Backend/Dockerfile
+        target: builder
+    web: Backend/Dockerfile
+run:
+  web: ./Backend/app
