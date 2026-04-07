@@ -1,17 +1,22 @@
+# IMPORTANT:
+# Do not put real secrets in this file.
+# Use environment variables or a local .env file to override sensitive values.
+# This YAML is only a public-safe structure/template for configuration keys.
+
 app:
-  port: 8080
   name: spidergo
-  dev: true
+  port: "8080"
+  env: development
   debug: true
   domain: localhost
-  secure_cookies: true
+  secure_cookies: false
 
 db:
-  dns: your-postgress-dns
+  dns: postgres://postgres:postgres@localhost:5432/spidergo?sslmode=disable
 
 redis:
-  address: your-redis-address
-  password: your-redis-password
+  address: localhost:6379
+  password: ""
   db: 0
   pool_size: 10
   min_idle_conns: 2
@@ -20,6 +25,9 @@ redis:
   write_timeout: 3s
   pool_timeout: 4s
   max_retries: 2
+
+security:
+  min_entropy_bits: 30
 
 rate_limiter:
   auth:
@@ -33,35 +41,44 @@ rate_limiter:
     daily_limit: 1000
 
 jwt_config:
-    access_key: your-screet-key
-    refresh_key: your-refresh-screet-key
-    access_ttl: 10m
-    refresh_ttl: 48h
-
+  access_key: replace-from-env
+  refresh_key: replace-from-env
+  access_ttl: 10m
+  refresh_ttl: 48h
 
 google_oauth:
-    client_id: your-google-cloud-client-id
-    client_secret: your-google-app-client-screet
-    redirect_url: your-redirect-url
-    user_url: your-user-url
-  
-github_oauth: 
-    client_id: your-github-client-id
-    client_secret: your-google-app-client-screet
-    redirect_url:  your-redirect-url
-    user_url:  your-user-url
+  client_id: replace-from-env
+  client_secret: replace-from-env
+  redirect_url: http://localhost:8080/auth/google/callback
+  user_url: https://www.googleapis.com/oauth2/v3/userinfo
+  scopes:
+    - openid
+    - email
+    - profile
 
-email: 
-    username: your-email-account
-    api_key: your-api-key
+github_oauth:
+  client_id: replace-from-env
+  client_secret: replace-from-env
+  redirect_url: http://localhost:8080/auth/github/callback
+  user_url: https://api.github.com/user
+  scopes:
+    - read:user
+    - user:email
+
+# email sending is using render
+email:
+  username: replace-from-env
+  api_key: replace-from-env
 
 crawler:
-    allowed_domains:
-    max_depth: 10
-    max_pages: 100
-    max_concurrency: 10
-    allowed_paths:
-    denied_patterns:
-     
+  max_depth: 3
+  max_pages: 10
+  max_concurrency: 10
+
+scraper:
+  max_links_per_page: 100
+  max_images_per_page: 50
+  max_products_per_page: 20
+
 
 

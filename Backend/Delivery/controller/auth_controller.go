@@ -137,6 +137,16 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 
 	response, err := ac.authUC.Login(ctx, &user, ip)
 	if err != nil {
+		if err.HttpStatus == http.StatusForbidden && err.Message == domain.ErrEmailNotVerified {
+			c.IndentedJSON(err.HttpStatus, gin.H{
+				"message":               err.Message,
+				"requires_verification": true,
+				"redirect":              "/verify-email",
+				"email":                 user.Email,
+			})
+			return
+		}
+
 		if err.HttpStatus >= 500 {
 			logrus.WithFields(logrus.Fields{
 				"error":       err.Message,
@@ -180,12 +190,12 @@ func (ac *AuthController) LoginUser(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, gin.H{
 		"user": gin.H{
-			"user_id":     response.User.UserID,
-			"first_name":  response.User.FirstName,
-			"last_name":   response.User.LastName,
+			"userId":      response.User.UserID,
+			"firstName":   response.User.FirstName,
+			"lastName":    response.User.LastName,
 			"email":       response.User.Email,
-			"is_verified": response.User.Is_Verified,
-			"avatar_url":  response.User.AvatarURL,
+			"isVerified":  response.User.Is_Verified,
+			"avatarUrl":   response.User.AvatarURL,
 		},
 	})
 
@@ -348,6 +358,25 @@ func (ac *AuthController) RefreshToken(c *gin.Context) {
 	}
 }
 
+func (ac *AuthController) LogoutUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	accessToken, _ := c.Cookie(domain.AccessToken)
+	refreshToken, _ := c.Cookie(domain.RefreshTokenCookie)
+
+	if err := ac.authUC.Logout(ctx, accessToken, refreshToken); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"error": err.Message,
+		}).Warn("Failed to revoke refresh token during logout")
+	}
+
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie(domain.AccessToken, "", -1, "/", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+	c.SetCookie(domain.RefreshTokenCookie, "", -1, "/auth/refresh", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
 func (ac *AuthController) GetProfile(c *gin.Context) {
 	ctx := c.Request.Context()
 	userID := c.GetString("userID")
@@ -359,13 +388,29 @@ func (ac *AuthController) GetProfile(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, gin.H{
-		"user_id":     user.UserID,
-		"first_name":  user.FirstName,
-		"last_name":   user.LastName,
+		"userId":      user.UserID,
+		"firstName":   user.FirstName,
+		"lastName":    user.LastName,
 		"email":       user.Email,
-		"is_verified": user.Is_Verified,
-		"avatar_url":  user.AvatarURL,
+		"isVerified":  user.Is_Verified,
+		"avatarUrl":   user.AvatarURL,
 	})
+}
+
+func (ac *AuthController) DeleteUser(c *gin.Context) {
+	ctx := c.Request.Context()
+	userID := c.GetString("userID")
+
+	if err := ac.authUC.DeleteUser(ctx, userID); err != nil {
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
+		return
+	}
+
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie(domain.AccessToken, "", -1, "/", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+	c.SetCookie(domain.RefreshTokenCookie, "", -1, "/auth/refresh", ac.cfg.App.Domain, ac.cfg.App.SecureCookies, true)
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }
 
 func (ac *AuthController) ForgotPassword(c *gin.Context) {
@@ -376,6 +421,12 @@ func (ac *AuthController) ForgotPassword(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
+		return
+	}
+
+	request.Email = strings.ToLower(strings.TrimSpace(request.Email))
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
 		return
 	}
 
@@ -400,6 +451,12 @@ func (ac *AuthController) VerifyResetCode(c *gin.Context) {
 		return
 	}
 
+	request.Email = strings.ToLower(strings.TrimSpace(request.Email))
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
+		return
+	}
+
 	appErr := ac.authUC.VerifyResetCode(ctx, request.Email, request.Code)
 	if appErr != nil {
 		c.IndentedJSON(appErr.HttpStatus, gin.H{"message": appErr.Message})
@@ -418,6 +475,12 @@ func (ac *AuthController) ResetPassword(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidInputFormat})
+		return
+	}
+
+	request.Email = strings.ToLower(strings.TrimSpace(request.Email))
+	if !IsValidEmail(request.Email) {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrInvalidEmail})
 		return
 	}
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 	domain "web_crawler_scraper/Domain"
 
@@ -18,6 +19,7 @@ type IAuthUsecase interface {
 	Login(ctx context.Context, user *domain.User, ip string) (*domain.ExchangeData, *domain.AppError)
 	GetLoginURL(providerName string, state string) (string, *domain.AppError)
 	RegisterOrLogin(ctx context.Context, providerName string, code string, ip string) (*domain.ExchangeData, *domain.AppError)
+	Logout(ctx context.Context, accessToken string, refreshToken string) *domain.AppError
 	RefreshToken(ctx context.Context, accessToken string) (string, string, *domain.AppError)
 	SendVerificationEmail(ctx context.Context, email string) *domain.AppError
 	VerifyEmail(ctx context.Context, email string, code int64) *domain.AppError
@@ -26,6 +28,7 @@ type IAuthUsecase interface {
 	VerifyResetCode(ctx context.Context, email string, code string) *domain.AppError
 	ResetPassword(ctx context.Context, email string, password string) *domain.AppError
 	GetUserByID(ctx context.Context, id string) (*domain.User, *domain.AppError)
+	DeleteUser(ctx context.Context, id string) *domain.AppError
 }
 
 type authUsecase struct {
@@ -122,10 +125,6 @@ func (ac *authUsecase) Register(ctx context.Context, user *domain.User, ip strin
 	user.UserID = userID
 	user.Password = string(hashedPassword)
 
-	if err := ac.SendVerificationEmail(ctx, user.Email); err != nil {
-		return err
-	}
-
 	if err := ac.repo.Create(ctx, user); err != nil {
 		return err
 	}
@@ -179,8 +178,17 @@ func (ac *authUsecase) Login(ctx context.Context, user *domain.User, ip string) 
 	}
 
 	if !old_user.Is_Verified {
+		if emailErr := ac.SendVerificationEmail(ctx, old_user.Email); emailErr != nil {
+			logger.WithFields(logger.Fields{
+				"email": old_user.Email,
+				"error": emailErr.Err,
+			}).Error(domain.LogFailedSendEmail)
+			return nil, emailErr
+		}
+
 		return nil, &domain.AppError{
 			Message:    domain.ErrEmailNotVerified,
+			Err:        "verification_code_resent",
 			HttpStatus: 403,
 		}
 	}
@@ -347,6 +355,38 @@ func (ac *authUsecase) RegisterOrLogin(
 	return userData, nil
 }
 
+func (ac *authUsecase) Logout(ctx context.Context, accessToken string, refreshToken string) *domain.AppError {
+	userID := ""
+
+	if accessToken != "" {
+		claims, err := ac.jwtService.ValidateToken(accessToken, domain.AccessToken)
+		if err == nil && claims != nil {
+			userID = claims.UserID
+		}
+	}
+
+	if userID == "" && refreshToken != "" {
+		claims, err := ac.jwtService.ValidateToken(refreshToken, domain.RefreshTokenCookie)
+		if err == nil && claims != nil {
+			userID = claims.UserID
+		}
+	}
+
+	if userID == "" {
+		return nil
+	}
+
+	if err := ac.tokenRepo.DeleteToken(ctx, userID); err != nil {
+		logger.WithFields(logger.Fields{
+			"user_id": userID,
+			"error":   err,
+		}).Warn("Failed to delete refresh token during logout")
+		return err
+	}
+
+	return nil
+}
+
 func (ac *authUsecase) RefreshToken(ctx context.Context, refreshToken string) (string, string, *domain.AppError) {
 
 	var newAccessToken string
@@ -401,6 +441,8 @@ func (ac *authUsecase) SendVerificationEmail(ctx context.Context, email string) 
 }
 
 func (ac *authUsecase) SendForgotPasswordEmail(ctx context.Context, email string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	uniqueCode, err := generateSecureNumber(100000, 999999)
 	if err != nil {
 		return &domain.AppError{
@@ -481,6 +523,8 @@ func (ac *authUsecase) GetUserByID(ctx context.Context, id string) (*domain.User
 }
 
 func (ac *authUsecase) ForgotPassword(ctx context.Context, email string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	// check if user exists
 	user, err := ac.repo.FindByEmail(ctx, email)
 	if err != nil {
@@ -495,6 +539,8 @@ func (ac *authUsecase) ForgotPassword(ctx context.Context, email string) *domain
 }
 
 func (ac *authUsecase) VerifyResetCode(ctx context.Context, email string, code string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	// Convert code to int64
 	var codeInt int64
 	_, err_ := fmt.Sscanf(code, "%d", &codeInt)
@@ -506,6 +552,8 @@ func (ac *authUsecase) VerifyResetCode(ctx context.Context, email string, code s
 }
 
 func (ac *authUsecase) ResetPassword(ctx context.Context, email string, password string) *domain.AppError {
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	user, err := ac.repo.FindByEmail(ctx, email)
 	if err != nil {
 		return err
@@ -519,4 +567,19 @@ func (ac *authUsecase) ResetPassword(ctx context.Context, email string, password
 	user.Password = hashedPassword
 	_, err = ac.repo.Update(ctx, user)
 	return err
+}
+
+func (ac *authUsecase) DeleteUser(ctx context.Context, id string) *domain.AppError {
+	if id == "" {
+		return &domain.AppError{Message: domain.ErrUnauthorizedRequest, HttpStatus: http.StatusUnauthorized}
+	}
+
+	if err := ac.tokenRepo.DeleteToken(ctx, id); err != nil {
+		logger.WithFields(logger.Fields{
+			"user_id": id,
+			"error":   err,
+		}).Warn("Failed to delete refresh token while deleting user")
+	}
+
+	return ac.repo.DeleteByID(ctx, id)
 }

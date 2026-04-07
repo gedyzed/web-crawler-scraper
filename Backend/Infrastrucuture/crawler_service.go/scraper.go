@@ -10,6 +10,7 @@ import (
 	"time"
 
 	domain "web_crawler_scraper/Domain"
+	"web_crawler_scraper/Infrastrucuture/config"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/go-shiori/go-readability"
@@ -19,11 +20,18 @@ import (
 	logrus "github.com/sirupsen/logrus"
 )
 
+const (
+	defaultMaxLinksPerPage    = 100
+	defaultMaxImagesPerPage   = 50
+	defaultMaxProductsPerPage = 20
+)
+
 type ScraperServiceFactory struct {
+	scraperConfig config.ScraperConfig
 }
 
-func NewScraperServiceFactory() domain.IScraperServiceFactory {
-	return &ScraperServiceFactory{}
+func NewScraperServiceFactory(cfg config.ScraperConfig) domain.IScraperServiceFactory {
+	return &ScraperServiceFactory{scraperConfig: cfg}
 }
 
 func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
@@ -40,20 +48,43 @@ func (s *ScraperServiceFactory) NewScraperService() domain.IScrapeService {
 
 	collector.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
-		Delay:       100 * time.Millisecond,
+		Delay:       50 * time.Millisecond,
 		RandomDelay: 100 * time.Millisecond,
 	})
-	return NewScraper(collector)
+	return NewScraper(collector, s.scraperConfig)
 }
 
 // Scraper handles fetching and parsing pages.
 // It is stateless — all mutable state lives inside FetchAndParse.
 type Scraper struct {
-	collector *colly.Collector
+	collector          *colly.Collector
+	maxLinksPerPage    int
+	maxImagesPerPage   int
+	maxProductsPerPage int
 }
 
-func NewScraper(collector *colly.Collector) domain.IScrapeService {
-	return &Scraper{collector: collector}
+func NewScraper(collector *colly.Collector, cfg config.ScraperConfig) domain.IScrapeService {
+	maxLinks := cfg.MaxLinksPerPage
+	if maxLinks <= 0 {
+		maxLinks = defaultMaxLinksPerPage
+	}
+
+	maxImages := cfg.MaxImagesPerPage
+	if maxImages <= 0 {
+		maxImages = defaultMaxImagesPerPage
+	}
+
+	maxProducts := cfg.MaxProductsPerPage
+	if maxProducts <= 0 {
+		maxProducts = defaultMaxProductsPerPage
+	}
+
+	return &Scraper{
+		collector:          collector,
+		maxLinksPerPage:    maxLinks,
+		maxImagesPerPage:   maxImages,
+		maxProductsPerPage: maxProducts,
+	}
 }
 
 // FetchAndParse visits a single URL and returns the parsed Page
@@ -94,6 +125,9 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 	collector.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := normalizeURL(e.Request.AbsoluteURL(e.Attr("href")))
 		if link == "" {
+			return
+		}
+		if len(discoveredLinks) >= s.maxLinksPerPage {
 			return
 		}
 
@@ -144,13 +178,13 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			extractedProducts = extractProducts(e, targetURL)
+			extractedProducts = s.extractProducts(e, targetURL)
 		}()
 
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			extractedImages = extractImageLinks(e.DOM, targetURL)
+			extractedImages = extractImageLinks(e.DOM, targetURL, s.maxImagesPerPage)
 		}()
 
 		wg.Wait()
@@ -182,7 +216,7 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 // E-commerce Product Extraction
 // extractProducts runs all three extraction strategies and returns
 // a deduplicated slice of products.
-func extractProducts(e *colly.HTMLElement, pageURL string) []domain.Product {
+func (s *Scraper) extractProducts(e *colly.HTMLElement, pageURL string) []domain.Product {
 	var products []domain.Product
 
 	// Strategy 1 — JSON-LD schema.org
@@ -196,7 +230,12 @@ func extractProducts(e *colly.HTMLElement, pageURL string) []domain.Product {
 		products = append(products, *ogProduct)
 	}
 
-	return deduplicateProducts(products)
+	deduplicated := deduplicateProducts(products)
+	if len(deduplicated) > s.maxProductsPerPage {
+		return deduplicated[:s.maxProductsPerPage]
+	}
+
+	return deduplicated
 }
 
 // schemaProduct mirrors the relevant fields of a schema.org Product.
@@ -604,11 +643,18 @@ func normalizeHost(host string) string {
 	return host
 }
 
-func extractImageLinks(doc *goquery.Selection, baseURL string) []domain.Image {
+func extractImageLinks(doc *goquery.Selection, baseURL string, maxImages int) []domain.Image {
 	seen := make(map[string]bool)
 	var links []domain.Image
+	if maxImages <= 0 {
+		maxImages = defaultMaxImagesPerPage
+	}
 
 	add := func(raw string) {
+		if len(links) >= maxImages {
+			return
+		}
+
 		resolved := resolveURL(raw, baseURL)
 		if resolved == "" || seen[resolved] {
 			return

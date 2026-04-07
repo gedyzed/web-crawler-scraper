@@ -11,9 +11,10 @@ import (
 	logrus "github.com/sirupsen/logrus"
 )
 
-func NewRedisRateLimiter(cl *redis.Client, limit int64, window time.Duration) domain.IRateLimiter {
+func NewRedisRateLimiter(cl *redis.Client, prefix string, limit int64, window time.Duration) domain.IRateLimiter {
 	return &RedisRateLimiter{
 		client: cl,
+		prefix: prefix,
 		limit:  limit,
 		window: window,
 	}
@@ -25,6 +26,7 @@ func NewAPIKeyRedisRateLimiter(cl *redis.Client) domain.IApiKeyRateLimiter {
 
 type RedisRateLimiter struct {
 	client *redis.Client
+	prefix string
 	limit  int64
 	window time.Duration
 }
@@ -34,8 +36,12 @@ type APIKeyRedisRateLimiter struct {
 }
 
 func (rl *RedisRateLimiter) Allow(ctx context.Context, ip string) (bool, *domain.AppError) {
+	prefix := rl.prefix
+	if prefix == "" {
+		prefix = "default"
+	}
 
-	key := fmt.Sprintf("rate:%s", ip)
+	key := fmt.Sprintf("rate:%s:%s", prefix, ip)
 	count, err := rl.client.Incr(ctx, key).Result()
 	if err != nil {
 		logrus.WithFields(logrus.Fields{

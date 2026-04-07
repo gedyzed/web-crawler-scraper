@@ -1,0 +1,235 @@
+---
+order: 5
+title: Third-Party Integration
+description: Connect external services to SpiderGo using API keys.
+icon: key
+---
+
+# Third-Party Integration
+
+This guide covers the complete flow for external integrations: choose the backend URL, create an API key, call versioned endpoints, and handle common errors.
+
+## Base URLs
+
+| Environment | Base URL |
+| --- | --- |
+| Production | `https://api.spidergo.app` |
+| Local development | `http://localhost:8080` |
+
+If you are building an external integration, default to the production base URL unless you are testing locally.
+
+## Auth Model for Integrators
+
+| Area | Auth Type | How to Send |
+| --- | --- | --- |
+| API key management (`/auth/api-keys`) | Cookie session | Login first, then send browser cookies |
+| Programmatic API (`/v1/*`) | API key bearer token | `Authorization: Bearer sk_live_...` |
+
+## API Key Lifecycle
+
+### 1. Create key from dashboard (recommended)
+
+1. Sign in to the SpiderGo dashboard.
+2. Open API keys management.
+3. Create a key with a descriptive name (example: `Production Integrations`).
+4. Copy the generated key immediately.
+
+The key value is shown only once after creation.
+
+### 2. Create key through API (cookie-auth)
+
+If you are automating internal admin workflows, call the key endpoint with an authenticated cookie session.
+
+Request:
+
+```http
+POST /auth/api-keys
+Content-Type: application/json
+Cookie: access_token=...
+
+{
+  "name": "Production Integrations"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "API key created. Store it securely now; it will not be shown again.",
+  "api_key": "sk_live_...",
+  "meta": {
+    "key_id": "...",
+    "name": "Production Integrations",
+    "prefix": "sk_live_",
+    "last4": "abcd",
+    "daily_limit": 1000,
+    "is_active": true,
+    "created_at": "2026-03-23T00:00:00Z"
+  }
+}
+```
+
+### 3. List and revoke keys
+
+- `GET /auth/api-keys` returns metadata for active keys.
+- `DELETE /auth/api-keys/:id` revokes a key.
+
+## Calling the API
+
+Use this header on all `/v1/*` requests:
+
+```http
+Authorization: Bearer sk_live_your_key
+```
+
+### Curl
+
+```bash
+curl -X POST https://api.spidergo.app/v1/scrape \
+  -H "Authorization: Bearer sk_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
+
+```bash
+curl -X POST https://api.spidergo.app/v1/crawl \
+  -H "Authorization: Bearer sk_live_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
+
+### JavaScript / TypeScript (fetch)
+
+```ts
+const API_BASE_URL = "https://api.spidergo.app";
+const apiKey = process.env.SPIDERGO_API_KEY;
+
+async function scrape(url: string) {
+  const response = await fetch(`${API_BASE_URL}/v1/scrape`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ url }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+```
+
+### Python (requests)
+
+```python
+import requests
+
+API_BASE_URL = "https://api.spidergo.app"
+API_KEY = "sk_live_your_key"
+
+resp = requests.post(
+    f"{API_BASE_URL}/v1/crawl",
+    headers={
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    },
+    json={"url": "https://example.com"},
+    timeout=30,
+)
+
+resp.raise_for_status()
+print(resp.json())
+```
+
+### Go (net/http)
+
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"net/http"
+)
+
+func main() {
+	apiURL := "https://api.spidergo.app/v1/scrape"
+	apiKey := "sk_live_your_key"
+	payload := []byte(`{"url":"https://example.com"}`)
+
+	req, err := http.NewRequest(http.MethodPost, apiURL, bytes.NewReader(payload))
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("status=%d body=%s\n", resp.StatusCode, string(body))
+}
+```
+
+## Minimal Request and Response Shape
+
+Request body for `/v1/scrape` and `/v1/crawl`:
+
+```json
+{
+  "url": "https://example.com"
+}
+```
+
+Successful responses are returned as a message envelope:
+
+```json
+{
+  "message": {
+    "CRID": "...",
+    "UserID": "...",
+    "TotalPages": 1,
+    "TotalResponseTimeMS": 120,
+    "TotalPayloadSize": 58244,
+    "Pages": []
+  }
+}
+```
+
+## Integration Errors and Limits
+
+| Status | Typical Cause | Action |
+| --- | --- | --- |
+| 400 | Invalid request body | Validate JSON payload and required `url` field |
+| 401 | Missing or invalid key format | Send `Authorization: Bearer sk_live_...` |
+| 403 | Key revoked/inactive or unauthorized key state | Rotate or create a new key |
+| 429 | API key daily quota exceeded | Retry later or use a key with available quota |
+| 500 | Internal error | Retry with backoff and log request ID/context |
+
+Default API-key limits in backend config:
+
+- Max keys per user: `3`
+- Daily requests per key: `1000`
+
+## Security Checklist
+
+- Never expose API keys in browser-side code.
+- Store keys in a server-side secret manager.
+- Rotate keys regularly.
+- Revoke unused keys immediately.
+- Treat key leaks as incidents and replace compromised keys.
+
+## Next Reference
+
+For full endpoint inventory (including auth/session routes), see [Backend API](/docs/backend-api).

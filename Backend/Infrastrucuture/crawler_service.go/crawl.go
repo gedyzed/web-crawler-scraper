@@ -2,7 +2,6 @@ package crawlerservicego
 
 import (
 	"context"
-	"encoding/json"
 
 	"net/http"
 	"strings"
@@ -13,7 +12,6 @@ import (
 
 	colly "github.com/gocolly/colly"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	logrus "github.com/sirupsen/logrus"
 )
 
@@ -36,20 +34,19 @@ type CrawlerServices struct {
 	Visited       map[string]bool
 	CrawlerConfig config.CrawlerConfig
 	Result        *domain.CrawlerResult
-	redisClient   redis.Client
 	PageCount     int
 }
 
 // CrawlerServiceFactory — holds immutable config, safe as singleton
 type CrawlerServiceFactory struct {
-	config      config.CrawlerConfig
-	redisClient redis.Client
+	crawlerConfig config.CrawlerConfig
+	scraperConfig config.ScraperConfig
 }
 
-func NewCrawlerServiceFactory(cfg config.CrawlerConfig, rdb redis.Client) domain.ICrawlerServiceFactory {
+func NewCrawlerServiceFactory(crawlerCfg config.CrawlerConfig, scraperCfg config.ScraperConfig) domain.ICrawlerServiceFactory {
 	return &CrawlerServiceFactory{
-		config:      cfg,
-		redisClient: rdb,
+		crawlerConfig: crawlerCfg,
+		scraperConfig: scraperCfg,
 	}
 }
 
@@ -72,45 +69,22 @@ func (f *CrawlerServiceFactory) NewCrawlerService(userID string) domain.ICrawler
 
 	collector.Limit(&colly.LimitRule{
 		DomainGlob:  "*",
-		Delay:       100 * time.Millisecond,
+		Delay:       50 * time.Millisecond,
 		RandomDelay: 100 * time.Millisecond,
 	})
 
 	return &CrawlerServices{
-		Scraper:       NewScraper(collector),
+		Scraper:       NewScraper(collector, f.scraperConfig),
 		mu:            &sync.Mutex{},
 		Visited:       make(map[string]bool),
-		CrawlerConfig: f.config,
+		CrawlerConfig: f.crawlerConfig,
 		Result:        result,
-		redisClient:   f.redisClient,
 		PageCount:     0,
 	}
 }
 
 // Crawling — BFS level-order traversal
 func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.CrawlerResult, *domain.AppError) {
-
-	// ── Check Redis cache ──
-	if cr.redisClient.Exists(ctx, seedURL).Val() > 0 {
-		data, err := cr.redisClient.Get(ctx, seedURL).Result()
-		if err != nil {
-			return nil, &domain.AppError{
-				Message:    domain.ErrInternalServer,
-				Err:        err.Error(),
-				HttpStatus: http.StatusInternalServerError,
-			}
-		}
-
-		var result domain.CrawlerResult
-		if err := json.Unmarshal([]byte(data), &result); err != nil {
-			return nil, &domain.AppError{
-				Message:    domain.ErrInternalServer,
-				Err:        err.Error(),
-				HttpStatus: http.StatusInternalServerError,
-			}
-		}
-		return &result, nil
-	}
 
 	// ── BFS crawl ──
 	currentLevel := []QueueItem{{URL: seedURL, Depth: 0}}
@@ -130,80 +104,89 @@ func (cr *CrawlerServices) Crawl(ctx context.Context, seedURL string) (*domain.C
 		}
 
 		var nextLevel []QueueItem
-		resultsCh := make(chan crawlWorkerResult, len(currentLevel))
-		var wg sync.WaitGroup
+		resultsCh := make(chan crawlWorkerResult, maxConcurrency)
+		nextIndex := 0
+		inFlight := 0
 
-		for _, item := range currentLevel {
-			if !cr.AllowedByConfig(item.URL, item.Depth) {
-				continue
+		dispatchNext := func() bool {
+			for nextIndex < len(currentLevel) {
+				if cr.PageCount >= cr.CrawlerConfig.MaxPages {
+					return false
+				}
+
+				item := currentLevel[nextIndex]
+				nextIndex++
+
+				if !cr.AllowedByConfig(item.URL, item.Depth) {
+					continue
+				}
+
+				select {
+				case sem <- struct{}{}:
+					inFlight++
+					go func(item QueueItem) {
+						defer func() { <-sem }()
+
+						// Each goroutine calls FetchAndParse which creates its own
+						// colly.Collector internally — no shared state.
+						page, links, err := cr.Scraper.FetchAndParse(item.URL, cr.Result.CRID, cr.Result.UserID)
+						if err != nil {
+							resultsCh <- crawlWorkerResult{item: item, err: err}
+							return
+						}
+
+						resultsCh <- crawlWorkerResult{
+							item:  item,
+							page:  page,
+							links: links,
+						}
+					}(item)
+					return true
+				default:
+					return false
+				}
 			}
 
-			sem <- struct{}{}
-			wg.Add(1)
-			go func(item QueueItem) {
-				defer wg.Done()
-				defer func() { <-sem }()
-
-				// Each goroutine calls FetchAndParse which creates its own
-				// colly.Collector internally — no shared state.
-
-				page, links, err := cr.Scraper.FetchAndParse(item.URL, cr.Result.CRID, cr.Result.UserID)
-				if err != nil {
-					resultsCh <- crawlWorkerResult{item: item, err: err}
-					return
-				}
-
-				resultsCh <- crawlWorkerResult{
-					item:  item,
-					page:  page,
-					links: links,
-				}
-
-			}(item)
+			return false
 		}
 
-		go func() {
-			wg.Wait()
-			close(resultsCh)
-		}()
+		for inFlight < maxConcurrency && dispatchNext() {
+		}
 
-		for result := range resultsCh {
+		for inFlight > 0 {
+			result := <-resultsCh
+			inFlight--
+
 			if result.err != nil {
 				logrus.WithFields(logrus.Fields{
 					"url":   result.item.URL,
 					"error": result.err.Message,
 				}).Warn(domain.LogCrawlPageError)
-				continue
-			}
-
-			if result.page == nil || cr.PageCount >= cr.CrawlerConfig.MaxPages {
-				continue
-			}
-
-			cr.PageCount++
-			cr.Result.Pages = append(cr.Result.Pages, *result.page)
-			cr.Result.TotalPages++
-			cr.Result.TotalResponseTimeMS += result.page.ResponseTimeMS
-			cr.Result.TotalPayloadSize += result.page.PayloadSize
-			for _, link := range result.links {
-				if !cr.Visited[link] {
-					cr.Visited[link] = true
-					nextLevel = append(nextLevel, QueueItem{
-						URL:   link,
-						Depth: result.item.Depth + 1,
-					})
+			} else if result.page != nil && cr.PageCount < cr.CrawlerConfig.MaxPages {
+				cr.PageCount++
+				cr.Result.Pages = append(cr.Result.Pages, *result.page)
+				cr.Result.TotalPages++
+				cr.Result.TotalResponseTimeMS += result.page.ResponseTimeMS
+				cr.Result.TotalPayloadSize += result.page.PayloadSize
+				for _, link := range result.links {
+					if !cr.Visited[link] {
+						cr.Visited[link] = true
+						nextLevel = append(nextLevel, QueueItem{
+							URL:   link,
+							Depth: result.item.Depth + 1,
+						})
+					}
 				}
+			}
+
+			for inFlight < maxConcurrency && dispatchNext() {
 			}
 		}
 
 		currentLevel = nextLevel
 	}
 
-	// Cache result in Redis ─
-	jsonBytes, err := json.Marshal(cr.Result)
-	if err == nil {
-		cr.redisClient.Set(ctx, seedURL, string(jsonBytes), time.Hour*4)
-	}
+	cr.Result.Cached = false
 
 	logrus.WithField("pages", cr.PageCount).Info(domain.LogCrawlCompleted)
 

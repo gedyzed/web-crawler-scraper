@@ -59,6 +59,33 @@ interface AuthState {
     }
 }
 
+const splitFullName = (name: string): { first_name: string; last_name: string } => {
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    const first_name = parts[0] || ''
+    const last_name = parts.slice(1).join(' ')
+    return { first_name, last_name }
+}
+
+const normalizeUser = (payload: any): User => {
+    const data = payload?.user || payload || {}
+    const firstname = (data.first_name || data.firstName || data.firstname || data.FirstName || '').trim()
+    const lastname = (data.last_name || data.lastName || data.lastname || data.LastName || '').trim()
+    const email = (data.email || data.Email || '').trim()
+    const combinedName = `${firstname} ${lastname}`.trim()
+    const rawName = (data.name || data.Name || '').trim()
+    const name = combinedName
+        || (rawName && rawName.toLowerCase() !== email.toLowerCase() ? rawName : undefined)
+    const username = data.username || (email ? email.split('@')[0] : '') || 'User'
+
+    return {
+        firstname,
+        lastname,
+        name,
+        email,
+        username,
+    }
+}
+
 // ─── Async Thunks ─────────────────────────────────────────
 
 export const loginUser = createAsyncThunk(
@@ -73,7 +100,7 @@ export const loginUser = createAsyncThunk(
             return profileRes.data
         } catch (err: any) {
             console.log(err.response)
-            return rejectWithValue(err.response?.data?.message || err.message || 'Login failed')
+            return rejectWithValue(err.response?.data || { message: err.message || 'Login failed' })
         }
     }
 )
@@ -82,7 +109,8 @@ export const signupUser = createAsyncThunk(
     'auth/signupUser',
     async ({ name, email, password }: { name: string; email: string; password: string }, { rejectWithValue }) => {
         try {
-            const response = await api.post('/auth/register', { name, email, password })
+            const { first_name, last_name } = splitFullName(name)
+            const response = await api.post('/auth/register', { first_name, last_name, email, password })
             console.log(response.data)
             return response.data
         } catch (err: any) {
@@ -197,6 +225,18 @@ export const generateApiKey = createAsyncThunk(
             return response.data
         } catch (err: any) {
             return rejectWithValue(err.response?.data?.message || err.message || 'Failed to generate API Key')
+        }
+    }
+)
+
+export const logoutUser = createAsyncThunk(
+    'auth/logoutUser',
+    async (_, { rejectWithValue }) => {
+        try {
+            await api.post('/auth/logout')
+            return true
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || err.message || 'Logout failed')
         }
     }
 )
@@ -432,17 +472,29 @@ const authSlice = createSlice({
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.login.loading = false
                 state.isAuthenticated = true
-                const email = action.payload?.Email || action.payload?.email || ''
-                state.user = {
-                    firstname: action.payload.firstname,
-                    lastname: action.payload.lastname,
-                    name: action.payload.name || action.payload.Name,
-                    username: action.payload.username || email.split('@')[0] || 'User', email
-                }
+                state.user = normalizeUser(action.payload)
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.login.loading = false
-                state.login.error = (action.payload as string) || 'Login failed'
+                const payload = action.payload as { message?: string } | string | undefined
+                state.login.error = typeof payload === 'string'
+                    ? payload
+                    : payload?.message || 'Login failed'
+            })
+
+        // ── Logout ──
+        builder
+            .addCase(logoutUser.pending, (state) => {
+                state.login.loading = true
+            })
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.login.loading = false
+                state.isAuthenticated = false
+                state.user = null
+                state.apiKeys = { ...initialState.apiKeys }
+            })
+            .addCase(logoutUser.rejected, (state) => {
+                state.login.loading = false
             })
 
         // ── Signup ──
@@ -544,13 +596,7 @@ const authSlice = createSlice({
             .addCase(checkAuth.fulfilled, (state, action) => {
                 state.authLoading = false
                 state.isAuthenticated = true
-                const email = action.payload?.Email || action.payload?.email || ''
-                state.user = {
-                    firstname: action.payload.firstname,
-                    lastname: action.payload.lastname,
-                    name: action.payload.name || action.payload.Name,
-                    username: action.payload.username || email.split('@')[0] || 'User', email
-                }
+                state.user = normalizeUser(action.payload)
             })
             .addCase(checkAuth.rejected, (state) => {
                 state.authLoading = false

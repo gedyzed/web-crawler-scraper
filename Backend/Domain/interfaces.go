@@ -10,6 +10,7 @@ type IUserRepo interface {
 	Create(ctx context.Context, user *User) *AppError
 	FindByID(ctx context.Context, field string) (*User, *AppError)
 	FindByEmail(ctx context.Context, field string) (*User, *AppError)
+	DeleteByID(ctx context.Context, id string) *AppError
 	Update(ctx context.Context, user *User) (*User, *AppError)
 	SaveProvider(ctx context.Context, provider *AuthProvider) *AppError
 	CreateVerificationCode(ctx context.Context, verification *VerificationCode) *AppError
@@ -54,6 +55,7 @@ type IResultRepo interface {
 	FindAllHistory(ctx context.Context, userID string) ([]History, *AppError)
 	FindResultByID(ctx context.Context, resultID string, userID string) (*CrawlerResult, *AppError)
 	FindHistoryByID(ctx context.Context, historyID string, userID string) (*History, *AppError)
+	DeleteHistoryByID(ctx context.Context, historyID string, userID string) *AppError
 }
 
 type IApiKeyRepo interface {

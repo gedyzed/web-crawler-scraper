@@ -10,7 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
-import { setLoginField, loginUser } from "@/store/authSlice"
+import { setLoginField, loginUser, setSignupField } from "@/store/authSlice"
 import { Loader2 } from "lucide-react"
 import { GlobalNotification } from "@/components/ui/global-notification"
 import { useEffect, useState } from "react"
@@ -54,6 +54,22 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
         if (loginUser.fulfilled.match(result)) {
             setLoginSuccess(true)
             setTimeout(() => navigate("/"), 1500)
+            return
+        }
+
+        if (loginUser.rejected.match(result)) {
+            const payload = result.payload as
+                | { message?: string; requires_verification?: boolean; redirect?: string; email?: string }
+                | string
+                | undefined
+
+            if (payload && typeof payload !== "string" && payload.requires_verification) {
+                const targetEmail = payload.email || email
+                if (targetEmail) {
+                    dispatch(setSignupField({ field: "email", value: targetEmail }))
+                }
+                navigate(payload.redirect || "/verify-email")
+            }
         }
     }
 
@@ -93,7 +109,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                     <Input
                         id="email"
                         type="email"
-                        placeholder="m@example.com"
+                        placeholder="john.doe@example.com"
                         autoComplete="username"
                         required
                         value={email}

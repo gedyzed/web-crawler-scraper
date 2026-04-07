@@ -33,10 +33,10 @@ func main() {
 		logrus.SetLevel(logrus.InfoLevel)
 	}
 
-	db := infrastructure.DBConnect(&cfg.DB)
+	db := infrastructure.DBConnect(&cfg.DB, cfg.App.Debug)
 	redis := infrastructure.NewRedisClient(&cfg.Redis)
-	authRateLimiter := infrastructure.NewRedisRateLimiter(redis, cfg.RateLimit.Auth.Limit, cfg.RateLimit.Auth.Window)
-	trialRateLimiter := infrastructure.NewRedisRateLimiter(redis, cfg.RateLimit.Trial.Limit, cfg.RateLimit.Trial.Window)
+	authRateLimiter := infrastructure.NewRedisRateLimiter(redis, "auth", cfg.RateLimit.Auth.Limit, cfg.RateLimit.Auth.Window)
+	trialRateLimiter := infrastructure.NewRedisRateLimiter(redis, "trial", cfg.RateLimit.Trial.Limit, cfg.RateLimit.Trial.Window)
 	apiKeyRateLimiter := infrastructure.NewAPIKeyRedisRateLimiter(redis)
 
 	if err := db.AutoMigrate(&domain.ApiKey{}); err != nil {
@@ -67,8 +67,8 @@ func main() {
 	passwordService := infrastructure.NewPasswordService()
 	emailService := emailService.NewEmailService(&cfg.Email)
 	jwtService := infrastructure.NewJwtService(&cfg.JWTConfig)
-	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, *redis)
-	scraperFactory := crawlerservicego.NewScraperServiceFactory()
+	crawlerFactory := crawlerservicego.NewCrawlerServiceFactory(cfg.Crawler, cfg.Scraper)
+	scraperFactory := crawlerservicego.NewScraperServiceFactory(cfg.Scraper)
 
 	// usecases
 	authUsecase := usecase.NewAuthUsecase(userRepo,
@@ -79,7 +79,7 @@ func main() {
 		passwordService,
 		emailService,
 	)
-	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory, trialRateLimiter)
+	crawlUsecase := usecase.NewCrawlerUsecase(resultRepo, crawlerFactory, trialRateLimiter, redis)
 	scraperUsecase := usecase.NewScraperUsecase(resultRepo, scraperFactory, trialRateLimiter)
 	apiKeyUsecase := usecase.NewApiKeyUsecase(
 		apiKeyRepo,

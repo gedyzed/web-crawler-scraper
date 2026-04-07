@@ -15,7 +15,7 @@ import {
 
 import { useAppDispatch } from "@/store/hooks"
 import { useNavigate } from "react-router-dom"
-import { logout } from "@/store/authSlice"
+import { logout, logoutUser } from "@/store/authSlice"
 import { GlobalNotification } from "@/components/ui/global-notification"
 import { useState } from "react"
 
@@ -35,11 +35,18 @@ export function NavUser({
     const [loggingOut, setLoggingOut] = useState(false)
     const [showLogoutSuccess, setShowLogoutSuccess] = useState(false)
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         setLoggingOut(true)
         setShowLogoutSuccess(true)
-        dispatch(logout())
-        setTimeout(() => navigate("/"), 1500)
+        try {
+            await dispatch(logoutUser()).unwrap()
+        } catch {
+            // Still clear local state to avoid leaving the UI in an authenticated state.
+        } finally {
+            dispatch(logout())
+            setTimeout(() => navigate("/"), 1500)
+            setLoggingOut(false)
+        }
     }
 
     // Get initials for avatar fallback (up to 2 characters)

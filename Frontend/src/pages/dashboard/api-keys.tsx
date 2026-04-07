@@ -161,7 +161,7 @@ export default function ApiKeysPage() {
                         </div>
                         <Button
                             onClick={() => setCreateOpen(true)}
-                            className="bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg px-4 h-9 font-medium shadow-none transition-colors cursor-pointer"
+                            className="bg-cyan-600 hover:bg-cyan-700 text-white rounded-sm px-4 h-9 font-medium shadow-none transition-colors cursor-pointer"
                         >
                             <Plus className="h-4 w-4 mr-1.5" /> Create Key
                         </Button>

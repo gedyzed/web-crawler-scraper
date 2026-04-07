@@ -8,10 +8,11 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { ShieldCheck, Loader2, CheckCircle2, RotateCcw, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton"
+import spidergoLogo from "@/assets/spidergo-logo.png"
 import {
     setVerifyEmailCode,
     clearVerifyEmailError,
@@ -27,11 +28,20 @@ const CODE_LENGTH = 6
 export default function VerifyEmailPage() {
     const dispatch = useAppDispatch()
     const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+    const navigate = useNavigate()
 
     const { code, loading, verified, timer, error } = useAppSelector(
         (state) => state.auth.verifyEmail
     )
     const signupEmail = useAppSelector((state) => state.auth.signup.email)
+
+    const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((signupEmail || "").trim())
+
+    useEffect(() => {
+        if (!hasValidEmail) {
+            navigate("/", { replace: true })
+        }
+    }, [hasValidEmail, navigate])
 
     // Focus first input on mount, cleanup on unmount
     useEffect(() => {
@@ -70,6 +80,7 @@ export default function VerifyEmailPage() {
         const newCode = [...code]
         newCode[index] = digit
         if (newCode.every((d) => d !== "") && newCode.join("").length === CODE_LENGTH) {
+            if (!hasValidEmail) return
             dispatch(verifyEmailCode({ email: signupEmail, code: newCode.join("") }))
         }
     }
@@ -93,6 +104,7 @@ export default function VerifyEmailPage() {
         const nextEmpty = newCode.findIndex((d) => d === "")
         if (nextEmpty === -1) {
             inputRefs.current[CODE_LENGTH - 1]?.focus()
+            if (!hasValidEmail) return
             dispatch(verifyEmailCode({ email: signupEmail, code: newCode.join("") }))
         } else {
             inputRefs.current[nextEmpty]?.focus()
@@ -100,7 +112,7 @@ export default function VerifyEmailPage() {
     }
 
     const handleResend = () => {
-        if (timer > 0) return
+        if (timer > 0 || !hasValidEmail) return
         dispatch(resendVerificationCode({ email: signupEmail })).then(() => {
             inputRefs.current[0]?.focus()
         })
@@ -121,10 +133,10 @@ export default function VerifyEmailPage() {
             <div className="relative flex w-full max-w-sm flex-col gap-6">
                 <Link to="/" className="flex items-center gap-1.5 self-center font-medium">
                     <ImageWithSkeleton
-                        src="/spidergo-logo.png"
+                        src={spidergoLogo}
                         alt="SpiderGo"
-                        className="h-7 w-7"
-                        containerClassName="h-7 w-7"
+                        className="h-8 w-8"
+                        containerClassName="h-8 w-8"
                     />
                     <span className="text-lg font-bold tracking-tight text-neutral-900 dark:text-neutral-100">
                         Spider<span className="text-cyan-600 dark:text-cyan-400">Go</span>

@@ -102,3 +102,27 @@ func (cl *CrawlerController) GetResult(c *gin.Context) {
 
 	c.IndentedJSON(http.StatusOK, result)
 }
+
+func (cl *CrawlerController) DeleteHistory(c *gin.Context) {
+	ctx := c.Request.Context()
+	userID := c.GetString("userID")
+	historyID := c.Param("id")
+
+	if historyID == "" {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "History ID is required"})
+		return
+	}
+
+	err := cl.CralwerUC.DeleteHistory(ctx, historyID, userID)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"userID":    userID,
+			"historyID": historyID,
+			"error":     err.Message,
+		}).Error("Failed to delete history")
+		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
+		return
+	}
+
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "History deleted successfully"})
+}

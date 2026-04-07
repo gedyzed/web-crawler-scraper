@@ -76,6 +76,23 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string) (*domain.User,
 	return &user, nil
 }
 
+func (r *userRepo) DeleteByID(ctx context.Context, id string) *domain.AppError {
+	res := r.db.WithContext(ctx).Unscoped().Where("user_id = ?", id).Delete(&domain.User{})
+	if res.Error != nil {
+		logger.WithFields(logger.Fields{
+			"user_id": id,
+			"error":   res.Error,
+		}).Error("Failed to delete user")
+		return &domain.AppError{Message: domain.ErrInternalServer, HttpStatus: 500}
+	}
+
+	if res.RowsAffected == 0 {
+		return &domain.AppError{Message: domain.ErrUserNotFound, HttpStatus: 404}
+	}
+
+	return nil
+}
+
 func (r *userRepo) Update(ctx context.Context, user *domain.User) (*domain.User, *domain.AppError) {
 
 	err := r.db.WithContext(ctx).Model(domain.User{}).Where("user_id = ?", user.UserID).Updates(user).Error

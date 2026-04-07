@@ -12,6 +12,7 @@ type CrawlerResult struct {
 	TotalPages          int
 	TotalResponseTimeMS int64
 	TotalPayloadSize    int64
+	Cached              bool `gorm:"-"`
 	Pages               []Page `gorm:"constraint:OnUpdate:CASCADE, OnDelete:CASCADE;foreignKey:ResultID;references:CRID"`
 	gorm.Model          `json:"-"`
 }

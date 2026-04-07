@@ -20,7 +20,7 @@ func setupCrawlerUsecaseTest(t *testing.T) (*gomock.Controller, *mocks.MockIResu
 	mockkRateLimiter := mocks.NewMockIRateLimiter(ctrl)
 
 
-	uc := usecase.NewCrawlerUsecase(mockRepo, mockFactory, mockkRateLimiter)
+	uc := usecase.NewCrawlerUsecase(mockRepo, mockFactory, mockkRateLimiter, nil)
 
 	return ctrl, mockRepo, mockFactory, mockService, uc
 }
