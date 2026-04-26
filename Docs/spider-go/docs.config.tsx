@@ -38,7 +38,7 @@ export default defineDocs({
     providers: {
       groq: {
         baseUrl: "https://api.groq.com/openai/v1",
-        apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY,
+        apiKey: process.env.GROQ_API_KEY,
       },
     },
     model: {
