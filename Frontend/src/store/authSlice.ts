@@ -271,7 +271,7 @@ export const deleteApiKey = createAsyncThunk(
 // ─── Initial State ────────────────────────────────────────
 const initialState: AuthState = {
     isAuthenticated: false,
-    authLoading: true,
+    authLoading: false,
     user: null,
     apiKeys: {
         keys: [],

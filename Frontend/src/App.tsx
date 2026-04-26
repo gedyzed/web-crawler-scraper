@@ -1,8 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { checkAuth } from "./store/authSlice";
-import { AppShellSkeleton } from "./components/loading-skeletons";
 import LandingPage from "./pages/landing";
 import LoginPage from "./pages/login";
 import SignupPage from "./pages/signup";
@@ -15,17 +14,20 @@ import DashboardPage from "./pages/dashboard/dashboard";
 import HistoryPage from "./pages/dashboard/history";
 import ProfilePage from "./pages/dashboard/profile";
 import ApiKeysPage from "./pages/dashboard/api-keys";
+import { AppShellSkeleton } from "./components/loading-skeletons";
 
 function App() {
     const dispatch = useAppDispatch();
-    const authLoading = useAppSelector((s) => s.auth.authLoading);
-    const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+    const { isAuthenticated, authLoading } = useAppSelector((s) => s.auth);
+    const [authBootstrapped, setAuthBootstrapped] = useState(false);
 
     useEffect(() => {
-        dispatch(checkAuth());
+        dispatch(checkAuth()).finally(() => {
+            setAuthBootstrapped(true);
+        });
     }, [dispatch]);
 
-    if (authLoading) {
+    if (!authBootstrapped || authLoading) {
         return <AppShellSkeleton />;
     }
 
