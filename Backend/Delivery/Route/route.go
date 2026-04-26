@@ -48,6 +48,10 @@ func AuthRoutes(router *gin.Engine,
 
 }
 
+func HealthRoutes(router *gin.Engine, healthHandler *controller.HealthController) {
+	router.GET("/health", healthHandler.Health)
+}
+
 func CrawlerAndScraperRoutes(
 	router *gin.Engine,
 	crawlerHandler *controller.CrawlerController,
