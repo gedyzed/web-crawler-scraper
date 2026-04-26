@@ -14,6 +14,7 @@ import DashboardPage from "./pages/dashboard/dashboard";
 import HistoryPage from "./pages/dashboard/history";
 import ProfilePage from "./pages/dashboard/profile";
 import ApiKeysPage from "./pages/dashboard/api-keys";
+import { AppShellSkeleton } from "./components/loading-skeletons";
 
 function App() {
     const dispatch = useAppDispatch();
@@ -27,18 +28,7 @@ function App() {
     }, [dispatch]);
 
     if (!authBootstrapped || authLoading) {
-        return (
-            <main
-                style={{
-                    minHeight: "100vh",
-                    display: "grid",
-                    placeItems: "center",
-                    fontFamily: "system-ui, -apple-system, sans-serif",
-                }}
-            >
-                <p>Loading your session...</p>
-            </main>
-        );
+        return <AppShellSkeleton />;
     }
 
     return (
