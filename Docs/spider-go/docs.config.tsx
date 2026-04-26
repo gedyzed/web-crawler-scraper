@@ -21,7 +21,7 @@ import {
 
 
 export default defineDocs({
-  entry: "docs",
+  entry: "d",
   github: {
     url: "https://github.com/gedyzed/web-crawler-scraper",
     branch: "main",
@@ -35,15 +35,15 @@ export default defineDocs({
     mode: "floating",
     position: "bottom-right",
     floatingStyle: "full-modal",
-    providers:{
+    providers: {
       groq: {
         baseUrl: "https://api.groq.com/openai/v1",
         apiKey: process.env.GROQ_API_KEY,
-      },  
+      },
     },
     model: {
       models: [
-        { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", provider: "groq" },        
+        { id: "llama-3.3-70b-versatile", label: "Llama 3.3 70B", provider: "groq" },
       ],
       defaultModel: "llama-3.3-70b-versatile",
     },

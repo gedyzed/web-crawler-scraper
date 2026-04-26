@@ -92,6 +92,7 @@ func main() {
 	apiKeyController := controller.NewAPIKeyController(apiKeyUsecase)
 	crawlController := controller.NewCrawlerController(&cfg.Crawler, crawlUsecase)
 	scraperController := controller.NewScraperController(scraperUsecase)
+	healthController := controller.NewHealthController(db)
 
 	// Middlewares
 	middlewares := middleware.NewMiddleware(jwtService, apiKeyUsecase, apiKeyRateLimiter)
@@ -119,6 +120,7 @@ func main() {
 
 	route.AuthRoutes(router, authController, apiKeyController, middlewares)
 	route.CrawlerAndScraperRoutes(router, crawlController, scraperController, middlewares)
+	route.HealthRoutes(router, healthController)
 
 	router.Run(":" + cfg.App.Port)
 
