@@ -24,6 +24,7 @@ import {
     BookOpen,
     Bug,
     Layers,
+    Home,
     Code2,
     Loader2,
     type LucideIcon,
@@ -97,6 +98,13 @@ function Navbar() {
                 </Link>
 
                 <div className="hidden sm:flex items-center gap-6">
+                    <Link
+                        to="/"
+                        className="flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-white transition-colors no-underline"
+                    >
+                        <Home className="h-4 w-4" />
+                        Home
+                    </Link>
                     <a
                         href="https://docs.spidergo.app"
                         rel="noopener noreferrer"
@@ -104,14 +112,6 @@ function Navbar() {
                     >
                         <BookOpen className="h-4 w-4" />
                         Docs
-                    </a>
-                    <a
-                        href="https://docs.spidergo.app/cli"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors"
-                    >
-                        <Code2 className="h-4 w-4" />
-                        CLI
                     </a>
                 </div>
 
@@ -187,15 +187,14 @@ function Navbar() {
                         <BookOpen className="h-4 w-4" />
                         Docs
                     </a>
-                    <a
-                        href="https://docs.spidergo.app/cli"
-                        rel="noopener noreferrer"
-                        className="h-10 rounded-sm border border-neutral-200 dark:border-white/10 bg-neutral-100 dark:bg-white/5 flex items-center justify-start gap-2 px-3 text-sm text-neutral-700 dark:text-neutral-300"
+                    <Link
+                        to="/"
+                        className="h-10 rounded-sm border border-cyan-200 dark:border-cyan-400/20 bg-cyan-50 dark:bg-cyan-950/30 flex items-center justify-start gap-2 px-3 text-sm font-semibold text-cyan-700 dark:text-cyan-300 no-underline"
                         onClick={() => setMobileMenuOpen(false)}
                     >
-                        <Code2 className="h-4 w-4" />
-                        CLI
-                    </a>
+                        <Home className="h-4 w-4" />
+                        Home
+                    </Link>
                 </div>
             )}
         </nav>
@@ -244,15 +243,13 @@ function HeroSection() {
                     Open Source Web Crawler & Scraper
                 </Badge>
 
-                <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-neutral-900 dark:text-white leading-[1.1]">
-                    Turn any website into{" "}
-                    <span className="bg-gradient-to-r from-cyan-500 to-sky-600 dark:from-neutral-200 dark:to-neutral-400 bg-clip-text text-transparent">
-                        structured data
-                    </span>
+                <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-neutral-600 dark:text-white leading-[1.1]">
+                    Turn static website and SSR apps into structured data{" "}
+
                 </h1>
 
                 <p className="mt-6 text-lg sm:text-xl text-neutral-500 dark:text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-                    Crawl, scrape, and extract clean data from any website.
+                    Crawl, scrape, and extract clean data from static website and SSR apps
                     <br className="hidden sm:block" />
                     Built in Go for speed. Delivered as JSON, ready to use.
                 </p>
