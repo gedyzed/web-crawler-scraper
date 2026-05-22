@@ -122,7 +122,17 @@ const (
 
 // For Crawler
 var (
-	ErrSeedURLNeeded = "Seed URL is not provided"
+	ErrSeedURLNeeded           = "Seed URL is not provided"
+	ErrURLUnreachable          = "Unable to reach the requested URL. Please check the address and try again."
+	ErrURLNotFound             = "The requested page could not be found."
+	ErrURLForbidden            = "Access to this page is not allowed."
+	ErrURLTimeout              = "The site took too long to respond. Please try again later."
+	ErrURLBadGateway           = "Could not connect to the target site."
+	ErrCrawlFailed             = "The crawl could not be completed. Please try again."
+	ErrScrapeFailed            = "The scrape could not be completed. Please try again."
+	ErrNoResultForHistory      = "No result found for this history entry."
+	ErrHistoryIDRequired       = "History ID is required."
+	ErrHTMLParseFailed         = "Failed to parse page content."
 )
 
 // For Email
@@ -153,15 +163,16 @@ var (
 
 // Crawler - Log Messages
 var (
-	LogCrawlStarted     = "Crawl started"
-	LogCrawlCompleted   = "Crawl completed"
-	LogCrawlPageError   = "Error visiting page during crawl"
-	LogCrawlFailed      = "Crawl failed"
-	LogScrapeStarted    = "Scrape started"
-	LogScrapeCompleted  = "Scrape completed"
-	LogScrapeFailed     = "Scrape failed"
-	LogHTMLExtractError = "Error extracting HTML"
-	LogHTMLParseError   = "Error parsing HTML"
+	LogCrawlStarted      = "Crawl started"
+	LogCrawlCompleted    = "Crawl completed"
+	LogCrawlPageError    = "Error visiting page during crawl"
+	LogCrawlFailed       = "Crawl failed"
+	LogScrapeStarted     = "Scrape started"
+	LogScrapeCompleted   = "Scrape completed"
+	LogScrapeFailed      = "Scrape failed"
+	LogHTMLExtractError  = "Error extracting HTML"
+	LogHTMLParseError    = "Error parsing HTML"
+	LogFailedDeleteHistory = "Failed to delete history"
 )
 
 // History - Types

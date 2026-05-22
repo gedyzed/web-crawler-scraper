@@ -212,7 +212,7 @@ func (c *crawlerUsecase) GetResultByHistoryID(ctx context.Context, historyID str
 	}
 
 	if history.ResultID == "" {
-		return nil, &domain.AppError{Message: "No result found for this history item", HttpStatus: 404}
+		return nil, &domain.AppError{Message: domain.ErrNoResultForHistory, HttpStatus: 404}
 	}
 
 	result, err := c.repo.FindResultByID(ctx, history.ResultID, userID)
@@ -225,7 +225,7 @@ func (c *crawlerUsecase) GetResultByHistoryID(ctx context.Context, historyID str
 
 func (c *crawlerUsecase) DeleteHistory(ctx context.Context, historyID string, userID string) *domain.AppError {
 	if historyID == "" {
-		return &domain.AppError{Message: "History ID is required", HttpStatus: 400}
+		return &domain.AppError{Message: domain.ErrHistoryIDRequired, HttpStatus: 400}
 	}
 
 	return c.repo.DeleteHistoryByID(ctx, historyID, userID)
