@@ -141,7 +141,7 @@ func LoadConfig(path string) *Config {
 	viper.SetDefault("rate_limiter.auth.limit", 5)
 	viper.SetDefault("rate_limiter.auth.window", "1m")
 	viper.SetDefault("rate_limiter.trial.limit", 3)
-	viper.SetDefault("rate_limiter.trial.window", "0s")
+	viper.SetDefault("rate_limiter.trial.window", "24h")
 	viper.SetDefault("rate_limiter.api_key.max_keys_per_user", 3)
 	viper.SetDefault("rate_limiter.api_key.daily_limit", 1000)
 	viper.SetDefault("scraper.max_links_per_page", 100)

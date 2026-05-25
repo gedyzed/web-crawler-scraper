@@ -2,9 +2,8 @@ name: Keep Backend Alive
 
 on:
   schedule:
-    # Runs every day at 06:00 UTC
     - cron: "0 6 * * *"
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   health-check:
@@ -12,7 +11,7 @@ jobs:
     steps:
       - name: Ping health endpoint
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://api.spidergo.app/health)
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 https://web-crawler-scraper-iunf.onrender.com/health)
           echo "Health check response: $response"
           if [ "$response" != "200" ]; then
             echo "::error::Health check failed with status $response"

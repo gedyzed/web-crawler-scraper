@@ -198,7 +198,7 @@ export const runJob = createAsyncThunk<CrawlerResult, { url: string; type: 'craw
                 ? { url, maxPages: config.maxPages, depth: config.depth, allowedPatterns: config.allowedPatterns, deniedPatterns: config.deniedPatterns }
                 : { url }
 
-            const response = await api.post(endpoint, body)
+            const response = await api.post(endpoint, body, { timeout: 0 })
             // Backend returns { message: CrawlerResult 
             console.log(response.data)
             return response.data.message as CrawlerResult

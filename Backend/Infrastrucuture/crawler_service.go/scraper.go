@@ -202,12 +202,19 @@ func (s *Scraper) FetchAndParse(targetURL string, resultID string, userID string
 		pageMu.Lock()
 		defer pageMu.Unlock()
 		page.StatusCode = e.StatusCode
+		logrus.WithFields(logrus.Fields{
+			"url":         targetURL,
+			"status_code": e.StatusCode,
+			"error":       err.Error(),
+		}).Warn(domain.LogCrawlPageError)
 	})
 
 	if err := collector.Visit(targetURL); err != nil {
-		return page, nil, &domain.AppError{
-			Message: fmt.Sprintf("Error visiting %s: %v", targetURL, err),
-		}
+		logrus.WithFields(logrus.Fields{
+			"url":   targetURL,
+			"error": err.Error(),
+		}).Warn(domain.LogScrapeFailed)
+		return page, nil, classifyFetchError(err)
 	}
 
 	return page, discoveredLinks, nil
@@ -726,9 +733,30 @@ func ParseRawHTML(htmlContent string, baseURL *url.URL) (*readability.Article, *
 	reader := strings.NewReader(htmlContent)
 	article, err := readability.FromReader(reader, baseURL)
 	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"url":   baseURL.String(),
+			"error": err.Error(),
+		}).Warn(domain.LogHTMLParseError)
 		return &readability.Article{}, &domain.AppError{
-			Message: err.Error(),
+			Message:    domain.ErrHTMLParseFailed,
+			HttpStatus: 422,
 		}
 	}
 	return &article, nil
+}
+
+func classifyFetchError(err error) *domain.AppError {
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "no such host") || strings.Contains(msg, "connection refused"):
+		return &domain.AppError{Message: domain.ErrURLBadGateway, HttpStatus: 502}
+	case strings.Contains(msg, "timeout") || strings.Contains(msg, "deadline exceeded"):
+		return &domain.AppError{Message: domain.ErrURLTimeout, HttpStatus: 504}
+	case strings.Contains(msg, "403") || strings.Contains(msg, "forbidden"):
+		return &domain.AppError{Message: domain.ErrURLForbidden, HttpStatus: 403}
+	case strings.Contains(msg, "404") || strings.Contains(msg, "not found"):
+		return &domain.AppError{Message: domain.ErrURLNotFound, HttpStatus: 404}
+	default:
+		return &domain.AppError{Message: domain.ErrURLUnreachable, HttpStatus: 502}
+	}
 }

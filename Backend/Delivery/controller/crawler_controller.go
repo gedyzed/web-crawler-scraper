@@ -85,7 +85,7 @@ func (cl *CrawlerController) GetResult(c *gin.Context) {
 	historyID := c.Param("id")
 
 	if historyID == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "History ID is required"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrHistoryIDRequired})
 		return
 	}
 
@@ -95,7 +95,7 @@ func (cl *CrawlerController) GetResult(c *gin.Context) {
 			"userID":    userID,
 			"historyID": historyID,
 			"error":     err.Message,
-		}).Error("Failed to fetch result by history ID")
+		}).Error(domain.LogFailedFetchHistory)
 		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
 		return
 	}
@@ -109,7 +109,7 @@ func (cl *CrawlerController) DeleteHistory(c *gin.Context) {
 	historyID := c.Param("id")
 
 	if historyID == "" {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "History ID is required"})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": domain.ErrHistoryIDRequired})
 		return
 	}
 
@@ -119,7 +119,7 @@ func (cl *CrawlerController) DeleteHistory(c *gin.Context) {
 			"userID":    userID,
 			"historyID": historyID,
 			"error":     err.Message,
-		}).Error("Failed to delete history")
+		}).Error(domain.LogFailedDeleteHistory)
 		c.IndentedJSON(err.HttpStatus, gin.H{"message": err.Message})
 		return
 	}

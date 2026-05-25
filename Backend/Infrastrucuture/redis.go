@@ -55,9 +55,11 @@ func (rl *RedisRateLimiter) Allow(ctx context.Context, ip string) (bool, *domain
 	}
 
 	if count == 1 {
-		if rl.window > 0 {
-			rl.client.Expire(ctx, key, rl.window)
+		window := rl.window
+		if window <= 0 {
+			window = 24 * time.Hour
 		}
+		rl.client.Expire(ctx, key, window)
 	}
 
 	if count > rl.limit {
